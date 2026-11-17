@@ -133,8 +133,8 @@ const Footer: React.FC = () => {
           <p>© {currentYear} Paradise Global Leisures (PVT) LTD. All rights reserved.</p>
           <div>Powered by SerendibCode</div>
           <div className="flex gap-4">
-            <Link to="/contact" className="hover:text-gold-400 transition-colors">Privacy Policy</Link>
-            <Link to="/contact" className="hover:text-gold-400 transition-colors">Terms of Service</Link>
+            <Link to="/privacy-policy" className="hover:text-gold-400 transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-gold-400 transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

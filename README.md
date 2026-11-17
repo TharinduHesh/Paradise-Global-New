@@ -166,3 +166,51 @@ The site uses a navy, gold, and beige visual palette with serif headings and res
 ## License
 
 This project is private and intended for Paradise Global Leisures. Add a formal license before distributing the source code publicly.
+# Paradise Global Leisures
+
+## Admin deployment
+
+The admin console is available at `/admin`. It uses D1 for users, sessions, enquiries, content, settings, media metadata, and the activity log; uploaded files are stored in R2.
+
+For local admin/API development, build first and use the Pages runtime rather than Vite alone:
+
+```powershell
+npm run build
+npm run dev:pages
+```
+
+Then open `http://localhost:8788/admin/login`. `npm run dev` on port 5173 only serves the React frontend and does not execute Pages Functions.
+
+1. Install Wrangler and authenticate:
+
+   ```powershell
+   npm install
+   npx wrangler login
+   ```
+
+2. Apply the versioned D1 migrations to the configured database:
+
+   ```powershell
+   npx wrangler d1 migrations apply paradise-global-new --remote
+   ```
+
+   For a local preview, use `--local` instead. The migrations are idempotent and preserve the existing `contact_enquiries` table.
+
+3. Create the R2 bucket and confirm the binding name matches `wrangler.toml`:
+
+   ```powershell
+   npx wrangler r2 bucket create paradise-global-media
+   ```
+
+4. Deploy the site:
+
+   ```powershell
+   npm run build
+   npx wrangler pages deploy dist --project-name paradise-global-new
+   ```
+
+5. Open `https://<your-pages-domain>/admin/login`. On the first visit choose **First deployment? Set up Owner**, create a 12+ character password, then sign in. The setup endpoint can only succeed while no admin user exists.
+
+Owners can add Admin and Editor accounts, change roles, deactivate accounts, change their own password, publish content, and toggle maintenance mode. Admins can manage enquiries and publish content; Editors can create and edit content but cannot publish or change access/settings. Public pages use published D1 content when available and retain the current `src/data` content as a safe migration fallback.
+
+Cloudflare Pages must have the `DB` D1 binding and `MEDIA` R2 binding configured for the production environment. Do not commit credentials; use Cloudflare dashboard environment bindings for production.

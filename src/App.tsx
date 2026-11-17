@@ -8,30 +8,28 @@ import About from './pages/About';
 import Services from './pages/Services';
 import Properties from './pages/Properties';
 import PropertyDetails from './pages/PropertyDetails';
-import PropertyManagement from './pages/PropertyManagement';
-import PlanApprovals from './pages/PlanApprovals';
-import LegalConsultation from './pages/LegalConsultation';
-import ArchitecturalSupport from './pages/ArchitecturalSupport';
-import Construction from './pages/Construction';
+import ServiceDetail from './pages/ServiceDetail';
 import Destinations from './pages/Destinations';
 import Contact from './pages/Contact';
+import AdminApp from './pages/Admin';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 const App: React.FC = () => {
   return (
-    <Layout>
-      <Routes>
+    <Routes>
+      <Route path="/admin/*" element={<AdminApp />} />
+      <Route path="*" element={<Layout><Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
-        <Route path="/services/plan-approvals" element={<PlanApprovals />} />
-        <Route path="/services/property-management" element={<PropertyManagement />} />
-        <Route path="/services/legal-consultation" element={<LegalConsultation />} />
-        <Route path="/services/architectural-support" element={<ArchitecturalSupport />} />
-        <Route path="/services/construction" element={<Construction />} />
+        <Route path="/services/:slug" element={<ServiceDetail />} />
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:slug" element={<PropertyDetails />} />
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         {/* 404 */}
         <Route path="*" element={
           <div className="min-h-screen flex items-center justify-center bg-beige-50">
@@ -42,8 +40,8 @@ const App: React.FC = () => {
             </div>
           </div>
         } />
-      </Routes>
-    </Layout>
+      </Routes></Layout>} />
+    </Routes>
   );
 };
 

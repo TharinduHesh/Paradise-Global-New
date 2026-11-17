@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight, CheckCircle } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
+import { getPublishedContent } from '../../lib/publishedContent';
+import type { Service } from '../../types';
 
 const services = [
   {
@@ -61,6 +63,23 @@ const services = [
 ];
 
 const ServicesOverview: React.FC = () => {
+  const [visibleServices, setVisibleServices] = useState(services);
+  useEffect(() => {
+    getPublishedContent<Service>('service')
+      .then((published) => {
+        if (published.length) {
+          setVisibleServices(published.map((item, index) => ({
+            icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
+            number: String(index + 1).padStart(2, '0'),
+            title: item.title,
+            description: item.data.description,
+            bullets: item.data.features.slice(0, 4),
+            href: `/services/${item.slug}`,
+          })));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
   return (
     <section className="section-padding bg-beige-50">
       <div className="container-custom">
@@ -72,7 +91,7 @@ const ServicesOverview: React.FC = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
-          {services.map(({ icon: Icon, number, title, description, bullets, href }) => (
+          {visibleServices.map(({ icon: Icon, number, title, description, bullets, href }) => (
             <div
               key={title}
               className="group bg-white rounded-sm shadow-card border border-beige-200 overflow-hidden card-hover flex flex-col"

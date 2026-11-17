@@ -31,6 +31,7 @@ export interface Service {
   title: string;
   description: string;
   icon: string;
+  image?: string;
   slug: string;
   features: string[];
   process?: ProcessStep[];

@@ -1,15 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { FileCheck, Home, Building2, Scale, PenTool, HardHat } from 'lucide-react';
 import CTABanner from '../components/home/CTABanner';
 import { services } from '../data/services';
+import type { Service } from '../types';
+import { getPublishedContent } from '../lib/publishedContent';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileCheck, Home, Building2, Scale, PenTool, HardHat
 };
 
 const Services: React.FC = () => {
+  const [items, setItems] = useState<Service[]>(services);
+  useEffect(() => {
+    getPublishedContent<Service>('service')
+      .then((published) => { if (published.length) setItems(published.map((item) => ({ ...item.data, id: item.id, slug: item.slug, title: item.title }))); })
+      .catch(() => undefined);
+  }, []);
   return (
     <>
       <title>Our Services — Paradise Global Leisures</title>
@@ -32,7 +40,7 @@ const Services: React.FC = () => {
       <section className="section-padding bg-beige-50">
         <div className="container-custom">
           <div className="grid grid-cols-1 gap-12">
-            {services.map((service, idx) => {
+            {items.map((service, idx) => {
               const Icon = iconMap[service.icon] || FileCheck;
               const isEven = idx % 2 === 0;
 
@@ -42,7 +50,8 @@ const Services: React.FC = () => {
                     {/* Image Side */}
                     <div className={`relative h-64 lg:h-auto overflow-hidden ${!isEven ? 'lg:order-2' : ''}`}>
                       <div className="absolute inset-0 bg-navy-900 flex items-center justify-center">
-                        <Icon size={80} className="text-gold-500/30" />
+                        {service.image && <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover opacity-50" />}
+                        <Icon size={80} className="relative text-gold-500/30" />
                         <div className="absolute inset-0 bg-gradient-to-br from-navy-900 via-navy-800 to-navy-950" style={{ opacity: 0.85 }} />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="text-center">

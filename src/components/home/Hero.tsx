@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown } from 'lucide-react';
+import heroImage from '../../Blue Hour Villa on Sri Lanka’s Coast.png';
 
 const Hero: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -27,7 +28,7 @@ const Hero: React.FC = () => {
         ref={heroRef}
         className="absolute inset-0 bg-cover bg-center scale-110"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=1920&q=90')`,
+          backgroundImage: `url("${heroImage}")`,
         }}
       />
 

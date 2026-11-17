@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import PropertyCard from '../components/properties/PropertyCard';
 import PropertyFilters from '../components/properties/PropertyFilters';
-import { properties } from '../data/properties';
+import { properties as staticProperties } from '../data/properties';
+import type { Property } from '../types';
 import type { PropertyFilters as FiltersType } from '../types';
 
 const defaultFilters: FiltersType = {
@@ -17,6 +18,13 @@ const defaultFilters: FiltersType = {
 
 const Properties: React.FC = () => {
   const [filters, setFilters] = useState<FiltersType>(defaultFilters);
+  const [properties, setProperties] = useState<Property[]>(staticProperties);
+  useEffect(() => {
+    fetch('/api/content?type=property')
+      .then((response) => response.ok ? response.json() as Promise<{ items: { data: Property }[] }> : Promise.reject(new Error('Content unavailable')))
+      .then((result) => { if (result.items.length) setProperties(result.items.map((item) => item.data)); })
+      .catch(() => undefined);
+  }, []);
 
   const filtered = useMemo(() => {
     return properties.filter((p) => {
@@ -32,7 +40,7 @@ const Properties: React.FC = () => {
       if (p.priceUnit === 'USD' && p.price > filters.maxPrice) return false;
       return true;
     });
-  }, [filters]);
+  }, [filters, properties]);
 
   return (
     <>

@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:pages": "npx wrangler pages dev dist --port 8788",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "tsc -b --pretty false",
     "preview": "vite preview"
   },
   "dependencies": {

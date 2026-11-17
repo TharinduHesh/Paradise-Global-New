@@ -130,6 +130,8 @@
   .shadow-gold { box-shadow: var(--shadow-gold); }
   .shadow-navy { box-shadow: var(--shadow-navy); }
   .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+  .legal-heading { font-family: var(--font-serif); color: var(--color-navy-900); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .legal-heading + p { color: var(--color-navy-600); line-height: 1.75; }
 }
 
 @layer utilities {
