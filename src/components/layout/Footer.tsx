@@ -107,7 +107,7 @@ const Footer: React.FC = () => {
                     className="flex items-center gap-2 text-white/60 text-sm hover:text-gold-400 transition-colors duration-200 group"
                   >
                     <MapPin size={12} className="text-gold-500" />
-                    {dest}
+                    {t(`destinationNames.${dest}`, { defaultValue: dest })}
                   </Link>
                 </li>
               ))}
