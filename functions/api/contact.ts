@@ -17,27 +17,25 @@ interface Env {
   DB: D1Database;
 }
 
-const requiredFields: (keyof ContactEnquiry)[] = [
-  'name',
-  'email',
-  'phone',
-  'service',
-  'propertyLocation',
-  'message',
-];
+const requiredFields = ['name', 'email', 'message'] as const;
 
 export const onRequestPost = async (context: {
   request: Request;
   env: Env;
 }) => {
-  let enquiry: Partial<ContactEnquiry>;
+  let body: unknown;
 
   try {
-    enquiry = await context.request.json() as Partial<ContactEnquiry>;
+    body = await context.request.json();
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return Response.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+
+  const enquiry = body as Partial<Record<keyof ContactEnquiry, unknown>>;
   const missingField = requiredFields.find((field) => {
     const value = enquiry[field];
     return typeof value !== 'string' || value.trim().length === 0;
@@ -47,6 +45,22 @@ export const onRequestPost = async (context: {
     return Response.json({ error: `The ${missingField} field is required.` }, { status: 400 });
   }
 
+  const optionalFields = {
+    phone: enquiry.phone,
+    service: enquiry.service,
+    propertyLocation: enquiry.propertyLocation,
+  };
+  const invalidField = Object.entries(optionalFields).find(
+    ([, value]) => value !== undefined && typeof value !== 'string',
+  );
+
+  if (invalidField) {
+    return Response.json({ error: `The ${invalidField[0]} field must be text.` }, { status: 400 });
+  }
+
+  const { name, email, phone = '', service = '', propertyLocation = '', message } =
+    enquiry as ContactEnquiry;
+
   try {
     await context.env.DB
       .prepare(`
@@ -55,12 +69,12 @@ export const onRequestPost = async (context: {
         VALUES (?, ?, ?, ?, ?, ?, 'new', 'website')
       `)
       .bind(
-        enquiry.name!.trim(),
-        enquiry.email!.trim(),
-        enquiry.phone!.trim(),
-        enquiry.service!.trim(),
-        enquiry.propertyLocation!.trim(),
-        enquiry.message!.trim(),
+        name.trim(),
+        email.trim(),
+        phone.trim(),
+        service.trim(),
+        propertyLocation.trim(),
+        message.trim(),
       )
       .run();
 
