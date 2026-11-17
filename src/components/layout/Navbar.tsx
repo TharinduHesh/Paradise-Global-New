@@ -16,7 +16,6 @@ const navLinks = [
       { label: 'Legal Consultation', href: '/services/legal-consultation' },
       { label: 'Architectural Support', href: '/services/architectural-support' },
       { label: 'Construction', href: '/services/construction' },
-      { label: 'Cyber Security Services', href: '/services/cyber-security' },
     ],
   },
   { label: 'Properties', href: '/properties' },

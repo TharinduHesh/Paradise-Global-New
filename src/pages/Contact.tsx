@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, MessageCircle, Send, CheckCircle, Clock } from 'lucide-react';
 import SectionHeader from '../components/ui/SectionHeader';
-import { saveContactEnquiry } from '../lib/firebase';
+import { saveContactEnquiry } from '../lib/contactApi';
 
 const serviceOptions = [
   'Select a Service',
@@ -12,7 +12,6 @@ const serviceOptions = [
   'Legal Consultation',
   'Architectural Support',
   'Construction',
-  'Cyber Security Services',
   'General Enquiry',
 ];
 

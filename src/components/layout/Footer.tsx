@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  MapPin, Phone, Mail, ArrowRight, Heart,
+  MapPin, Phone, Mail, ArrowRight,
   ExternalLink, Globe, MessageCircle
 } from 'lucide-react';
 
@@ -54,7 +54,6 @@ const Footer: React.FC = () => {
                 { label: 'Legal Consultation', href: '/services/legal-consultation' },
                 { label: 'Architectural Support', href: '/services/architectural-support' },
                 { label: 'Construction', href: '/services/construction' },
-                { label: 'Cyber Security Services', href: '/services/cyber-security' },
               ].map((item) => (
                 <li key={item.href}>
                   <Link
@@ -132,11 +131,7 @@ const Footer: React.FC = () => {
       <div className="container-custom py-5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-white/40 text-sm">
           <p>© {currentYear} Paradise Global Leisures (PVT) LTD. All rights reserved.</p>
-          <div className="flex items-center gap-1">
-            <span>Made with</span>
-            <Heart size={12} className="text-gold-400 mx-1 fill-current" />
-            <span>in Sri Lanka</span>
-          </div>
+          <div>Powered by SerendibCode</div>
           <div className="flex gap-4">
             <Link to="/contact" className="hover:text-gold-400 transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-gold-400 transition-colors">Terms of Service</Link>

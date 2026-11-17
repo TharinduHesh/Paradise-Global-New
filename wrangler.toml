@@ -1,0 +1,8 @@
+name = "paradise-global-leisures"
+compatibility_date = "2026-11-17"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "paradise-global-leisures"
+database_id = "replace-with-your-d1-database-id"
