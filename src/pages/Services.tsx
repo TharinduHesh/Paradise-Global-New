@@ -6,12 +6,14 @@ import CTABanner from '../components/home/CTABanner';
 import { services } from '../data/services';
 import type { Service } from '../types';
 import { getPublishedContent } from '../lib/publishedContent';
+import { useTranslation } from 'react-i18next';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileCheck, Home, Building2, Scale, PenTool, HardHat
 };
 
 const Services: React.FC = () => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<Service[]>(services);
   useEffect(() => {
     getPublishedContent<Service>('service')
@@ -27,11 +29,11 @@ const Services: React.FC = () => {
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80')` }} />
         <div className="relative container-custom text-center">
-          <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">What We Offer</p>
-          <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">Our Services</h1>
+          <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('home.servicesEyebrow')}</p>
+          <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">{t('nav.services')}</h1>
           <div className="gold-divider" />
           <p className="text-white/70 text-lg mt-5 max-w-2xl mx-auto">
-            A complete suite of property services covering every stage of your journey — from vision to reality.
+            {t('home.servicesSubtitle')}
           </p>
         </div>
       </div>
@@ -87,7 +89,7 @@ const Services: React.FC = () => {
                         to={`/services/${service.slug}`}
                         className="btn-primary inline-flex"
                       >
-                        Learn More <ArrowRight size={16} />
+                        {t('common.learnMore')} <ArrowRight size={16} />
                       </Link>
                     </div>
                   </div>

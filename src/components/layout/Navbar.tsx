@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -23,7 +25,16 @@ const navLinks = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const navKeys: Record<string, string> = {
+  Home: 'home', About: 'about', Services: 'services', 'All Services': 'allServices',
+  Properties: 'properties', Destinations: 'destinations', Contact: 'contact',
+  'Plan Approvals': 'planApprovals', 'Real Estate': 'realEstate',
+  'Property Management': 'propertyManagement', 'Legal Consultation': 'legalConsultation',
+  'Architectural Support': 'architecturalSupport', Construction: 'construction',
+};
+
 const Navbar: React.FC = () => {
+  const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -77,7 +88,7 @@ const Navbar: React.FC = () => {
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
                   <button className="flex items-center gap-1 text-white/90 hover:text-gold-400 px-4 py-2 text-sm font-medium transition-colors duration-200">
-                    {link.label}
+                    {t(`nav.${navKeys[link.label] ?? 'services'}`)}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                   </button>
                   <div className={`absolute top-full left-0 w-56 bg-navy-900 border border-navy-800 shadow-xl rounded-sm transition-all duration-200 ${activeDropdown === link.label ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
@@ -89,7 +100,7 @@ const Navbar: React.FC = () => {
                           `block px-4 py-3 text-sm transition-colors duration-200 border-b border-navy-800 last:border-0 ${isActive ? 'text-gold-400 bg-navy-800' : 'text-white/80 hover:text-gold-400 hover:bg-navy-800'}`
                         }
                       >
-                        {child.label}
+                        {t(`nav.${navKeys[child.label] ?? ''}`, { defaultValue: child.label })}
                       </NavLink>
                     ))}
                   </div>
@@ -102,7 +113,7 @@ const Navbar: React.FC = () => {
                     `px-4 py-2 text-sm font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                   }
                 >
-                  {link.label}
+                  {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
                 </NavLink>
               )
             )}
@@ -110,6 +121,11 @@ const Navbar: React.FC = () => {
 
           {/* CTA + Mobile Toggle */}
           <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-xs text-white/80 sm:flex">
+              <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
+              <span className="text-white/40">|</span>
+              <button onClick={() => void i18n.changeLanguage('si')} className={i18n.language === 'si' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.sinhala')}</button>
+            </div>
             <a
               href="tel:+94XXXXXXXXX"
               className="hidden md:flex items-center gap-2 text-gold-400 text-sm font-medium hover:text-gold-300 transition-colors"
@@ -121,7 +137,7 @@ const Navbar: React.FC = () => {
               to="/contact"
               className="hidden md:inline-flex btn-primary text-sm px-5 py-2.5"
             >
-              Get Consultation
+              {t('nav.consultation')}
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -144,7 +160,7 @@ const Navbar: React.FC = () => {
                   className="flex items-center justify-between w-full text-white/90 px-4 py-3 text-sm font-medium"
                   onClick={() => setActiveDropdown(activeDropdown === link.label ? null : link.label)}
                 >
-                  {link.label}
+                  {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
                   <ChevronDown size={14} className={`transition-transform ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
                 </button>
                 {activeDropdown === link.label && (
@@ -157,7 +173,7 @@ const Navbar: React.FC = () => {
                           `block py-2.5 text-sm transition-colors ${isActive ? 'text-gold-400' : 'text-white/70 hover:text-gold-400'}`
                         }
                       >
-                        {child.label}
+                        {t(`nav.${navKeys[child.label] ?? ''}`, { defaultValue: child.label })}
                       </NavLink>
                     ))}
                   </div>
@@ -171,17 +187,22 @@ const Navbar: React.FC = () => {
                   `block px-4 py-3 text-sm font-medium transition-colors ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                 }
               >
-                {link.label}
+                {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
               </NavLink>
             )
           )}
           <div className="pt-4 pb-2 flex flex-col gap-3">
+            <div className="mx-4 flex items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs text-white/80">
+              <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : ''}>{t('language.english')}</button>
+              <span>|</span>
+              <button onClick={() => void i18n.changeLanguage('si')} className={i18n.language === 'si' ? 'font-semibold text-gold-400' : ''}>{t('language.sinhala')}</button>
+            </div>
             <a href="tel:+94XXXXXXXXX" className="flex items-center gap-2 text-gold-400 text-sm px-4">
               <Phone size={15} />
               +94 77 000 0000
             </a>
             <Link to="/contact" className="btn-primary mx-4 text-center justify-center">
-              Get Consultation
+              {t('nav.consultation')}
             </Link>
           </div>
         </div>

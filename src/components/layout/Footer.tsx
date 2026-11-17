@@ -4,8 +4,10 @@ import {
   MapPin, Phone, Mail, ArrowRight,
   ExternalLink, Globe, MessageCircle
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -23,7 +25,7 @@ const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              Your complete property partner in Southern Sri Lanka. From plan approvals to construction, real estate, and management — we guide your entire property journey.
+              {t('footer.description')}
             </p>
             <div className="flex gap-3">
               {[
@@ -45,7 +47,7 @@ const Footer: React.FC = () => {
 
           {/* Services */}
           <div>
-            <h4 className="font-serif text-white font-semibold text-lg mb-5">Our Services</h4>
+            <h4 className="font-serif text-white font-semibold text-lg mb-5">{t('footer.services')}</h4>
             <ul className="space-y-2.5">
               {[
                 { label: 'Plan Approvals', href: '/services/plan-approvals' },
@@ -70,7 +72,7 @@ const Footer: React.FC = () => {
 
           {/* Destinations */}
           <div>
-            <h4 className="font-serif text-white font-semibold text-lg mb-5">Destinations</h4>
+            <h4 className="font-serif text-white font-semibold text-lg mb-5">{t('footer.destinations')}</h4>
             <ul className="space-y-2.5">
               {[
                 'Galle', 'Unawatuna', 'Weligama', 'Mirissa',
@@ -91,7 +93,7 @@ const Footer: React.FC = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-serif text-white font-semibold text-lg mb-5">Get In Touch</h4>
+            <h4 className="font-serif text-white font-semibold text-lg mb-5">{t('footer.contact')}</h4>
             <ul className="space-y-4">
               <li className="flex gap-3">
                 <MapPin size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
@@ -117,7 +119,7 @@ const Footer: React.FC = () => {
             </ul>
             <div className="mt-6">
               <Link to="/contact" className="btn-primary text-sm px-5 py-2.5 w-full justify-center">
-                Contact Us
+                {t('footer.contactUs')}
               </Link>
             </div>
           </div>
@@ -133,8 +135,8 @@ const Footer: React.FC = () => {
           <p>© {currentYear} Paradise Global Leisures (PVT) LTD. All rights reserved.</p>
           <div>Powered by SerendibCode</div>
           <div className="flex gap-4">
-            <Link to="/privacy-policy" className="hover:text-gold-400 transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="hover:text-gold-400 transition-colors">Terms of Service</Link>
+            <Link to="/privacy-policy" className="hover:text-gold-400 transition-colors">{t('footer.privacy')}</Link>
+            <Link to="/terms-of-service" className="hover:text-gold-400 transition-colors">{t('footer.terms')}</Link>
           </div>
         </div>
       </div>

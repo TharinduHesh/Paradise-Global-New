@@ -3,6 +3,7 @@ import { MapPin, Phone, Mail, MessageCircle, Send, CheckCircle, Clock } from 'lu
 import SectionHeader from '../components/ui/SectionHeader';
 import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
 import { Turnstile } from '../components/ui/Turnstile';
+import { useTranslation } from 'react-i18next';
 
 const serviceOptions = [
   'Select a Service',
@@ -30,6 +31,7 @@ const locationOptions = [
 ];
 
 const Contact: React.FC = () => {
+  const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -69,7 +71,7 @@ const Contact: React.FC = () => {
       setTurnstileToken(null);
     } catch (error) {
       console.error('Unable to save contact enquiry:', error);
-      setSubmitError('We could not send your enquiry. Please try again or contact us by phone.');
+      setSubmitError(t('contact.submitError'));
       setTurnstileToken(null);
       setWidgetAttempt((attempt) => attempt + 1);
     } finally {
@@ -79,18 +81,18 @@ const Contact: React.FC = () => {
 
   return (
     <>
-      <title>Contact Us — Paradise Global Leisures</title>
+      <title>{t('contact.title')} — Paradise Global Leisures</title>
 
       {/* Page Header */}
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{ backgroundImage: `url('https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1920&q=80')` }} />
         <div className="relative container-custom text-center">
-          <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">Get In Touch</p>
-          <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>
+          <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('contact.eyebrow')}</p>
+          <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">{t('contact.title')}</h1>
           <div className="gold-divider" />
           <p className="text-white/70 text-lg mt-5 max-w-2xl mx-auto">
-            Whether you're buying, selling, building, or looking for expert advice — our team is here to help you take the next step.
+            {t('contact.subtitle')}
           </p>
         </div>
       </div>
@@ -102,8 +104,8 @@ const Contact: React.FC = () => {
             {/* Contact Info */}
             <div className="space-y-6">
               <SectionHeader
-                eyebrow="Contact Information"
-                title="Let's Start a Conversation"
+                eyebrow={t('contact.info')}
+                title={t('contact.conversation')}
               />
 
               <div className="space-y-5 mt-6">
@@ -183,26 +185,26 @@ const Contact: React.FC = () => {
                     <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
                       <CheckCircle size={40} className="text-green-500" />
                     </div>
-                    <h3 className="font-serif text-navy-900 text-2xl font-bold mb-3">Thank You!</h3>
+                    <h3 className="font-serif text-navy-900 text-2xl font-bold mb-3">{t('contact.success')}</h3>
                     <p className="text-navy-500 text-base max-w-md mb-8">
-                      Your enquiry has been received. A member of our team will be in touch within 24 hours.
+                      {t('contact.successText')}
                     </p>
                     <button
                       onClick={() => { setSubmitted(false); setForm({ name: '', email: '', phone: '', service: '', propertyLocation: '', message: '' }); }}
                       className="btn-primary"
                     >
-                      Send Another Enquiry
+                      {t('contact.another')}
                     </button>
                   </div>
                 ) : (
                   <>
-                    <h3 className="font-serif text-navy-900 text-2xl font-bold mb-2">Send Us an Enquiry</h3>
-                    <p className="text-navy-500 text-sm mb-6">Fill in the form below and we'll get back to you within 24 hours.</p>
+                    <h3 className="font-serif text-navy-900 text-2xl font-bold mb-2">{t('contact.enquiry')}</h3>
+                    <p className="text-navy-500 text-sm mb-6">{t('contact.enquirySubtitle')}</p>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Full Name *</label>
+                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.name')} *</label>
                           <input
                             required
                             name="name"
@@ -215,7 +217,7 @@ const Contact: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Email Address *</label>
+                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.email')} *</label>
                           <input
                             required
                             name="email"
@@ -231,7 +233,7 @@ const Contact: React.FC = () => {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Phone / WhatsApp</label>
+                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.phone')}</label>
                           <input
                             name="phone"
                             maxLength={50}
@@ -243,7 +245,7 @@ const Contact: React.FC = () => {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Service Required</label>
+                          <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.service')}</label>
                           <select
                             name="service"
                             value={form.service}
@@ -256,7 +258,7 @@ const Contact: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Property Location of Interest</label>
+                        <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.location')}</label>
                         <select
                           name="propertyLocation"
                           value={form.propertyLocation}
@@ -268,7 +270,7 @@ const Contact: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Message *</label>
+                        <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">{t('contact.message')} *</label>
                         <textarea
                           required
                           name="message"
@@ -289,11 +291,11 @@ const Contact: React.FC = () => {
                       )}
 
                       <button type="submit" disabled={isSubmitting || siteKey === undefined || Boolean(siteKey && !turnstileToken)} className="btn-primary w-full justify-center text-base py-4 disabled:cursor-not-allowed disabled:opacity-60">
-                        <Send size={18} /> {isSubmitting ? 'Sending...' : 'Send Enquiry'}
+                        <Send size={18} /> {isSubmitting ? t('common.loading') : t('common.send')}
                       </button>
 
                       <p className="text-navy-400 text-xs text-center">
-                        By submitting this form, you agree to our privacy policy. We'll never share your details.
+                        {t('contact.privacyNote')}
                       </p>
                     </form>
                   </>

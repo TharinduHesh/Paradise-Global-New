@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import heroImage from '../../Blue Hour Villa on Sri Lanka’s Coast.png';
 
 const Hero: React.FC = () => {
+  const { t } = useTranslation();
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,28 +48,23 @@ const Hero: React.FC = () => {
           <div className="flex items-center gap-3 mb-6 animate-fade-in">
             <div className="h-px w-12 bg-gold-400" />
             <p className="text-gold-400 text-sm font-medium uppercase tracking-[0.2em]">
-              Sri Lanka's Southern Coast
+              {t('home.eyebrow')}
             </p>
           </div>
 
           {/* Main heading */}
           <h1 className="font-serif text-white text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-4 animate-fade-up">
-            Paradise
-            <br />
-            <span className="text-gradient-gold">Global Leisures</span>
+            {t('home.title')}
           </h1>
 
           {/* Tagline */}
           <p className="text-white/90 text-xl md:text-2xl font-serif italic mb-6 animate-fade-up animate-delay-100">
-            "Your Complete Property Journey,
-            <br className="hidden md:block" /> From Vision to Reality."
+            {t('home.tagline')}
           </p>
 
           {/* Description */}
           <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-2xl animate-fade-up animate-delay-200">
-            From plan approvals and architectural support to real estate, construction,
-            legal consultation, and complete property management — we help you navigate
-            every stage of your property journey.
+            {t('home.description')}
           </p>
 
           {/* CTA Buttons */}
@@ -76,24 +73,24 @@ const Hero: React.FC = () => {
               to="/properties"
               className="btn-primary text-base px-8 py-4 group"
             >
-              Explore Properties
+              {t('home.explore')}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to="/contact"
               className="btn-outline text-base px-8 py-4"
             >
-              Get a Consultation
+              {t('home.consultation')}
             </Link>
           </div>
 
           {/* Stats Row */}
           <div className="flex flex-wrap gap-8 mt-14 pt-10 border-t border-white/20 animate-fade-up animate-delay-400">
             {[
-              { value: '150+', label: 'Properties Managed' },
-              { value: '8', label: 'Coastal Destinations' },
-              { value: '10+', label: 'Years Experience' },
-              { value: '98%', label: 'Client Satisfaction' },
+              { value: '150+', label: t('home.managed') },
+              { value: '8', label: t('home.destinations') },
+              { value: '10+', label: t('home.experience') },
+              { value: '98%', label: t('home.satisfaction') },
             ].map(({ value, label }) => (
               <div key={label}>
                 <p className="font-serif text-gold-400 text-3xl font-bold">{value}</p>
