@@ -6,6 +6,20 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+const FacebookIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M14 8h3V4h-3c-3.3 0-5 1.7-5 5v3H6v4h3v8h4v-8h3l1-4h-4V9c0-.7.3-1 1-1Z" />
+  </svg>
+);
+
+const InstagramIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <rect x="3" y="3" width="18" height="18" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 const Footer: React.FC = () => {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
@@ -29,6 +43,8 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex gap-3">
               {[
+                { icon: FacebookIcon, href: '#', label: 'Facebook' },
+                { icon: InstagramIcon, href: '#', label: 'Instagram' },
                 { icon: ExternalLink, href: '#', label: 'LinkedIn' },
                 { icon: Globe, href: '#', label: 'Website' },
                 { icon: MessageCircle, href: 'https://wa.me/94770000000', label: 'WhatsApp' },

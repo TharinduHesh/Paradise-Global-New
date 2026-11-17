@@ -70,17 +70,17 @@ const Services: React.FC = () => {
                         Service {String(idx + 1).padStart(2, '0')}
                       </p>
                       <h2 className="font-serif text-navy-900 text-2xl md:text-3xl font-bold mb-4">
-                        {service.title}
+                        {t(`services.${service.slug}.title`, { defaultValue: service.title })}
                       </h2>
                       <p className="text-navy-600 leading-relaxed mb-6">
-                        {service.description}
+                        {t(`services.${service.slug}.description`, { defaultValue: service.description })}
                       </p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                        {service.features.map((feature) => (
+                        {service.features.map((feature, featureIndex) => (
                           <div key={feature} className="flex items-start gap-2.5">
                             <CheckCircle size={15} className="text-gold-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-navy-700 text-sm">{feature}</span>
+                            <span className="text-navy-700 text-sm">{t(`services.${service.slug}.feature${featureIndex + 1}`, { defaultValue: feature })}</span>
                           </div>
                         ))}
                       </div>

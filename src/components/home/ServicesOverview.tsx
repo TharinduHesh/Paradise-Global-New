@@ -74,8 +74,9 @@ const ServicesOverview: React.FC = () => {
             icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
             number: String(index + 1).padStart(2, '0'),
             title: t(`services.${item.slug}.title`, { defaultValue: item.title }),
-            description: item.data.description,
-            bullets: item.data.features.slice(0, 4),
+            description: t(`services.${item.slug}.description`, { defaultValue: item.data.description }),
+            bullets: item.data.features.slice(0, 4).map((feature, featureIndex) =>
+              t(`services.${item.slug}.feature${featureIndex + 1}`, { defaultValue: feature })),
             href: `/services/${item.slug}`,
           })));
         }
@@ -93,7 +94,13 @@ const ServicesOverview: React.FC = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
-          {visibleServices.map(({ icon: Icon, number, title, description, bullets, href }) => (
+          {visibleServices.map(({ icon: Icon, number, title, description, bullets, href }) => {
+            const slug = href.split('/').pop() ?? '';
+            const localizedTitle = t(`services.${slug}.title`, { defaultValue: title });
+            const localizedDescription = t(`services.${slug}.description`, { defaultValue: description });
+            const localizedBullets = bullets.map((bullet, index) =>
+              t(`services.${slug}.feature${index + 1}`, { defaultValue: bullet }));
+            return (
             <div
               key={title}
               className="group bg-white rounded-sm shadow-card border border-beige-200 overflow-hidden card-hover flex flex-col"
@@ -114,17 +121,17 @@ const ServicesOverview: React.FC = () => {
 
                 {/* Title */}
                 <h3 className="font-serif font-bold text-navy-900 text-xl mb-3 group-hover:text-gold-600 transition-colors">
-                  {title}
+                  {localizedTitle}
                 </h3>
 
                 {/* Description */}
                 <p className="text-navy-500 text-sm leading-relaxed mb-5">
-                  {description}
+                  {localizedDescription}
                 </p>
 
                 {/* Bullet points */}
                 <ul className="space-y-2 mb-6 flex-1">
-                  {bullets.map((b) => (
+                  {localizedBullets.map((b) => (
                     <li key={b} className="flex items-center gap-2.5 text-sm text-navy-700">
                       <CheckCircle size={14} className="flex-shrink-0 text-gold-600" />
                       {b}
@@ -141,7 +148,8 @@ const ServicesOverview: React.FC = () => {
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Bottom CTA */}
