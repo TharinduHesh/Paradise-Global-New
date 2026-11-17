@@ -7,7 +7,3 @@ binding = "DB"
 database_name = "paradise-global-new"
 database_id = "fe9c354e-1978-4398-90a1-3c78366a3eb4"
 migrations_dir = "migrations"
-
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "paradise-global-media"

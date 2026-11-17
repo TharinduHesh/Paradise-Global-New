@@ -170,7 +170,7 @@ This project is private and intended for Paradise Global Leisures. Add a formal 
 
 ## Admin deployment
 
-The admin console is available at `/admin`. It uses D1 for users, sessions, enquiries, content, settings, media metadata, and the activity log; uploaded files are stored in R2.
+The admin console is available at `/admin`. It uses D1 for users, sessions, enquiries, content, settings, and the activity log. Service images can use an existing image URL or a path to a file in `public/`.
 
 For local admin/API development, build first and use the Pages runtime rather than Vite alone:
 
@@ -196,21 +196,12 @@ Then open `http://localhost:8788/admin/login`. `npm run dev` on port 5173 only s
 
    For a local preview, use `--local` instead. The migrations are idempotent and preserve the existing `contact_enquiries` table.
 
-3. Create the R2 bucket and confirm the binding name matches `wrangler.toml`:
+3. For the first Owner account, add a random `OWNER_SETUP_TOKEN` as an encrypted secret in the Pages project's **Settings → Variables and Secrets**. For local development, set it in the ignored `.dev.vars` file.
 
-   ```powershell
-   npx wrangler r2 bucket create paradise-global-media
-   ```
+4. Push to the Pages production branch to deploy. If you added the secret after deployment, redeploy to load it.
 
-4. Deploy the site:
-
-   ```powershell
-   npm run build
-   npx wrangler pages deploy dist --project-name paradise-global-new
-   ```
-
-5. Open `https://<your-pages-domain>/admin/login`. On the first visit choose **First deployment? Set up Owner**, create a 12+ character password, then sign in. The setup endpoint can only succeed while no admin user exists.
+5. Open `https://<your-pages-domain>/admin/login` and choose **First deployment? Set up Owner**. Enter the setup token and a password of at least 12 characters. The setup endpoint will only create an account while there are no admin users.
 
 Owners can add Admin and Editor accounts, change roles, deactivate accounts, change their own password, publish content, and toggle maintenance mode. Admins can manage enquiries and publish content; Editors can create and edit content but cannot publish or change access/settings. Public pages use published D1 content when available and retain the current `src/data` content as a safe migration fallback.
 
-Cloudflare Pages must have the `DB` D1 binding and `MEDIA` R2 binding configured for the production environment. Do not commit credentials; use Cloudflare dashboard environment bindings for production.
+Cloudflare Pages uses the `DB` binding in `wrangler.toml` for production. Do not commit credentials; use Cloudflare dashboard environment bindings for production.

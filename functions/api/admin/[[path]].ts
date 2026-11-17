@@ -4,6 +4,7 @@ import {
 } from '../../_lib/admin';
 
 interface Body { email?: string; password?: string; name?: string; role?: AdminUser['role']; userId?: string; currentPassword?: string; newPassword?: string; }
+interface SetupBody extends Body { setupToken?: string; }
 interface ContentBody { id?: string; contentType?: string; slug?: string; title?: string; data?: Record<string, unknown>; sortOrder?: number; isPublished?: boolean; }
 
 const route = (request: Request) => new URL(request.url).pathname.replace(/^\/api\/admin\/?/, '').replace(/\/$/, '') || 'me';
@@ -31,24 +32,32 @@ const login = async (context: AdminContext) => {
 };
 
 const setup = async (context: AdminContext) => {
-  const count = await context.env.DB.prepare('SELECT COUNT(*) AS count FROM admin_users').first<{ count: number }>();
-  if ((count?.count ?? 0) > 0) return error('Owner setup is already complete.', 409);
-  const body = await readJson<Body>(context.request);
-  if (!body?.email || !body.password || !body.name || body.password.length < 12) return error('Name, email, and a password of at least 12 characters are required.');
+  const body = await readJson<SetupBody>(context.request);
+  const setupToken = context.env.OWNER_SETUP_TOKEN;
+  if (!setupToken || body?.setupToken !== setupToken) return error('A valid Owner setup token is required.', 403);
+  if (!body.email?.trim() || !body.password || !body.name?.trim() || body.password.length < 12) {
+    return error('Name, email, and a password of at least 12 characters are required.');
+  }
   const userId = randomId();
-  await context.env.DB.prepare('INSERT INTO admin_users (id, email, name, password_hash, role) VALUES (?, ?, ?, ?, "owner")')
-    .bind(userId, body.email.trim(), body.name.trim(), await hashPassword(body.password)).run();
+  const email = body.email.trim();
+  const name = body.name.trim();
+  const owner = await context.env.DB.prepare(`
+    INSERT INTO admin_users (id, email, name, password_hash, role)
+    SELECT ?, ?, ?, ?, 'owner' WHERE NOT EXISTS (SELECT 1 FROM admin_users)
+    RETURNING id
+  `).bind(userId, email, name, await hashPassword(body.password)).first<{ id: string }>();
+  if (!owner) return error('Owner setup is already complete.', 409);
   const token = await createSession(context.env, userId);
   await logActivity(context.env, userId, 'setup_owner', 'user', userId);
-  return json({ user: { id: userId, email: body.email.trim(), name: body.name.trim(), role: 'owner' } }, { status: 201, headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
+  return json({ user: { id: userId, email, name, role: 'owner' } }, { status: 201, headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
 };
 
 export const onRequest = async (context: { request: Request; env: AdminEnv }) => {
   const admin: AdminContext = context;
   const path = route(context.request);
   try {
-    if (path === 'login' && context.request.method === 'POST') return login(admin);
-    if (path === 'setup' && context.request.method === 'POST') return setup(admin);
+    if (path === 'login' && context.request.method === 'POST') return await login(admin);
+    if (path === 'setup' && context.request.method === 'POST') return await setup(admin);
     if (path === 'logout' && context.request.method === 'POST') return new Response(null, { status: 204, headers: await clearSession(context.env, context.request) });
     const auth = await withAuth(admin);
     if (auth.response) return auth.response;
@@ -115,37 +124,6 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       if (!body?.id) return error('Content id is required.');
       await context.env.DB.prepare('UPDATE content_items SET is_published = ?, updated_at = datetime("now") WHERE id = ?').bind(body.published ? 1 : 0, body.id).run();
       await logActivity(context.env, user.id, body.published ? 'publish' : 'unpublish', 'content', body.id);
-      return json({ ok: true });
-    }
-    if (path === 'media' && context.request.method === 'GET') {
-      const result = await context.env.DB.prepare('SELECT * FROM media_assets ORDER BY created_at DESC LIMIT 100').all();
-      return json({ media: result.results });
-    }
-    if (path === 'media' && context.request.method === 'POST') {
-      if (!context.env.MEDIA) return error('R2 media storage is not configured.', 503);
-      const form = await context.request.formData();
-      const file = form.get('file');
-      const altText = String(form.get('altText') ?? '');
-      if (!(file instanceof File) || !file.type.startsWith('image/') || file.size > 10 * 1024 * 1024) return error('Upload an image smaller than 10 MB.');
-      const safeName = file.name.toLowerCase().replace(/[^a-z0-9._-]/g, '-');
-      const key = `${new Date().toISOString().slice(0, 10)}/${randomId()}-${safeName}`;
-      await context.env.MEDIA.put(key, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
-      const id = randomId();
-      await context.env.DB.prepare('INSERT INTO media_assets (id, object_key, filename, content_type, size, alt_text, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)')
-        .bind(id, key, file.name, file.type, file.size, altText.trim(), user.id).run();
-      await logActivity(context.env, user.id, 'upload', 'media', id, { key });
-      return json({ id, url: `/media/${key}`, altText }, { status: 201 });
-    }
-    if (path.startsWith('media/') && context.request.method === 'DELETE') {
-      if (!['owner', 'admin'].includes(user.role)) return error('Admin access required.', 403);
-      const id = path.split('/')[1];
-      const asset = await context.env.DB.prepare('SELECT object_key FROM media_assets WHERE id = ?').bind(id).first<{ object_key: string }>();
-      if (!asset) return error('Media not found.', 404);
-      const inUse = await context.env.DB.prepare(`SELECT COUNT(*) AS count FROM content_items WHERE data_json LIKE ?`).bind(`%${asset.object_key}%`).first<{ count: number }>();
-      if ((inUse?.count ?? 0) > 0) return error('This image is still used by published content.');
-      if (context.env.MEDIA) await context.env.MEDIA.delete(asset.object_key);
-      await context.env.DB.prepare('DELETE FROM media_assets WHERE id = ?').bind(id).run();
-      await logActivity(context.env, user.id, 'delete', 'media', id);
       return json({ ok: true });
     }
     if (path === 'settings' && context.request.method === 'GET') {

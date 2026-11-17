@@ -9,15 +9,9 @@ interface D1Database {
   prepare(query: string): D1Statement;
 }
 
-interface R2Bucket {
-  put(key: string, value: ArrayBuffer | ReadableStream | string, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
-  get(key: string): Promise<{ body: ReadableStream; httpMetadata?: { contentType?: string } } | null>;
-  delete(key: string): Promise<void>;
-}
-
 export interface AdminEnv {
   DB: D1Database;
-  MEDIA?: R2Bucket;
+  OWNER_SETUP_TOKEN?: string;
 }
 
 export interface AdminUser {
@@ -41,17 +35,32 @@ const hexToBytes = (hex: string) => new Uint8Array(hex.match(/.{1,2}/g)?.map((va
 
 export const randomId = () => bytesToHex(crypto.getRandomValues(new Uint8Array(16)));
 
-export const hashPassword = async (password: string, salt = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))) => {
+// Cloudflare's production runtime caps Web Crypto PBKDF2 at 100,000 iterations.
+const PASSWORD_ITERATIONS = 100_000;
+const LEGACY_PASSWORD_ITERATIONS = 210_000;
+
+const derivePasswordHash = async (password: string, salt: string, iterations: number) => {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: hexToBytes(salt), iterations: 210_000, hash: 'SHA-256' }, key, 256);
-  return `pbkdf2$${salt}$${bytesToHex(new Uint8Array(bits))}`;
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: hexToBytes(salt), iterations, hash: 'SHA-256' }, key, 256);
+  return bytesToHex(new Uint8Array(bits));
+};
+
+export const hashPassword = async (password: string) => {
+  const salt = randomId();
+  const hash = await derivePasswordHash(password, salt, PASSWORD_ITERATIONS);
+  return `pbkdf2$${PASSWORD_ITERATIONS}$${salt}$${hash}`;
 };
 
 export const verifyPassword = async (password: string, stored: string) => {
-  const [, salt, expected] = stored.split('$');
-  if (!salt || !expected) return false;
-  const actual = (await hashPassword(password, salt)).split('$')[2];
-  return actual === expected;
+  const parts = stored.split('$');
+  const isLegacy = parts.length === 3;
+  const [algorithm, roundsOrSalt, saltOrHash, hash] = parts;
+  const salt = isLegacy ? roundsOrSalt : saltOrHash;
+  const expected = isLegacy ? saltOrHash : hash;
+  if (algorithm !== 'pbkdf2' || !salt || !expected) return false;
+  if (!isLegacy && (parts.length !== 4 || roundsOrSalt !== String(PASSWORD_ITERATIONS))) return false;
+  const iterations = isLegacy ? LEGACY_PASSWORD_ITERATIONS : PASSWORD_ITERATIONS;
+  return await derivePasswordHash(password, salt, iterations) === expected;
 };
 
 const sha256 = async (value: string) => bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))));
