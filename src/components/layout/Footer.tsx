@@ -63,7 +63,14 @@ const Footer: React.FC = () => {
                     className="flex items-center gap-2 text-white/60 text-sm hover:text-gold-400 transition-colors duration-200 group"
                   >
                     <ArrowRight size={12} className="text-gold-500 group-hover:translate-x-1 transition-transform" />
-                    {item.label}
+                    {t(`nav.${{
+                      'Plan Approvals': 'planApprovals',
+                      'Real Estate': 'realEstate',
+                      'Property Management': 'propertyManagement',
+                      'Legal Consultation': 'legalConsultation',
+                      'Architectural Support': 'architecturalSupport',
+                      Construction: 'construction',
+                    }[item.label] ?? ''}`, { defaultValue: item.label })}
                   </Link>
                 </li>
               ))}
@@ -98,7 +105,7 @@ const Footer: React.FC = () => {
               <li className="flex gap-3">
                 <MapPin size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
                 <span className="text-white/60 text-sm">
-                  Paradise Global Leisures (PVT) LTD<br />
+                  {t('footer.address')}<br />
                   Habaraduwa, Koggala,<br />
                   Southern Province, Sri Lanka
                 </span>
@@ -132,8 +139,8 @@ const Footer: React.FC = () => {
       {/* Bottom Bar */}
       <div className="container-custom py-5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-white/40 text-sm">
-          <p>© {currentYear} Paradise Global Leisures (PVT) LTD. All rights reserved.</p>
-          <div>Powered by SerendibCode</div>
+          <p>© {currentYear} Paradise Global Leisures (PVT) LTD. {t('footer.rights')}</p>
+          <div>{t('footer.poweredBy')}</div>
           <div className="flex gap-4">
             <Link to="/privacy-policy" className="hover:text-gold-400 transition-colors">{t('footer.privacy')}</Link>
             <Link to="/terms-of-service" className="hover:text-gold-400 transition-colors">{t('footer.terms')}</Link>

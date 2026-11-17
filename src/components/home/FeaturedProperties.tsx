@@ -5,8 +5,10 @@ import SectionHeader from '../ui/SectionHeader';
 import PropertyCard from '../properties/PropertyCard';
 import { properties as staticProperties } from '../../data/properties';
 import type { Property } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 const FeaturedProperties: React.FC = () => {
+  const { t } = useTranslation();
   const [properties, setProperties] = useState<Property[]>(staticProperties);
   useEffect(() => {
     fetch('/api/content?type=property')
@@ -21,12 +23,12 @@ const FeaturedProperties: React.FC = () => {
       <div className="container-custom">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <SectionHeader
-            eyebrow="Curated Selection"
-            title="Featured Properties"
-            subtitle="Handpicked luxury properties across Sri Lanka's most sought-after coastal destinations."
+            eyebrow={t('home.featuredEyebrow')}
+            title={t('home.featuredTitle')}
+            subtitle={t('home.featuredSubtitle')}
           />
           <Link to="/properties" className="btn-navy flex-shrink-0 self-start md:self-auto">
-            All Properties <ArrowRight size={16} />
+            {t('home.allProperties')} <ArrowRight size={16} />
           </Link>
         </div>
 

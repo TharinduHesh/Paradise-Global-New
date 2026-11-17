@@ -3,17 +3,19 @@ import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
 import { destinations } from '../../data/destinations';
+import { useTranslation } from 'react-i18next';
 
 const DestinationsSection: React.FC = () => {
+  const { t } = useTranslation();
   const featured = destinations.slice(0, 6);
 
   return (
     <section className="section-padding bg-navy-900">
       <div className="container-custom">
         <SectionHeader
-          eyebrow="Where We Operate"
-          title="Discover Sri Lanka's South Coast"
-          subtitle="We specialize in Sri Lanka's most beautiful and in-demand coastal locations, each with unique character and outstanding investment potential."
+          eyebrow={t('home.destinationsEyebrow')}
+          title={t('home.destinationsTitle')}
+          subtitle={t('home.destinationsSubtitle')}
           centered
           light
         />
@@ -38,7 +40,7 @@ const DestinationsSection: React.FC = () => {
                 <div className="absolute inset-0 p-6 flex flex-col justify-end">
                   <div className="flex items-center gap-1.5 text-gold-400 text-xs mb-2 uppercase tracking-widest">
                     <MapPin size={12} />
-                    {dest.district} District
+                    {dest.district} {t('common.district', { defaultValue: 'District' })}
                   </div>
                   <h3 className="font-serif text-white text-2xl font-bold mb-1 group-hover:text-gold-400 transition-colors">
                     {dest.name}
@@ -48,10 +50,10 @@ const DestinationsSection: React.FC = () => {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="bg-gold-500/20 border border-gold-500/40 text-gold-400 text-xs px-2.5 py-1 rounded-sm">
-                      {dest.propertyCount} Properties
+                      {dest.propertyCount} {t('home.properties')}
                     </span>
                     <span className="flex items-center gap-1 text-white/60 text-xs group-hover:text-gold-400 transition-colors">
-                      Explore <ArrowRight size={12} />
+                      {t('home.explore')} <ArrowRight size={12} />
                     </span>
                   </div>
                 </div>
@@ -62,7 +64,7 @@ const DestinationsSection: React.FC = () => {
 
         <div className="text-center mt-10">
           <Link to="/destinations" className="btn-primary inline-flex">
-            View All Destinations <ArrowRight size={16} />
+            {t('home.allDestinations')} <ArrowRight size={16} />
           </Link>
         </div>
       </div>

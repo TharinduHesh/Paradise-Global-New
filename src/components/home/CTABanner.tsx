@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const CTABanner: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <section className="relative py-20 overflow-hidden">
       {/* Background */}
@@ -18,20 +20,20 @@ const CTABanner: React.FC = () => {
 
       <div className="relative container-custom text-center">
         <p className="text-gold-400 text-sm font-medium uppercase tracking-[0.2em] mb-4">
-          Start Your Journey Today
+          {t('home.ctaEyebrow')}
         </p>
         <h2 className="font-serif text-white text-3xl md:text-4xl lg:text-5xl font-bold mb-6 max-w-3xl mx-auto leading-tight">
-          Ready to Find Your Perfect Property in Sri Lanka?
+          {t('home.ctaTitle')}
         </h2>
         <p className="text-white/70 text-lg mb-10 max-w-2xl mx-auto">
-          Speak with our expert team today. Whether you're buying, selling, building, or looking to maximise your investment — we're here to guide you every step of the way.
+          {t('home.ctaSubtitle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/properties" className="btn-primary text-base px-8 py-4">
-            Explore Properties <ArrowRight size={18} />
+            {t('home.explore')} <ArrowRight size={18} />
           </Link>
           <Link to="/contact" className="btn-outline text-base px-8 py-4">
-            Get a Consultation <ArrowRight size={18} />
+            {t('home.consultation')} <ArrowRight size={18} />
           </Link>
           <a
             href="https://wa.me/94770000000"
@@ -39,7 +41,7 @@ const CTABanner: React.FC = () => {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 transition-colors text-base"
           >
-            <Phone size={18} /> WhatsApp Us
+            <Phone size={18} /> {t('home.whatsapp')}
           </a>
         </div>
       </div>

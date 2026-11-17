@@ -4,6 +4,7 @@ import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight, CheckC
 import SectionHeader from '../ui/SectionHeader';
 import { getPublishedContent } from '../../lib/publishedContent';
 import type { Service } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 const services = [
   {
@@ -63,6 +64,7 @@ const services = [
 ];
 
 const ServicesOverview: React.FC = () => {
+  const { t } = useTranslation();
   const [visibleServices, setVisibleServices] = useState(services);
   useEffect(() => {
     getPublishedContent<Service>('service')
@@ -71,7 +73,7 @@ const ServicesOverview: React.FC = () => {
           setVisibleServices(published.map((item, index) => ({
             icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
             number: String(index + 1).padStart(2, '0'),
-            title: item.title,
+            title: t(`services.${item.slug}.title`, { defaultValue: item.title }),
             description: item.data.description,
             bullets: item.data.features.slice(0, 4),
             href: `/services/${item.slug}`,
@@ -79,14 +81,14 @@ const ServicesOverview: React.FC = () => {
         }
       })
       .catch(() => undefined);
-  }, []);
+  }, [t]);
   return (
     <section className="section-padding bg-beige-50">
       <div className="container-custom">
         <SectionHeader
-          eyebrow="Everything Under One Roof"
-          title="Complete Property Services"
-          subtitle="From the moment you choose a location to the day you receive your keys — we handle every aspect of your property journey with local expertise and international standards."
+          eyebrow={t('home.servicesEyebrow')}
+          title={t('home.servicesTitle')}
+          subtitle={t('home.servicesSubtitle')}
           centered
         />
 
@@ -135,7 +137,7 @@ const ServicesOverview: React.FC = () => {
                   to={href}
                   className="flex items-center gap-2 text-sm font-semibold text-gold-600 group-hover:gap-3 transition-all duration-200 mt-auto pt-5 border-t border-beige-200"
                 >
-                  Learn More <ArrowRight size={14} />
+                  {t('common.learnMore')} <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -144,19 +146,19 @@ const ServicesOverview: React.FC = () => {
 
         {/* Bottom CTA */}
         <div className="mt-12 text-center bg-navy-900 rounded-sm p-8 md:p-12">
-          <p className="text-gold-400 text-sm uppercase tracking-widest font-medium mb-3">One Company. Every Stage.</p>
+          <p className="text-gold-400 text-sm uppercase tracking-widest font-medium mb-3">{t('home.servicesCtaEyebrow')}</p>
           <h3 className="font-serif text-white text-2xl md:text-3xl font-bold mb-4">
-            We Handle Your Entire Property Journey
+            {t('home.servicesCtaTitle')}
           </h3>
           <p className="text-white/60 max-w-2xl mx-auto text-sm md:text-base leading-relaxed mb-8">
-            No need to coordinate multiple firms. Paradise Global Leisures provides every service you need — from finding the land and getting approvals, to designing, building, and managing your property.
+            {t('home.servicesCtaText')}
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/contact" className="btn-primary">
-              Get a Free Consultation <ArrowRight size={16} />
+              {t('home.freeConsultation')} <ArrowRight size={16} />
             </Link>
             <Link to="/services" className="btn-outline">
-              Explore All Services
+              {t('home.exploreServices')}
             </Link>
           </div>
         </div>

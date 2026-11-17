@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight } from 'lucide-react';
 import { getPublishedContent } from '../../lib/publishedContent';
 import type { Service } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 const services = [
   {
@@ -44,6 +45,7 @@ const services = [
 ];
 
 const ServicesStrip: React.FC = () => {
+  const { t } = useTranslation();
   const [visibleServices, setVisibleServices] = useState(services);
   useEffect(() => {
     getPublishedContent<Service>('service')
@@ -65,13 +67,13 @@ const ServicesStrip: React.FC = () => {
       <div className="border-b border-white/10 py-3">
         <div className="container-custom flex items-center justify-between">
           <p className="text-gold-400 text-xs font-semibold uppercase tracking-[0.2em]">
-            Our Core Services
+            {t('home.coreServices')}
           </p>
           <Link
             to="/services"
             className="flex items-center gap-1.5 text-white/50 text-xs hover:text-gold-400 transition-colors"
           >
-            View all <ArrowRight size={11} />
+            {t('home.viewAll')} <ArrowRight size={11} />
           </Link>
         </div>
       </div>
@@ -79,7 +81,9 @@ const ServicesStrip: React.FC = () => {
       {/* 6 service tiles */}
       <div className="container-custom">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/10">
-          {visibleServices.map(({ icon: Icon, title, short, href }) => (
+          {visibleServices.map(({ icon: Icon, title, short, href }) => {
+            const slug = href.split('/').pop() ?? '';
+            return (
             <Link
               key={title}
               to={href}
@@ -90,14 +94,15 @@ const ServicesStrip: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold text-sm text-white group-hover:text-gold-400 transition-colors leading-tight mb-1">
-                  {title}
+                  {t(`services.${slug}.title`, { defaultValue: title })}
                 </p>
                 <p className="text-white/40 text-xs leading-tight group-hover:text-white/60 transition-colors">
-                  {short}
+                  {t(`services.${slug}.short`, { defaultValue: short })}
                 </p>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

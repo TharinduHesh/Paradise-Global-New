@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, Star, Clock, Users, Award, TrendingUp } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
+import { useTranslation } from 'react-i18next';
 
 const reasons = [
   {
@@ -36,6 +37,7 @@ const reasons = [
 ];
 
 const WhyChooseUs: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <section className="section-padding bg-beige-50">
       <div className="container-custom">
@@ -62,20 +64,20 @@ const WhyChooseUs: React.FC = () => {
           {/* Right: Content */}
           <div>
             <SectionHeader
-              eyebrow="Why Paradise Global Leisures"
-              title="Your Trusted Property Partner in Sri Lanka"
-              subtitle="We combine local expertise with international standards to deliver an unparalleled property service experience on Sri Lanka's magnificent Southern Coast."
+              eyebrow={t('home.whyEyebrow')}
+              title={t('home.whyTitle')}
+              subtitle={t('home.whySubtitle')}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-10">
-              {reasons.map(({ icon: Icon, title, description }) => (
+              {reasons.map(({ icon: Icon, title, description }, index) => (
                 <div key={title} className="group flex gap-4">
                   <div className="flex-shrink-0 w-11 h-11 rounded-sm bg-gold-50 border border-gold-200 flex items-center justify-center group-hover:bg-gold-100 transition-colors">
                     <Icon size={20} className="text-gold-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-navy-900 text-sm mb-1">{title}</h4>
-                    <p className="text-navy-500 text-xs leading-relaxed">{description}</p>
+                    <h4 className="font-semibold text-navy-900 text-sm mb-1">{t(`why.${index}.title`, { defaultValue: title })}</h4>
+                    <p className="text-navy-500 text-xs leading-relaxed">{t(`why.${index}.description`, { defaultValue: description })}</p>
                   </div>
                 </div>
               ))}

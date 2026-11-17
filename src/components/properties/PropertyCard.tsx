@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, ArrowRight, Waves, MessageCircle } from 'lucide-react';
 import type { Property } from '../../types';
 import Badge from '../ui/Badge';
+import { useTranslation } from 'react-i18next';
 
 interface PropertyCardProps {
   property: Property;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+  const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
 
   const formatPrice = (property: Property): string => {
@@ -41,11 +43,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           <Badge variant={property.priceType === 'sale' ? 'navy' : 'gold'}>
-            For {property.priceType === 'sale' ? 'Sale' : 'Rent'}
+            {property.priceType === 'sale' ? t('property.forSale') : t('property.forRent')}
           </Badge>
           {property.isBeachfront && (
             <Badge variant="green">
-              <Waves size={10} className="mr-1" /> Beachfront
+              <Waves size={10} className="mr-1" /> {t('property.beachfront')}
             </Badge>
           )}
         </div>
@@ -74,7 +76,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
         {/* Name */}
         <h3 className="font-serif font-semibold text-navy-900 text-lg mb-1.5 line-clamp-1 group-hover:text-gold-600 transition-colors">
-          {property.name}
+          {t(`content.properties.${property.slug}.name`, { defaultValue: property.name })}
         </h3>
 
         {/* Location */}
@@ -89,13 +91,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             {property.bedrooms > 0 && (
               <span className="flex items-center gap-1.5">
                 <Bed size={14} className="text-gold-500" />
-                {property.bedrooms} Bed{property.bedrooms > 1 ? 's' : ''}
+                {property.bedrooms} {t('property.bed', { count: property.bedrooms })}
               </span>
             )}
             {property.bathrooms > 0 && (
               <span className="flex items-center gap-1.5">
                 <Bath size={14} className="text-gold-500" />
-                {property.bathrooms} Bath{property.bathrooms > 1 ? 's' : ''}
+                {property.bathrooms} {t('property.bath', { count: property.bathrooms })}
               </span>
             )}
             <span className="flex items-center gap-1.5">
@@ -111,17 +113,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             to={`/properties/${property.slug}`}
             className="flex-1 btn-navy text-sm py-2.5 justify-center"
           >
-            View Details <ArrowRight size={14} />
+            {t('property.viewDetails')} <ArrowRight size={14} />
           </Link>
           <a
             href={`https://wa.me/94770000000?text=I'm interested in ${encodeURIComponent(property.name)} in ${property.location}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white text-sm font-semibold rounded-md hover:bg-green-600 transition-colors"
-            title="Enquire on WhatsApp"
+            title={t('property.whatsapp')}
           >
             <MessageCircle size={14} />
-            Enquire
+            {t('property.enquire')}
           </a>
         </div>
       </div>
