@@ -95,7 +95,7 @@ const ServicesOverview: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
           {visibleServices.map(({ icon: Icon, number, title, description, bullets, href }) => {
-            const slug = href.split('/').pop() ?? '';
+            const slug = href === '/properties' ? 'real-estate' : href.split('/').pop() ?? '';
             const localizedTitle = t(`services.${slug}.title`, { defaultValue: title });
             const localizedDescription = t(`services.${slug}.description`, { defaultValue: description });
             const localizedBullets = bullets.map((bullet, index) =>
