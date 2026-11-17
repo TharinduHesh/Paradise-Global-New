@@ -4,5 +4,5 @@ pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "paradise-global-leisures"
-database_id = "replace-with-your-d1-database-id"
+database_name = "paradise-global-new"
+database_id = "fe9c354e-1978-4398-90a1-3c78366a3eb4"
