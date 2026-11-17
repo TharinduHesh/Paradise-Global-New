@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { MapPin, Phone, Mail, MessageCircle, Send, CheckCircle, Clock } from 'lucide-react';
 import SectionHeader from '../components/ui/SectionHeader';
-import { saveContactEnquiry } from '../lib/contactApi';
+import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
+import { Turnstile } from '../components/ui/Turnstile';
 
 const serviceOptions = [
   'Select a Service',
@@ -32,9 +33,25 @@ const Contact: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [siteKey, setSiteKey] = useState<string | null>();
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [widgetAttempt, setWidgetAttempt] = useState(0);
   const [form, setForm] = useState({
     name: '', email: '', phone: '', service: '', propertyLocation: '', message: ''
   });
+
+  useEffect(() => {
+    const request = new AbortController();
+    getContactSiteKey(request.signal).then(setSiteKey).catch(() => {
+      if (!request.signal.aborted) setSubmitError('Reload the page to start the enquiry, or contact us by phone.');
+    });
+    return () => request.abort();
+  }, []);
+
+  const handleVerificationError = useCallback(() => {
+    setTurnstileToken(null);
+    setSubmitError('The security check could not load. Reload the page or contact us by phone.');
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -42,15 +59,19 @@ const Contact: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (siteKey === undefined || (siteKey && !turnstileToken)) return;
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      await saveContactEnquiry(form);
+      await saveContactEnquiry(form, turnstileToken);
       setSubmitted(true);
+      setTurnstileToken(null);
     } catch (error) {
       console.error('Unable to save contact enquiry:', error);
       setSubmitError('We could not send your enquiry. Please try again or contact us by phone.');
+      setTurnstileToken(null);
+      setWidgetAttempt((attempt) => attempt + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -185,6 +206,7 @@ const Contact: React.FC = () => {
                           <input
                             required
                             name="name"
+                            maxLength={150}
                             type="text"
                             value={form.name}
                             onChange={handleChange}
@@ -197,6 +219,7 @@ const Contact: React.FC = () => {
                           <input
                             required
                             name="email"
+                            maxLength={254}
                             type="email"
                             value={form.email}
                             onChange={handleChange}
@@ -211,6 +234,7 @@ const Contact: React.FC = () => {
                           <label className="block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide">Phone / WhatsApp</label>
                           <input
                             name="phone"
+                            maxLength={50}
                             type="tel"
                             value={form.phone}
                             onChange={handleChange}
@@ -248,6 +272,7 @@ const Contact: React.FC = () => {
                         <textarea
                           required
                           name="message"
+                          maxLength={4000}
                           rows={5}
                           value={form.message}
                           onChange={handleChange}
@@ -256,13 +281,14 @@ const Contact: React.FC = () => {
                         />
                       </div>
 
+                      {siteKey && <Turnstile key={widgetAttempt} siteKey={siteKey} onToken={setTurnstileToken} onError={handleVerificationError} />}
                       {submitError && (
                         <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                           {submitError}
                         </p>
                       )}
 
-                      <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center text-base py-4 disabled:cursor-not-allowed disabled:opacity-60">
+                      <button type="submit" disabled={isSubmitting || siteKey === undefined || Boolean(siteKey && !turnstileToken)} className="btn-primary w-full justify-center text-base py-4 disabled:cursor-not-allowed disabled:opacity-60">
                         <Send size={18} /> {isSubmitting ? 'Sending...' : 'Send Enquiry'}
                       </button>
 

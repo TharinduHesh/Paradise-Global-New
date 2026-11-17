@@ -7,11 +7,18 @@ export interface ContactEnquiry {
   message: string;
 }
 
-export const saveContactEnquiry = async (enquiry: ContactEnquiry): Promise<void> => {
+export const getContactSiteKey = async (signal: AbortSignal): Promise<string | null> => {
+  const response = await fetch('/api/contact', { signal });
+  if (!response.ok) throw new Error('Unable to load contact form.');
+  const { siteKey } = await response.json() as { siteKey?: string | null };
+  return siteKey ?? null;
+};
+
+export const saveContactEnquiry = async (enquiry: ContactEnquiry, turnstileToken: string | null): Promise<void> => {
   const response = await fetch('/api/contact', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(enquiry),
+    body: JSON.stringify({ ...enquiry, turnstileToken }),
   });
 
   if (!response.ok) {

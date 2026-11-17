@@ -15,14 +15,36 @@ interface D1Database {
 
 interface Env {
   DB: D1Database;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 const requiredFields = ['name', 'email', 'message'] as const;
+const fieldLimits = { name: 150, email: 254, phone: 50, service: 120, propertyLocation: 120, message: 4000 } as const;
+
+export const onRequestGet = ({ env }: { env: Env }) =>
+  Response.json({ siteKey: env.TURNSTILE_SECRET_KEY ? env.TURNSTILE_SITE_KEY ?? null : null });
+
+const validateTurnstile = async (request: Request, secret: string, token: unknown) => {
+  if (typeof token !== 'string' || token.length === 0 || token.length > 2048) return false;
+  const body = new URLSearchParams({ secret, response: token });
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body,
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error('Turnstile verification service unavailable.');
+  const result = await response.json() as { success?: boolean; hostname?: string; action?: string };
+  return result.success === true && result.hostname === new URL(request.url).hostname && result.action === 'contact';
+};
 
 export const onRequestPost = async (context: {
   request: Request;
   env: Env;
 }) => {
+  if (Number(context.request.headers.get('Content-Length')) > 32768) {
+    return Response.json({ error: 'Enquiry is too large.' }, { status: 413 });
+  }
   let body: unknown;
 
   try {
@@ -35,7 +57,7 @@ export const onRequestPost = async (context: {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const enquiry = body as Partial<Record<keyof ContactEnquiry, unknown>>;
+  const enquiry = body as Partial<Record<keyof ContactEnquiry | 'turnstileToken', unknown>>;
   const missingField = requiredFields.find((field) => {
     const value = enquiry[field];
     return typeof value !== 'string' || value.trim().length === 0;
@@ -58,10 +80,25 @@ export const onRequestPost = async (context: {
     return Response.json({ error: `The ${invalidField[0]} field must be text.` }, { status: 400 });
   }
 
+  for (const field of Object.keys(fieldLimits) as (keyof ContactEnquiry)[]) {
+    const value = enquiry[field];
+    if (typeof value === 'string' && value.length > fieldLimits[field]) {
+      return Response.json({ error: `The ${field} field is too long.` }, { status: 400 });
+    }
+  }
+
   const { name, email, phone = '', service = '', propertyLocation = '', message } =
     enquiry as ContactEnquiry;
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email.trim())) {
+    return Response.json({ error: 'Enter a valid email address.' }, { status: 400 });
+  }
+
   try {
+    const secret = context.env.TURNSTILE_SECRET_KEY;
+    if (secret && !await validateTurnstile(context.request, secret, enquiry.turnstileToken)) {
+      return Response.json({ error: 'Complete the security check and try again.' }, { status: 403 });
+    }
     await context.env.DB
       .prepare(`
         INSERT INTO contact_enquiries

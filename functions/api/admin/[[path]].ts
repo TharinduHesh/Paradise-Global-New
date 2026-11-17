@@ -10,6 +10,12 @@ interface ContentBody { id?: string; contentType?: string; slug?: string; title?
 const route = (request: Request) => new URL(request.url).pathname.replace(/^\/api\/admin\/?/, '').replace(/\/$/, '') || 'me';
 const rateKey = (request: Request) => request.headers.get('CF-Connecting-IP') ?? 'unknown';
 
+const csvCell = (value: unknown) => {
+  const text = String(value ?? '');
+  const safeText = /^[\s\uFEFF]*[=+@\-＝＋＠－]/u.test(text) ? `'${text}` : text;
+  return `"${safeText.replaceAll('"', '""')}"`;
+};
+
 const login = async (context: AdminContext) => {
   const body = await readJson<Body>(context.request);
   if (!body?.email || !body.password) return error('Email and password are required.');
@@ -80,7 +86,7 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
         .bind(search, search, search, status, status).all();
       if (url.searchParams.get('format') === 'csv') {
         const fields = ['id', 'name', 'email', 'phone', 'service', 'property_location', 'message', 'status', 'created_at'];
-        const csv = [fields.join(','), ...result.results.map((row) => fields.map((field) => `"${String((row as Record<string, unknown>)[field] ?? '').replaceAll('"', '""')}"`).join(','))].join('\n');
+        const csv = [fields.join(','), ...result.results.map((row) => fields.map((field) => csvCell((row as Record<string, unknown>)[field])).join(','))].join('\n');
         return new Response(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="contact-enquiries.csv"' } });
       }
       return json({ enquiries: result.results });
