@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from './components/layout/Layout';
@@ -18,6 +18,29 @@ import TermsOfService from './pages/TermsOfService';
 
 const App: React.FC = () => {
   const { t } = useTranslation();
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    if (window.location.pathname.startsWith('/admin')) return;
+    fetch('/api/settings', { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() as Promise<{ settings: { maintenance?: { enabled: boolean; message: string } } }> : Promise.reject())
+      .then((result) => setMaintenance(result.settings.maintenance ?? null))
+      .catch(() => setMaintenance(null));
+  }, []);
+
+  if (window.location.pathname !== '/admin' && !window.location.pathname.startsWith('/admin/') && maintenance?.enabled) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-navy-900 px-6 text-center text-white">
+        <div className="max-w-xl">
+          <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl bg-gold-500 font-serif text-4xl font-bold">P</div>
+          <h1 className="mb-4 font-serif text-4xl md:text-5xl">{t('maintenance.title')}</h1>
+          <div className="mx-auto my-6 h-px w-16 bg-gold-500" />
+          <p className="text-lg leading-relaxed text-white/75">{maintenance.message || t('maintenance.defaultMessage')}</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/admin/*" element={<AdminApp />} />

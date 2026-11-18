@@ -1,6 +1,7 @@
 export const he = {
   translation: {
     notFound: { page: 'העמוד לא נמצא', home: 'חזרה לבית' },
+    maintenance: { title: 'נחזור בקרוב', defaultMessage: 'אנו מבצעים שיפורים. אנא בדקו שוב בקרוב.' },
     nav: { home: 'בית', about: 'אודות', services: 'שירותים', allServices: 'כל השירותים', properties: 'נכסים', destinations: 'יעדים', contact: 'צור קשר', consultation: 'קבלו ייעוץ', planApprovals: 'היתרי תכנון', realEstate: 'נדל״ן', propertyManagement: 'ניהול נכסים', legalConsultation: 'ייעוץ משפטי', architecturalSupport: 'שירותי אדריכלות', construction: 'בנייה', toggleMenu: 'פתיחה או סגירת התפריט' },
     language: { english: 'English', hebrew: 'עברית' },
     footer: { description: 'השותף המלא שלכם לנכסים בדרום סרי לנקה. מהיתרי תכנון ובנייה ועד נדל״ן, ייעוץ משפטי וניהול — נלווה אתכם לאורך כל הדרך.', services: 'השירותים שלנו', destinations: 'יעדים', contact: 'צרו קשר', privacy: 'מדיניות פרטיות', terms: 'תנאי שימוש', contactUs: 'פנו אלינו', rights: 'כל הזכויות שמורות.', address: 'Paradise Global Leisures (PVT) LTD', province: 'מחוז הדרום, סרי לנקה', locationLine: 'הבארדואה, קוגאלה', poweredBy: 'מופעל על ידי SerendibCode' },

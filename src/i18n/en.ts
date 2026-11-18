@@ -1,6 +1,7 @@
 export const en = {
   translation: {
     notFound: { page: 'Page not found', home: 'Go Home' },
+    maintenance: { title: "We'll Be Right Back", defaultMessage: 'We are making improvements. Please check back soon.' },
     nav: { home: 'Home', about: 'About', services: 'Services', allServices: 'All Services', properties: 'Properties', destinations: 'Destinations', contact: 'Contact', consultation: 'Get Consultation', planApprovals: 'Plan Approvals', realEstate: 'Real Estate', propertyManagement: 'Property Management', legalConsultation: 'Legal Consultation', architecturalSupport: 'Architectural Support', construction: 'Construction', toggleMenu: 'Toggle menu' },
     language: { english: 'English', hebrew: 'עברית' },
     footer: { description: 'Your complete property partner in Southern Sri Lanka. From plan approvals to construction, real estate, and management — we guide your entire property journey.', services: 'Our Services', destinations: 'Destinations', contact: 'Get In Touch', privacy: 'Privacy Policy', terms: 'Terms of Service', contactUs: 'Contact Us', rights: 'All rights reserved.', address: 'Paradise Global Leisures (PVT) LTD', province: 'Southern Province, Sri Lanka', locationLine: 'Habaraduwa, Koggala', poweredBy: 'Powered by SerendibCode' },
