@@ -4,6 +4,7 @@ import { MapPin, Bed, Bath, Square, ArrowRight, Waves, MessageCircle } from 'luc
 import type { Property } from '../../types';
 import Badge from '../ui/Badge';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedText } from '../../lib/localizedContent';
 
 interface PropertyCardProps {
   property: Property;
@@ -12,6 +13,7 @@ interface PropertyCardProps {
 const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const { t } = useTranslation();
   const [imgError, setImgError] = useState(false);
+  const localizedName = getLocalizedText(property.name, property.name_he);
 
   const formatPrice = (property: Property): string => {
     if (property.priceUnit === 'USD') {
@@ -36,7 +38,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
       <div className="relative overflow-hidden h-56">
         <img
           src={imgError ? fallbackImage : property.image}
-          alt={property.name}
+          alt={localizedName}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={() => setImgError(true)}
         />
@@ -59,7 +61,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         {property.status !== 'available' && (
           <div className="absolute inset-0 bg-navy-900/60 flex items-center justify-center">
             <span className="text-white font-bold text-xl uppercase tracking-widest">
-              {property.status}
+              {property.status === 'sold' ? t('property.sold') : property.status === 'rented' ? t('property.rented') : property.status}
             </span>
           </div>
         )}
@@ -76,7 +78,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
         {/* Name */}
         <h3 className="font-serif font-semibold text-navy-900 text-lg mb-1.5 line-clamp-1 group-hover:text-gold-600 transition-colors">
-          {t(`content.properties.${property.slug}.name`, { defaultValue: property.name })}
+          {localizedName}
         </h3>
 
         {/* Location */}
@@ -116,7 +118,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             {t('property.viewDetails')} <ArrowRight size={14} />
           </Link>
           <a
-            href={`https://wa.me/94770000000?text=I'm interested in ${encodeURIComponent(property.name)} in ${property.location}`}
+            href={`https://wa.me/94770000000?text=${encodeURIComponent(`I'm interested in ${localizedName} in ${property.location}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white text-sm font-semibold rounded-md hover:bg-green-600 transition-colors"

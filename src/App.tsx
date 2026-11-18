@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Layout from './components/layout/Layout';
 
 // Pages
@@ -16,6 +17,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Routes>
       <Route path="/admin/*" element={<AdminApp />} />
@@ -35,8 +37,8 @@ const App: React.FC = () => {
           <div className="min-h-screen flex items-center justify-center bg-beige-50">
             <div className="text-center">
               <h1 className="font-serif text-6xl font-bold text-navy-900 mb-4">404</h1>
-              <p className="text-navy-500 text-xl mb-6">Page not found</p>
-              <a href="/" className="btn-primary">Go Home</a>
+              <p className="text-navy-500 text-xl mb-6">{t('notFound.page')}</p>
+              <a href="/" className="btn-primary">{t('notFound.home')}</a>
             </div>
           </div>
         } />

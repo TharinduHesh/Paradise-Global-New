@@ -47,7 +47,7 @@ const WhyChooseUs: React.FC = () => {
             <div className="relative rounded-sm overflow-hidden shadow-2xl">
               <img
                 src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80"
-                alt="Paradise Global Leisures Team"
+                alt={t('home.teamAlt')}
                 className="w-full h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-navy-900/50 to-transparent" />
@@ -55,7 +55,7 @@ const WhyChooseUs: React.FC = () => {
             {/* Floating stat card */}
             <div className="absolute -bottom-6 -right-6 bg-white shadow-card-hover rounded-sm p-6 max-w-[200px]">
               <p className="font-serif text-4xl font-bold text-gold-500">10+</p>
-              <p className="text-navy-700 font-semibold text-sm mt-1">Years Serving the Southern Coast</p>
+              <p className="text-navy-700 font-semibold text-sm mt-1">{t('home.yearsServing')}</p>
             </div>
             {/* Gold accent */}
             <div className="absolute -top-4 -left-4 w-24 h-24 border-2 border-gold-400 rounded-sm opacity-40" />

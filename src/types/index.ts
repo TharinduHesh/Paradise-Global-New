@@ -23,6 +23,9 @@ export interface Property {
   status: 'available' | 'sold' | 'rented';
   slug: string;
   yearBuilt?: number;
+  name_he?: string;
+  description_he?: string;
+  features_he?: string[];
 }
 
 // Service Types
@@ -35,6 +38,9 @@ export interface Service {
   slug: string;
   features: string[];
   process?: ProcessStep[];
+  title_he?: string;
+  description_he?: string;
+  features_he?: string[];
 }
 
 export interface ProcessStep {

@@ -122,8 +122,8 @@ const Footer: React.FC = () => {
                 <MapPin size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
                 <span className="text-white/60 text-sm">
                   {t('footer.address')}<br />
-                  Habaraduwa, Koggala,<br />
-                  Southern Province, Sri Lanka
+                  {t('footer.locationLine')}<br />
+                  {t('footer.province')}
                 </span>
               </li>
               <li className="flex gap-3">

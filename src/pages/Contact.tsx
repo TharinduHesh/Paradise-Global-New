@@ -5,33 +5,24 @@ import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
 import { Turnstile } from '../components/ui/Turnstile';
 import { useTranslation } from 'react-i18next';
 
-const serviceOptions = [
-  'Select a Service',
-  'Plan Approvals',
-  'Real Estate — Buy',
-  'Real Estate — Sell',
-  'Property Management',
-  'Legal Consultation',
-  'Architectural Support',
-  'Construction',
-  'General Enquiry',
-];
-
-const locationOptions = [
-  'Select Location',
-  'Galle',
-  'Unawatuna',
-  'Weligama',
-  'Mirissa',
-  'Hiriketiya',
-  'Tangalle',
-  'Matara',
-  'Dikwella',
-  'Other / Not Sure',
-];
-
 const Contact: React.FC = () => {
   const { t } = useTranslation();
+  const serviceOptions = [
+    { value: '', label: t('contact.servicesSelect') },
+    { value: 'Plan Approvals', label: t('contact.services.planApprovals') },
+    { value: 'Real Estate — Buy', label: t('contact.services.buy') },
+    { value: 'Real Estate — Sell', label: t('contact.services.sell') },
+    { value: 'Property Management', label: t('contact.services.propertyManagement') },
+    { value: 'Legal Consultation', label: t('contact.services.legalConsultation') },
+    { value: 'Architectural Support', label: t('contact.services.architecturalSupport') },
+    { value: 'Construction', label: t('contact.services.construction') },
+    { value: 'General Enquiry', label: t('contact.services.general') },
+  ];
+  const locationOptions = [
+    { value: '', label: t('contact.locationSelect') },
+    ...['galle','unawatuna','weligama','mirissa','hiriketiya','tangalle','matara','dikwella'].map((key) => ({ value: key.charAt(0).toUpperCase() + key.slice(1), label: t(`contact.locations.${key}`) })),
+    { value: 'Other / Not Sure', label: t('contact.locations.other') },
+  ];
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -45,15 +36,15 @@ const Contact: React.FC = () => {
   useEffect(() => {
     const request = new AbortController();
     getContactSiteKey(request.signal).then(setSiteKey).catch(() => {
-      if (!request.signal.aborted) setSubmitError('Reload the page to start the enquiry, or contact us by phone.');
+      if (!request.signal.aborted) setSubmitError(t('contact.reloadError'));
     });
     return () => request.abort();
-  }, []);
+  }, [t]);
 
   const handleVerificationError = useCallback(() => {
     setTurnstileToken(null);
-    setSubmitError('The security check could not load. Reload the page or contact us by phone.');
-  }, []);
+    setSubmitError(t('contact.securityLoadError'));
+  }, [t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -115,7 +106,7 @@ const Contact: React.FC = () => {
                     <MapPin size={18} className="text-gold-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-navy-900 text-sm mb-1">Our Office</p>
+                    <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.ourOffice')}</p>
                     <p className="text-navy-500 text-sm leading-relaxed">
                       Paradise Global Leisures (PVT) LTD<br />
                       Kandy &amp; Colombo<br />
@@ -130,7 +121,7 @@ const Contact: React.FC = () => {
                     <Phone size={18} className="text-gold-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-navy-900 text-sm mb-1">Phone</p>
+                    <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.phoneLabel')}</p>
                     <a href="tel:+94751668705" className="text-navy-500 text-sm block hover:text-gold-600 transition-colors">075 166 8705</a>
                   </div>
                 </div>
@@ -141,7 +132,7 @@ const Contact: React.FC = () => {
                     <Mail size={18} className="text-gold-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-navy-900 text-sm mb-1">Email</p>
+                    <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.emailLabel')}</p>
                     <a href="mailto:info@paradisegloballeisures.com" className="text-navy-500 text-sm hover:text-gold-600 transition-colors">info@paradisegloballeisures.com</a>
                   </div>
                 </div>
@@ -158,7 +149,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-green-800 text-sm mb-1">WhatsApp</p>
-                    <p className="text-green-600 text-sm group-hover:underline">Chat with us instantly</p>
+                    <p className="text-green-600 text-sm group-hover:underline">{t('contact.chat')}</p>
                   </div>
                 </a>
 
@@ -168,10 +159,10 @@ const Contact: React.FC = () => {
                     <Clock size={18} className="text-gold-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-navy-900 text-sm mb-1">Office Hours</p>
-                    <p className="text-navy-500 text-sm">Mon–Fri: 9:00 AM – 6:00 PM</p>
-                    <p className="text-navy-500 text-sm">Sat: 9:00 AM – 1:00 PM</p>
-                    <p className="text-navy-400 text-xs mt-1">Sri Lanka Time (IST+0:30)</p>
+                    <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.officeHours')}</p>
+                    <p className="text-navy-500 text-sm">{t('contact.hoursWeekday')}</p>
+                    <p className="text-navy-500 text-sm">{t('contact.hoursSaturday')}</p>
+                    <p className="text-navy-400 text-xs mt-1">{t('contact.sriLankaTime')}</p>
                   </div>
                 </div>
               </div>
@@ -212,7 +203,7 @@ const Contact: React.FC = () => {
                             type="text"
                             value={form.name}
                             onChange={handleChange}
-                            placeholder="John Smith"
+                            placeholder={t('contact.placeholders.name')}
                             className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 placeholder-navy-300 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors"
                           />
                         </div>
@@ -225,7 +216,7 @@ const Contact: React.FC = () => {
                             type="email"
                             value={form.email}
                             onChange={handleChange}
-                            placeholder="john@example.com"
+                            placeholder={t('contact.placeholders.email')}
                             className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 placeholder-navy-300 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors"
                           />
                         </div>
@@ -240,7 +231,7 @@ const Contact: React.FC = () => {
                             type="tel"
                             value={form.phone}
                             onChange={handleChange}
-                            placeholder="+44 7700 000000"
+                            placeholder={t('contact.placeholders.phone')}
                             className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 placeholder-navy-300 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors"
                           />
                         </div>
@@ -252,7 +243,7 @@ const Contact: React.FC = () => {
                             onChange={handleChange}
                             className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 bg-white focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors"
                           >
-                            {serviceOptions.map(o => <option key={o}>{o}</option>)}
+                            {serviceOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                           </select>
                         </div>
                       </div>
@@ -265,7 +256,7 @@ const Contact: React.FC = () => {
                           onChange={handleChange}
                           className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 bg-white focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors"
                         >
-                          {locationOptions.map(o => <option key={o}>{o}</option>)}
+                          {locationOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </div>
 
@@ -278,7 +269,7 @@ const Contact: React.FC = () => {
                           rows={5}
                           value={form.message}
                           onChange={handleChange}
-                          placeholder="Tell us about your requirements, timeline, and any specific questions you have..."
+                          placeholder={t('contact.placeholders.message')}
                           className="w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 placeholder-navy-300 focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors resize-none"
                         />
                       </div>
@@ -310,7 +301,7 @@ const Contact: React.FC = () => {
               <div className="h-72 bg-gradient-to-br from-beige-100 to-beige-200 flex items-center justify-center">
                 <div className="text-center">
                   <MapPin size={50} className="text-gold-400 mx-auto mb-3" />
-                  <p className="font-serif text-navy-800 text-xl font-semibold">Kandy &amp; Colombo</p>
+                  <p className="font-serif text-navy-800 text-xl font-semibold">{t('contact.mapTitle')}</p>
                   <p className="text-navy-500 text-sm mt-1">Sri Lanka</p>
                   <a
                     href="https://maps.google.com/?q=Kandy+Colombo+Sri+Lanka"
@@ -318,7 +309,7 @@ const Contact: React.FC = () => {
                     rel="noopener noreferrer"
                     className="mt-4 btn-primary inline-flex text-sm"
                   >
-                    <MapPin size={14} /> View on Google Maps
+                    <MapPin size={14} /> {t('contact.viewMap')}
                   </a>
                 </div>
               </div>

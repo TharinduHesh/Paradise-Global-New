@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
             <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-xs text-white/80 sm:flex">
               <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
               <span className="text-white/40">|</span>
-              <button onClick={() => void i18n.changeLanguage('si')} className={i18n.language === 'si' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.sinhala')}</button>
+              <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
             </div>
             <a
               href="tel:+94XXXXXXXXX"
@@ -142,7 +142,7 @@ const Navbar: React.FC = () => {
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden text-white hover:text-gold-400 transition-colors p-1"
-              aria-label="Toggle menu"
+              aria-label={t('nav.toggleMenu')}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -195,7 +195,7 @@ const Navbar: React.FC = () => {
             <div className="mx-4 flex items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs text-white/80">
               <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : ''}>{t('language.english')}</button>
               <span>|</span>
-              <button onClick={() => void i18n.changeLanguage('si')} className={i18n.language === 'si' ? 'font-semibold text-gold-400' : ''}>{t('language.sinhala')}</button>
+              <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : ''}>{t('language.hebrew')}</button>
             </div>
             <a href="tel:+94XXXXXXXXX" className="flex items-center gap-2 text-gold-400 text-sm px-4">
               <Phone size={15} />

@@ -7,6 +7,7 @@ import { services } from '../data/services';
 import type { Service } from '../types';
 import { getPublishedContent } from '../lib/publishedContent';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   FileCheck, Home, Building2, Scale, PenTool, HardHat
@@ -22,7 +23,7 @@ const Services: React.FC = () => {
   }, []);
   return (
     <>
-      <title>Our Services — Paradise Global Leisures</title>
+      <title>{t('nav.services')} — Paradise Global Leisures</title>
 
       {/* Page Header */}
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
@@ -70,14 +71,14 @@ const Services: React.FC = () => {
                         Service {String(idx + 1).padStart(2, '0')}
                       </p>
                       <h2 className="font-serif text-navy-900 text-2xl md:text-3xl font-bold mb-4">
-                        {t(`services.${service.slug}.title`, { defaultValue: service.title })}
+                        {getLocalizedText(service.title, service.title_he)}
                       </h2>
                       <p className="text-navy-600 leading-relaxed mb-6">
-                        {t(`services.${service.slug}.description`, { defaultValue: service.description })}
+                        {getLocalizedText(service.description, service.description_he)}
                       </p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                        {service.features.map((feature, featureIndex) => (
+                        {getLocalizedList(service.features, service.features_he).map((feature, featureIndex) => (
                           <div key={feature} className="flex items-start gap-2.5">
                             <CheckCircle size={15} className="text-gold-500 flex-shrink-0 mt-0.5" />
                             <span className="text-navy-700 text-sm">{t(`services.${service.slug}.feature${featureIndex + 1}`, { defaultValue: feature })}</span>

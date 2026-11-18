@@ -105,9 +105,9 @@ const Hero: React.FC = () => {
       <button
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/50 hover:text-gold-400 transition-colors animate-bounce"
-        aria-label="Scroll down"
+        aria-label={t('common.scrollDown')}
       >
-        <span className="text-xs uppercase tracking-widest">Scroll</span>
+        <span className="text-xs uppercase tracking-widest">{t('common.scrollDown')}</span>
         <ChevronDown size={20} />
       </button>
     </section>
