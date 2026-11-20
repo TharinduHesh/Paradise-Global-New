@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden min-w-0 items-center justify-center gap-0 xl:flex">
+          <nav className="hidden min-w-0 items-center justify-start gap-1 -translate-x-3 xl:flex">
             {navLinks.map((link) =>
               link.children ? (
                 <div
@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
                   onMouseEnter={() => setActiveDropdown(link.label)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <button className="flex items-center gap-1 whitespace-nowrap px-1.5 py-2 text-[13px] font-medium text-white/90 transition-colors duration-200 hover:text-gold-400 2xl:px-2 2xl:text-sm">
+                  <button className="flex items-center gap-1 whitespace-nowrap px-2.5 py-2 text-[15px] font-medium text-white/90 transition-colors duration-200 hover:text-gold-400">
                     {t(`nav.${navKeys[link.label] ?? 'services'}`)}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                   </button>
@@ -109,7 +109,7 @@ const Navbar: React.FC = () => {
                   key={link.href}
                   to={link.href}
                   className={({ isActive }) =>
-                    `whitespace-nowrap px-1.5 py-2 text-[13px] font-medium transition-colors duration-200 2xl:px-2 2xl:text-sm ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
+                    `whitespace-nowrap px-2.5 py-2 text-[15px] font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                   }
                 >
                   {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
