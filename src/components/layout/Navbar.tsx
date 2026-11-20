@@ -36,6 +36,13 @@ const navKeys: Record<string, string> = {
   'Paradise Design & Construction': 'construction',
 };
 
+const setWebsiteLanguage = (language: 'en' | 'he') => {
+  window.localStorage.setItem('pgl-language', language);
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
+  void i18n.changeLanguage(language);
+};
+
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -121,9 +128,9 @@ const Navbar: React.FC = () => {
           {/* CTA + Mobile Toggle */}
           <div className="flex w-[330px] shrink-0 items-center justify-end gap-2 max-xl:w-auto">
             <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-[13px] text-white/80 xl:flex 2xl:text-sm">
-              <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
+              <button type="button" onClick={() => setWebsiteLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
               <span className="text-white/40">|</span>
-              <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
+              <button type="button" onClick={() => setWebsiteLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
             </div>
             <a
               href="tel:+94XXXXXXXXX"
@@ -192,9 +199,9 @@ const Navbar: React.FC = () => {
           )}
           <div className="pt-4 pb-2 flex flex-col gap-3">
             <div className="mx-4 flex items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs text-white/80">
-              <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : ''}>{t('language.english')}</button>
+              <button type="button" onClick={() => setWebsiteLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : ''}>{t('language.english')}</button>
               <span>|</span>
-              <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : ''}>{t('language.hebrew')}</button>
+              <button type="button" onClick={() => setWebsiteLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : ''}>{t('language.hebrew')}</button>
             </div>
             <a href="tel:+94XXXXXXXXX" className="flex items-center gap-2 text-gold-400 text-sm px-4">
               <Phone size={15} />
