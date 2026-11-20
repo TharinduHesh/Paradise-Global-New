@@ -14,7 +14,7 @@ type Enquiry = { id: number; name: string; email: string; phone: string; service
 type ContentItem = { id: string; content_type: string; slug: string; title: string; data_json: string; is_published: number; sort_order: number };
 
 const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`/api/admin/${path}`, { ...init, headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) } });
+  const response = await fetch(`/api/admin/${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) } });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(body.error ?? 'Request failed.');
   return body as T;
@@ -24,7 +24,7 @@ const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2
 const statusClass: Record<string, string> = { new: 'bg-blue-50 text-blue-700', in_progress: 'bg-amber-50 text-amber-700', resolved: 'bg-emerald-50 text-emerald-700', archived: 'bg-slate-100 text-slate-500' };
 const ADMIN_SESSION_MS = 5 * 60 * 1000;
 
-const Login: React.FC = () => {
+const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenticated }) => {
   const navigate = useNavigate();
   const [setup, setSetup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -36,8 +36,9 @@ const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password }) });
-      navigate('/admin');
+      const result = await api<{ user: User }>(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password }) });
+      onAuthenticated(result.user);
+      navigate('/admin', { replace: true });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to sign in.');
     } finally {
@@ -175,7 +176,35 @@ const AdminApp: React.FC = () => {
     };
   }, []);
 
-  useEffect(() => { api<{ user: User }>('me').then((r) => setUser(r.user)).catch(() => setUser(null)).finally(() => setLoading(false)); }, [location.pathname]); useEffect(() => { if (!user) return undefined; const timer = window.setTimeout(() => { api('logout', { method: 'POST' }).catch(() => undefined).finally(() => { setUser(null); navigate('/admin/login', { replace: true }); }); }, ADMIN_SESSION_MS); return () => window.clearTimeout(timer); }, [user, navigate]); if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading admin...</div>; if (!user) return <Login />; const path = location.pathname; const page = path === '/admin/enquiries' ? <Enquiries /> : path === '/admin/content' ? <Content /> : path === '/admin/settings' ? <SettingsPage /> : path === '/admin/users' && user.role === 'owner' ? <UsersPage /> : path === '/admin/account' ? <AccountPage /> : <Dashboard />; return <div className="min-h-screen bg-[#f8fafc]"><Sidebar user={user} open={open} setOpen={setOpen} onLogout={async () => { await api('logout', { method: 'POST' }); navigate('/admin/login'); }} /><main className="min-h-screen px-4 py-8 lg:ml-64 lg:px-10">{page}</main></div>;
+  useEffect(() => {
+    if (location.pathname === '/admin/login') {
+      setLoading(false);
+      setUser(null);
+      return;
+    }
+    setLoading(true);
+    api<{ user: User }>('me')
+      .then((r) => setUser(r.user))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, [location.pathname]);
+  useEffect(() => {
+    if (!user) return undefined;
+    const timer = window.setTimeout(() => {
+      api('logout', { method: 'POST' })
+        .catch(() => undefined)
+        .finally(() => {
+          setUser(null);
+          navigate('/admin/login', { replace: true });
+        });
+    }, ADMIN_SESSION_MS);
+    return () => window.clearTimeout(timer);
+  }, [user, navigate]);
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading admin...</div>;
+  if (!user) return <Login onAuthenticated={(authenticatedUser) => setUser(authenticatedUser)} />;
+  const path = location.pathname;
+  const page = path === '/admin/enquiries' ? <Enquiries /> : path === '/admin/content' ? <Content /> : path === '/admin/settings' ? <SettingsPage /> : path === '/admin/users' && user.role === 'owner' ? <UsersPage /> : path === '/admin/account' ? <AccountPage /> : <Dashboard />;
+  return <div className="min-h-screen bg-[#f8fafc]"><Sidebar user={user} open={open} setOpen={setOpen} onLogout={async () => { await api('logout', { method: 'POST', credentials: 'include' }); setUser(null); navigate('/admin/login', { replace: true }); }} /><main className="min-h-screen px-4 py-8 lg:ml-64 lg:px-10">{page}</main></div>;
 };
 
 export default AdminApp;
