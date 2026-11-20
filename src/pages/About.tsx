@@ -85,7 +85,7 @@ const About: React.FC = () => {
               <img
                 src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
                 alt="Sri Lanka coastal property"
-                className="w-full h-[500px] object-cover rounded-sm shadow-2xl"
+                className="w-full h-80 object-cover rounded-sm shadow-2xl md:h-[420px]"
               />
               <div className="absolute -bottom-6 -left-6 bg-navy-900 text-white rounded-sm p-6 shadow-xl">
                 <p className="font-serif text-4xl font-bold text-gold-400">2014</p>

@@ -77,7 +77,7 @@ const PropertyDetails: React.FC = () => {
             {/* Left: Images + Details */}
             <div className="lg:col-span-2">
               {/* Main Image */}
-              <div className="relative overflow-hidden rounded-sm shadow-card mb-3 h-80 md:h-[450px]">
+              <div className="relative overflow-hidden rounded-sm shadow-card mb-3 h-72 md:h-[420px]">
                 <img
                   src={allImages[activeImage]}
                   alt={localizedName}

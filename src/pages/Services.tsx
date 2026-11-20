@@ -51,7 +51,7 @@ const Services: React.FC = () => {
                 <div key={service.id} className="bg-white rounded-sm shadow-card border border-beige-200 overflow-hidden">
                   <div className={`grid grid-cols-1 lg:grid-cols-2 ${isEven ? '' : 'lg:flex-row-reverse'}`}>
                     {/* Image Side */}
-                    <div className={`relative h-64 lg:h-auto overflow-hidden ${!isEven ? 'lg:order-2' : ''}`}>
+                    <div className={`relative h-64 overflow-hidden lg:h-[420px] ${!isEven ? 'lg:order-2' : ''}`}>
                       <div className="absolute inset-0 bg-navy-900 flex items-center justify-center">
                         {service.image && <img src={service.image} alt={service.title} className="absolute inset-0 h-full w-full object-cover opacity-50" />}
                         <Icon size={80} className="relative text-gold-500/30" />

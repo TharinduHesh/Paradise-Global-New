@@ -33,7 +33,7 @@ const Destinations: React.FC = () => {
                 <div key={dest.id} className="bg-white rounded-sm shadow-card overflow-hidden border border-beige-200">
                   <div className={`grid grid-cols-1 lg:grid-cols-2 ${!isEven ? 'lg:flex-row-reverse' : ''}`}>
                     {/* Image */}
-                    <div className={`relative h-80 lg:h-auto overflow-hidden ${!isEven ? 'lg:order-2' : ''}`}>
+                    <div className={`relative h-64 overflow-hidden sm:h-72 lg:h-[420px] ${!isEven ? 'lg:order-2' : ''}`}>
                       <img
                         src={dest.image}
                         alt={dest.name}

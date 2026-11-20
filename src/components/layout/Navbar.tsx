@@ -66,9 +66,9 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex h-24 items-center flex-shrink-0" aria-label="Paradise Global Leisures">
             <img
-              src="/logo.png"
+              src="/logo.png?v=20261120"
               alt="Paradise Global Leisures"
-              className="h-20 w-20 shrink-0 object-contain max-xl:h-16 max-xl:w-16"
+              className="h-[84px] w-[84px] shrink-0 object-contain max-xl:h-16 max-xl:w-16"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
@@ -86,7 +86,7 @@ const Navbar: React.FC = () => {
                   onMouseEnter={() => setActiveDropdown(link.label)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <button className="flex items-center gap-1 whitespace-nowrap px-2 py-2 text-xs font-medium text-white/90 transition-colors duration-200 hover:text-gold-400">
+                  <button className="flex items-center gap-1 whitespace-nowrap px-2 py-2 text-sm font-medium text-white/90 transition-colors duration-200 hover:text-gold-400">
                     {t(`nav.${navKeys[link.label] ?? 'services'}`)}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                   </button>
@@ -109,7 +109,7 @@ const Navbar: React.FC = () => {
                   key={link.href}
                   to={link.href}
                   className={({ isActive }) =>
-                    `whitespace-nowrap px-2 py-2 text-xs font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
+                    `whitespace-nowrap px-2 py-2 text-sm font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                   }
                 >
                   {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
@@ -120,21 +120,21 @@ const Navbar: React.FC = () => {
 
           {/* CTA + Mobile Toggle */}
           <div className="flex w-[350px] shrink-0 items-center justify-end gap-2 max-xl:w-auto">
-            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-xs text-white/80 xl:flex">
+            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-sm text-white/80 xl:flex">
               <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
               <span className="text-white/40">|</span>
               <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
             </div>
             <a
               href="tel:+94XXXXXXXXX"
-              className="hidden xl:flex items-center gap-2 text-gold-400 text-sm whitespace-nowrap font-medium hover:text-gold-300 transition-colors"
+              className="hidden xl:flex items-center gap-2 text-gold-400 text-base whitespace-nowrap font-medium hover:text-gold-300 transition-colors"
             >
               <Phone size={15} />
               <span>+94 77 000 0000</span>
             </a>
             <Link
               to="/contact"
-              className="hidden xl:inline-flex btn-primary text-sm px-4 py-2.5 whitespace-nowrap"
+              className="hidden xl:inline-flex btn-primary text-base px-5 py-3 whitespace-nowrap"
             >
               {t('nav.consultation')}
             </Link>
