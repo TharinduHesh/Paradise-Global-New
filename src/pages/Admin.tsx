@@ -152,7 +152,81 @@ const Content: React.FC = () => {
     </div></>;
 };
 
-const SettingsPage: React.FC = () => { const [settings, setSettings] = useState<Record<string, Record<string, unknown>>>({}); const [message, setMessage] = useState(''); useEffect(() => { api<{ settings: Record<string, Record<string, unknown>> }>('settings').then((r) => setSettings(r.settings)).catch(console.error); }, []); const company = (settings.company ?? {}) as Record<string, string>; const maintenance = (settings.maintenance ?? { enabled: false, message: '' }) as { enabled: boolean; message: string }; const update = async (key: string, value: unknown) => { await api('settings', { method: 'POST', body: JSON.stringify({ key, value }) }); setSettings({ ...settings, [key]: value as Record<string, unknown> }); setMessage('Saved successfully.'); setTimeout(() => setMessage(''), 2500); }; return <><Header title="Business & appearance" subtitle="Keep contact information, branding, SEO and maintenance settings current." />{message && <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}<div className="grid gap-6 lg:grid-cols-2"><section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="mb-5 font-serif text-xl font-bold text-[#0a1628]">Business information</h2><div className="space-y-3">{[['name', 'Company name'], ['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['email', 'Email'], ['address', 'Address'], ['hours', 'Opening hours']].map(([key, label]) => <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-500">{label}<input className={`${inputClass} mt-1 normal-case font-normal`} value={company[key] ?? ''} onChange={(e) => setSettings({ ...settings, company: { ...company, [key]: e.target.value } })} /></label>)}<button onClick={() => update('company', company)} className="mt-2 rounded-lg bg-[#0a1628] px-4 py-2.5 text-sm font-semibold text-white">Save business info</button></div></section><section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="mb-5 flex items-center gap-2 font-serif text-xl font-bold text-[#0a1628]"><Settings size={20} className="text-[#c9a84c]" /> Maintenance mode</h2><label className="flex items-center gap-3 text-sm font-medium text-slate-700"><input type="checkbox" checked={maintenance.enabled} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, enabled: e.target.checked } })} /> Show maintenance page to public visitors</label><textarea className={`${inputClass} mt-4`} rows={4} value={maintenance.message ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, message: e.target.value } })} /><button onClick={() => update('maintenance', maintenance)} className="mt-3 rounded-lg bg-[#c9a84c] px-4 py-2.5 text-sm font-semibold text-white">Save maintenance settings</button><div className="mt-6 rounded-lg bg-amber-50 p-4 text-xs leading-relaxed text-amber-800"><strong>Owner-only control.</strong> Admin pages remain available while maintenance mode is enabled.</div></section></div></>; };
+const MaintenancePreview: React.FC = () => {
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; title: string; message: string; reopeningAt: string }>({
+    enabled: false,
+    title: "We'll Be Right Back",
+    message: 'We are making improvements. Please check back soon.',
+    reopeningAt: '',
+  });
+  useEffect(() => {
+    api<{ settings: Record<string, Record<string, unknown>> }>('settings')
+      .then((r) => setMaintenance((r.settings.maintenance ?? maintenance) as typeof maintenance))
+      .catch(console.error);
+  }, []);
+  const reopenText = maintenance.reopeningAt
+    ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Colombo' }).format(new Date(maintenance.reopeningAt))
+    : '';
+  return (
+    <main className="fixed inset-0 z-50 grid min-h-screen grid-cols-1 bg-[#0a1628] text-white lg:grid-cols-[minmax(0,1fr)_520px]">
+      <div className="absolute inset-0 bg-cover bg-center opacity-45 lg:relative lg:opacity-100" style={{ backgroundImage: "url('/sri-lanka-golden-palm-coast.png')" }} />
+      <section className="absolute inset-0 flex items-center bg-[#0a1628]/85 p-8 lg:relative lg:bg-[#0a1628] lg:px-16">
+        <div className="mx-auto max-w-sm lg:mx-0">
+          <img src="/logo.png?v=gold" alt="Paradise Global Leisures" className="mb-7 h-24 w-24 object-contain" />
+          <h1 className="font-serif text-4xl font-bold leading-tight lg:text-5xl">{maintenance.title || "We'll Be Right Back"}</h1>
+          <div className="my-6 h-[3px] w-16 bg-[#c9a84c]" />
+          <p className="text-base leading-7 text-white/70">{maintenance.message || 'We are making improvements. Please check back soon.'}</p>
+          {reopenText && <div className="mt-7 border-t border-white/10 pt-5 text-sm text-white/60">Expected reopening<strong className="mt-1 block text-base text-[#e8b33f]">{reopenText}</strong></div>}
+        </div>
+      </section>
+      <Link to="/admin/settings" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg">Close preview</Link>
+    </main>
+  );
+};
+
+const SettingsPage: React.FC = () => {
+  const [settings, setSettings] = useState<Record<string, Record<string, unknown>>>({});
+  const [message, setMessage] = useState('');
+  useEffect(() => { api<{ settings: Record<string, Record<string, unknown>> }>('settings').then((r) => setSettings(r.settings)).catch(console.error); }, []);
+  const company = (settings.company ?? {}) as Record<string, string>;
+  const maintenance = (settings.maintenance ?? { enabled: false, title: "We'll Be Right Back", message: '', reopeningAt: '' }) as { enabled: boolean; title: string; message: string; reopeningAt: string };
+  const update = async (key: string, value: unknown) => {
+    await api('settings', { method: 'POST', body: JSON.stringify({ key, value }) });
+    setSettings({ ...settings, [key]: value as Record<string, unknown> });
+    setMessage('Saved successfully.');
+    setTimeout(() => setMessage(''), 2500);
+  };
+  return (
+    <>
+      <Header title="Business & appearance" subtitle="Keep contact information, branding, SEO and maintenance settings current." />
+      {message && <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div>}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-5 font-serif text-xl font-bold text-[#0a1628]">Business information</h2>
+          <div className="space-y-3">
+            {[['name', 'Company name'], ['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['email', 'Email'], ['address', 'Address'], ['hours', 'Opening hours']].map(([key, label]) =>
+              <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-500">{label}<input className={`${inputClass} mt-1 normal-case font-normal`} value={company[key] ?? ''} onChange={(e) => setSettings({ ...settings, company: { ...company, [key]: e.target.value } })} /></label>
+            )}
+            <button onClick={() => update('company', company)} className="mt-2 rounded-lg bg-[#0a1628] px-4 py-2.5 text-sm font-semibold text-white">Save business info</button>
+          </div>
+        </section>
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-5 flex items-center gap-2 font-serif text-xl font-bold text-[#0a1628]"><Settings size={20} className="text-[#c9a84c]" /> Maintenance mode</h2>
+          <label className="flex items-center gap-3 text-sm font-medium text-slate-700"><input type="checkbox" checked={maintenance.enabled} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, enabled: e.target.checked } })} /> Show maintenance page to public visitors</label>
+          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Page title *<input className={`${inputClass} mt-1 normal-case font-normal`} value={maintenance.title ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, title: e.target.value } })} /></label>
+          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Message *<textarea className={`${inputClass} mt-1 normal-case font-normal`} rows={4} value={maintenance.message ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, message: e.target.value } })} /></label>
+          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Expected reopening<input type="datetime-local" className={`${inputClass} mt-1 normal-case font-normal`} value={maintenance.reopeningAt ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, reopeningAt: e.target.value } })} /></label>
+          <p className="mt-2 text-xs text-slate-400">Leave empty when no exact reopening time is available.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button onClick={() => update('maintenance', maintenance)} className="rounded-lg bg-[#c9a84c] px-4 py-2.5 text-sm font-semibold text-white">Save maintenance settings</button>
+            <Link to="/admin/maintenance-preview" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Preview maintenance page</Link>
+          </div>
+          <div className="mt-6 rounded-lg bg-amber-50 p-4 text-xs leading-relaxed text-amber-800"><strong>Owner-only control.</strong> Admin pages remain available while maintenance mode is enabled.</div>
+        </section>
+      </div>
+    </>
+  );
+};
 
 const UsersPage: React.FC = () => { const [users, setUsers] = useState<(User & { is_active: number; created_at: string })[]>([]); const [form, setForm] = useState({ name: '', email: '', role: 'editor', password: '' }); const load = () => api<{ users: typeof users }>('users').then((r) => setUsers(r.users)).catch(console.error); useEffect(() => { load(); }, []); return <><Header title="Users & security" subtitle="Owner-managed access with role-based permissions." /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><div className="overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-5 py-3">User</th><th className="px-5 py-3">Role</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{users.map((item) => <tr key={item.id}><td className="px-5 py-4"><p className="font-medium">{item.name}</p><p className="text-xs text-slate-500">{item.email}</p></td><td className="px-5 py-4 capitalize">{item.role}</td><td className="px-5 py-4">{item.is_active ? <span className="text-emerald-600">Active</span> : <span className="text-slate-400">Inactive</span>}</td><td className="px-5 py-4"><button onClick={async () => { await api(`users/${item.id}`, { method: 'PATCH', body: JSON.stringify({ isActive: !item.is_active }) }); load(); }} className="text-xs font-semibold text-[#9a7425]">{item.is_active ? 'Deactivate' : 'Activate'}</button></td></tr>)}</tbody></table></div></div><form onSubmit={async (e) => { e.preventDefault(); await api('users', { method: 'POST', body: JSON.stringify(form) }); setForm({ name: '', email: '', role: 'editor', password: '' }); load(); }} className="h-fit rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="mb-4 font-serif text-xl font-bold text-[#0a1628]">Add a user</h2><div className="space-y-3"><input className={inputClass} placeholder="Full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /><input className={inputClass} type="email" placeholder="Email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /><select className={inputClass} value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}><option value="editor">Editor</option><option value="admin">Admin</option><option value="owner">Owner</option></select><input className={inputClass} type="password" minLength={12} placeholder="Temporary password (12+ chars)" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /><button className="w-full rounded-lg bg-[#c9a84c] px-4 py-3 font-semibold text-white">Create user</button></div></form></div></>; };
 
@@ -203,7 +277,7 @@ const AdminApp: React.FC = () => {
   if (loading) return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading admin...</div>;
   if (!user) return <Login onAuthenticated={(authenticatedUser) => setUser(authenticatedUser)} />;
   const path = location.pathname;
-  const page = path === '/admin/enquiries' ? <Enquiries /> : path === '/admin/content' ? <Content /> : path === '/admin/settings' ? <SettingsPage /> : path === '/admin/users' && user.role === 'owner' ? <UsersPage /> : path === '/admin/account' ? <AccountPage /> : <Dashboard />;
+  const page = path === '/admin/maintenance-preview' ? <MaintenancePreview /> : path === '/admin/enquiries' ? <Enquiries /> : path === '/admin/content' ? <Content /> : path === '/admin/settings' ? <SettingsPage /> : path === '/admin/users' && user.role === 'owner' ? <UsersPage /> : path === '/admin/account' ? <AccountPage /> : <Dashboard />;
   return <div className="min-h-screen bg-[#f8fafc]"><Sidebar user={user} open={open} setOpen={setOpen} onLogout={async () => { await api('logout', { method: 'POST', credentials: 'include' }); setUser(null); navigate('/admin/login', { replace: true }); }} /><main className="min-h-screen px-4 py-8 lg:ml-64 lg:px-10">{page}</main></div>;
 };
 

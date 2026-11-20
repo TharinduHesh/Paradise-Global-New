@@ -13,7 +13,7 @@ const Destinations: React.FC = () => {
 
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=1920&q=80')` }} />
+          style={{ backgroundImage: `url('/sri-lanka-golden-palm-coast.png')` }} />
         <div className="relative container-custom text-center">
           <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('destinationsPage.eyebrow')}</p>
           <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">{t('destinationsPage.title')}</h1>
