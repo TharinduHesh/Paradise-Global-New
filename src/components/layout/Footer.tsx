@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="mb-5 flex h-24 items-center">
-              <img src="/logo.png?v=20261120" alt="Paradise Global Leisures" className="h-28 w-28 object-contain max-sm:h-24 max-sm:w-24" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+              <img src="/logo.png?v=gold" alt="Paradise Global Leisures" className="h-28 w-28 object-contain max-sm:h-24 max-sm:w-24" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
             </div>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
               {t('footer.description')}

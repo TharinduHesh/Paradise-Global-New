@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity, BarChart3, ClipboardList, FileText, LogOut, Menu, Palette,
   Settings, Shield, Users, X, Plus, Search, Clock3, AlertTriangle,
+  Eye, EyeOff, Mail, LockKeyhole, ArrowLeft, LogIn,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import i18n from '../i18n';
@@ -24,18 +25,94 @@ const statusClass: Record<string, string> = { new: 'bg-blue-50 text-blue-700', i
 const ADMIN_SESSION_MS = 5 * 60 * 1000;
 
 const Login: React.FC = () => {
-  const navigate = useNavigate(); const [setup, setSetup] = useState(false); const [form, setForm] = useState({ name: '', email: '', password: '', setupToken: '' }); const [error, setError] = useState(''); const [loading, setLoading] = useState(false);
-  const submit = async (event: React.FormEvent) => { event.preventDefault(); setLoading(true); setError(''); try { await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password }) }); navigate('/admin'); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to sign in.'); } finally { setLoading(false); } };
-  return <div className="flex min-h-screen items-center justify-center bg-[#0a1628] px-4 py-10"><div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-    <div className="mb-8 text-center"><div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#c9a84c] text-2xl font-bold text-white">P</div><h1 className="font-serif text-3xl font-bold text-[#0a1628]">Paradise Admin</h1><p className="mt-2 text-sm text-slate-500">{setup ? 'Create the first Owner account' : 'Sign in to manage your website'}</p></div>
-    <form onSubmit={submit} className="space-y-4">{setup && <input className={inputClass} placeholder="Full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />}<input className={inputClass} type="email" placeholder="Email address" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /><input className={inputClass} type="password" placeholder={setup ? 'Password (12+ characters)' : 'Password'} minLength={setup ? 12 : undefined} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />{setup && <input className={inputClass} type="password" placeholder="Owner setup token" required value={form.setupToken} onChange={(e) => setForm({ ...form, setupToken: e.target.value })} />}{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}<button disabled={loading} className="w-full rounded-lg bg-[#c9a84c] px-4 py-3 font-semibold text-white transition hover:bg-[#b8912e] disabled:opacity-60">{loading ? 'Please wait...' : setup ? 'Create Owner account' : 'Sign in'}</button></form>
-    <button onClick={() => { setSetup(!setup); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">{setup ? 'Already have an account? Sign in' : 'First deployment? Set up Owner'}</button>
-  </div></div>;
+  const navigate = useNavigate();
+  const [setup, setSetup] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '', setupToken: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password }) });
+      navigate('/admin');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to sign in.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#edf1f6] px-4 py-10">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#fff_0,#edf1f6_55%,#dde5ef_100%)]" />
+      <div className="relative w-full max-w-[470px]">
+        <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-[0_24px_70px_rgba(10,22,40,0.14)] sm:px-10 sm:py-10">
+          <div className="mb-7 text-center">
+            <img src="/logo.png?v=gold" alt="Paradise Global Leisures" className="mx-auto mb-5 h-24 w-24 object-contain" />
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#b8912e]">Paradise Admin</p>
+            <h1 className="mt-2 font-serif text-3xl font-bold text-[#0a1628]">{setup ? 'Create owner account' : 'Welcome back'}</h1>
+            <p className="mt-2 text-sm text-slate-500">{setup ? 'Set up secure access to your website.' : 'Sign in with your authorized administrator account.'}</p>
+          </div>
+          <form onSubmit={submit} className="space-y-5">
+            {setup && (
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Full name</span>
+                <input className={inputClass} placeholder="Your full name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </label>
+            )}
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Email address</span>
+              <div className="relative">
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input className={`${inputClass} h-12 pl-11`} type="email" placeholder="admin@example.com" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Password</span>
+              <div className="relative">
+                <LockKeyhole size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  className={`${inputClass} h-12 pl-11 pr-12`}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={setup ? 'Password (12+ characters)' : 'Enter your password'}
+                  minLength={setup ? 12 : undefined}
+                  required
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                />
+                <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-[#9a7425]" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                </button>
+              </div>
+            </label>
+            {setup && (
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Owner setup token</span>
+                <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} placeholder="Owner setup token" required value={form.setupToken} onChange={(e) => setForm({ ...form, setupToken: e.target.value })} />
+              </label>
+            )}
+            {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</p>}
+            <button disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#c9a84c] px-4 font-semibold text-white shadow-[0_10px_24px_rgba(201,168,76,0.25)] transition hover:bg-[#b8912e] disabled:opacity-60">
+              {loading ? 'Please wait...' : <><LogIn size={18} />{setup ? 'Create owner account' : 'Sign in securely'}</>}
+            </button>
+          </form>
+          <button onClick={() => { setSetup(!setup); setShowPassword(false); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">
+            {setup ? 'Already have an account? Sign in' : 'First deployment? Set up Owner'}
+          </button>
+        </div>
+        <Link to="/" className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 hover:text-[#9a7425]">
+          <ArrowLeft size={16} /> Back to website
+        </Link>
+      </div>
+    </main>
+  );
 };
 
 const Sidebar: React.FC<{ user: User; open: boolean; setOpen: (value: boolean) => void; onLogout: () => void }> = ({ user, open, setOpen, onLogout }) => {
   const links = [{ href: '/admin', label: 'Dashboard', icon: BarChart3 }, { href: '/admin/enquiries', label: 'Enquiries', icon: ClipboardList }, { href: '/admin/content', label: 'Website content', icon: FileText }, { href: '/admin/settings', label: 'Business & appearance', icon: Palette }, { href: '/admin/account', label: 'My account', icon: Shield }, ...(user.role === 'owner' ? [{ href: '/admin/users', label: 'Users & security', icon: Users }] : []), ...(user.role !== 'editor' ? [{ href: '/admin/activity', label: 'Activity log', icon: Activity }] : [])];
-  return <><button aria-label="Open menu" onClick={() => setOpen(!open)} className="fixed left-4 top-4 z-40 rounded-lg bg-[#0a1628] p-2 text-white lg:hidden"><Menu size={20} /></button><aside className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-[#0a1628] px-5 py-6 text-white transition-transform lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}><div className="mb-10 flex items-center justify-between"><Link to="/admin" className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#c9a84c] font-serif text-xl font-bold">P</span><span><strong className="block font-serif text-lg">Paradise</strong><small className="text-xs text-white/50">ADMIN CONSOLE</small></span></Link><button className="lg:hidden" onClick={() => setOpen(false)}><X size={20} /></button></div><nav className="space-y-1">{links.map(({ href, label, icon: Icon }) => <Link key={href} to={href} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"><Icon size={18} />{label}</Link>)}</nav><div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-4"><div className="mb-3 flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a84c] text-sm font-bold">{user.name.charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="text-xs capitalize text-white/50">{user.role}</p></div></div><button onClick={onLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"><LogOut size={16} /> Sign out</button></div></aside></>;
+  return <><button aria-label="Open menu" onClick={() => setOpen(!open)} className="fixed left-4 top-4 z-40 rounded-lg bg-[#0a1628] p-2 text-white lg:hidden"><Menu size={20} /></button><aside className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-[#0a1628] px-5 py-6 text-white transition-transform lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}><div className="mb-10 flex items-center justify-between"><Link to="/admin" className="flex items-center gap-3"><img src="/logo.png?v=gold" alt="" className="h-11 w-11 object-contain" /><span><strong className="block font-serif text-lg">Paradise</strong><small className="text-xs text-white/50">ADMIN CONSOLE</small></span></Link><button className="lg:hidden" onClick={() => setOpen(false)}><X size={20} /></button></div><nav className="space-y-1">{links.map(({ href, label, icon: Icon }) => <Link key={href} to={href} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"><Icon size={18} />{label}</Link>)}</nav><div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-4"><div className="mb-3 flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a84c] text-sm font-bold">{user.name.charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="text-xs capitalize text-white/50">{user.role}</p></div></div><button onClick={onLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"><LogOut size={16} /> Sign out</button></div></aside></>;
 };
 
 const Header: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#b8912e]">Paradise Global Leisures</p><h1 className="font-serif text-3xl font-bold text-[#0a1628]">{title}</h1><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div><Link to="/" target="_blank" className="text-sm font-medium text-[#9a7425] hover:underline">View website ↗</Link></header>;

@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link to="/" className="flex h-24 items-center flex-shrink-0" aria-label="Paradise Global Leisures">
             <img
-              src="/logo.png?v=20261120"
+              src="/logo.png?v=gold"
               alt="Paradise Global Leisures"
               className="h-[84px] w-[84px] shrink-0 object-contain max-xl:h-16 max-xl:w-16"
               onError={(e) => {
