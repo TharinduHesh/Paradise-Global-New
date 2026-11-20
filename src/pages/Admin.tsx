@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Activity, BarChart3, ClipboardList, FileText, LogOut, Menu, Palette,
+  Activity, BarChart3, ClipboardList, FileText, LogOut, Menu,
   Settings, Shield, Users, X, Plus, Clock3, AlertTriangle,
   Eye, EyeOff, Mail, LockKeyhole, ArrowLeft, LogIn,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import i18n from '../i18n';
 import MaintenancePage from './Maintenance';
-import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, isAdministrator, manageableRoles, staffPermissions, type AccessUser, type Role, type StaffPermission } from '../lib/adminAccess';
+import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, isAdministrator, manageableRoles, staffPermissions, websiteManagementPath, websiteSections, type AccessUser, type Role, type StaffPermission } from '../lib/adminAccess';
 import { enquiryCategories, type EnquiryCategory } from '../lib/enquiryCategories';
 
 type User = AccessUser & { id: string; email: string; name: string };
@@ -119,18 +119,33 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
 
 const Sidebar: React.FC<{ user: User; open: boolean; setOpen: (value: boolean) => void; onLogout: () => void }> = ({ user, open, setOpen, onLogout }) => {
   const isManager = user.role === 'manager';
+  const path = useLocation().pathname.replace(/\/+$/, '').toLowerCase();
+  const inWebsiteManagement = websiteSections.some((section) => section.path === path);
   const icons: Record<string, LucideIcon> = {
-    '/': BarChart3, '/properties': FileText, '/services': Settings, '/enquiries': ClipboardList,
-    '/hospitality': FileText, '/projects': FileText, '/content': FileText, '/media': Palette,
+    '/': BarChart3, '/enquiries': ClipboardList, '/content': FileText,
     '/seo': BarChart3, '/users': Users, '/activity': Activity, '/account': Shield,
   };
   const links = adminSections.flatMap(([section, title]) => {
     const href = section === '/' ? '/admin' : '/admin' + section;
+    const current: React.AriaAttributes['aria-current'] = href === path ? 'page' : href === websiteManagementPath && inWebsiteManagement ? 'location' : undefined;
     return canAccessAdminPage(user, href)
-      ? [{ href, label: isManager && section === '/users' ? 'Staff Accounts' : title, icon: icons[section] }]
+      ? [{ href, label: isManager && section === '/users' ? 'Staff Accounts' : title, icon: icons[section], current }]
       : [];
   });
-  return <><button aria-label="Open menu" onClick={() => setOpen(!open)} className="fixed left-4 top-4 z-40 rounded-lg bg-[#0a1628] p-2 text-white lg:hidden"><Menu size={20} /></button><aside className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-[#0a1628] px-5 py-6 text-white transition-transform lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}><div className="mb-10 flex items-center justify-between"><Link to={adminHome(user)} className="flex items-center gap-3"><img src="/logo.png?v=gold" alt="" className="h-11 w-11 object-contain" /><span><strong className="block font-serif text-lg">Paradise</strong><small className="text-xs text-white/50">{isManager ? 'MANAGER DASHBOARD' : 'ADMIN CONSOLE'}</small></span></Link><button className="lg:hidden" onClick={() => setOpen(false)}><X size={20} /></button></div><nav aria-label="Admin sections" className="max-h-[calc(100dvh-15rem)] space-y-1 overflow-y-auto">{links.map(({ href, label, icon: Icon }) => <Link key={href} to={href} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"><Icon size={18} />{label}</Link>)}</nav><div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-4"><div className="mb-3 flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a84c] text-sm font-bold">{user.name.charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="text-xs capitalize text-white/50">{user.role}</p></div></div><button onClick={onLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"><LogOut size={16} /> Sign out</button></div></aside></>;
+  return <><button aria-label="Open menu" onClick={() => setOpen(!open)} className="fixed left-4 top-4 z-40 rounded-lg bg-[#0a1628] p-2 text-white lg:hidden"><Menu size={20} /></button><aside className={`fixed inset-y-0 left-0 z-30 w-64 transform bg-[#0a1628] px-5 py-6 text-white transition-transform lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}><div className="mb-10 flex items-center justify-between"><Link to={adminHome(user)} className="flex items-center gap-3"><img src="/logo.png?v=gold" alt="" className="h-11 w-11 object-contain" /><span><strong className="block font-serif text-lg">Paradise</strong><small className="text-xs text-white/50">{isManager ? 'MANAGER DASHBOARD' : 'ADMIN CONSOLE'}</small></span></Link><button className="lg:hidden" onClick={() => setOpen(false)}><X size={20} /></button></div><nav aria-label="Admin sections" className="max-h-[calc(100dvh-15rem)] space-y-1 overflow-y-auto">{links.map(({ href, label, icon: Icon, current }) => (
+  <Link
+    key={href}
+    to={href}
+    aria-current={current}
+    onClick={() => setOpen(false)}
+    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${current
+      ? 'bg-white/10 text-white'
+      : 'text-white/70 hover:bg-white/10 hover:text-white'}`}
+  >
+    <Icon size={18} />
+    {label}
+  </Link>
+))}</nav><div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-4"><div className="mb-3 flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a84c] text-sm font-bold">{user.name.charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="text-xs capitalize text-white/50">{user.role}</p></div></div><button onClick={onLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"><LogOut size={16} /> Sign out</button></div></aside></>;
 };
 
 const Header: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#b8912e]">Paradise Global Leisures</p><h1 className="font-serif text-3xl font-bold text-[#0a1628]">{title}</h1><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div><Link to="/" target="_blank" className="text-sm font-medium text-[#9a7425] hover:underline">View website ↗</Link></header>;
@@ -276,7 +291,7 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
   </>;
 };
 
-const Content: React.FC<{ title: string; types: string[] }> = ({ title, types }) => {
+const WebsiteManagement: React.FC<{ path: string; types: readonly string[] }> = ({ path, types }) => {
   const [items, setItems] = useState<ContentItem[]>([]);
   const [type, setType] = useState(types[0]);
   const [editingId, setEditingId] = useState<string>();
@@ -293,7 +308,22 @@ const Content: React.FC<{ title: string; types: string[] }> = ({ title, types })
       reset(); load();
     } catch (error) { alert(error instanceof Error ? error.message : 'Invalid content'); }
   };
-  return <><Header title={title} subtitle="Manage records in the website content catalogue." />
+  return <>
+    <Header title="Website Management" subtitle="Manage records in the website content catalogue." />
+    <nav aria-label="Website management sections" className="mb-6 flex flex-wrap gap-2">
+      {websiteSections.map((section) => (
+        <Link
+          key={section.path}
+          to={section.path}
+          aria-current={section.path === path ? 'page' : undefined}
+          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${section.path === path
+            ? 'border-[#0a1628] bg-[#0a1628] text-white'
+            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}
+        >
+          {section.label}
+        </Link>
+      ))}
+    </nav>
     <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
       <div>
         <div className="mb-4 flex gap-2 overflow-x-auto">{types.map((value) => <button key={value} onClick={() => { setType(value); reset(); }} className={`rounded-full px-4 py-2 text-sm capitalize ${type === value ? 'bg-[#0a1628] text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{value}s</button>)}</div>
@@ -598,17 +628,9 @@ const AdminApp: React.FC = () => {
   const path = location.pathname.replace(/\/+$/, '').toLowerCase();
   if (!canAccessAdminPage(user, path)) return <Navigate to={adminHome(user)} replace />;
 
-  const catalogue: Record<string, { title: string; types: string[] }> = {
-    '/admin/properties': { title: 'Property Listings', types: ['property'] },
-    '/admin/services': { title: 'Services & Divisions', types: ['service'] },
-    '/admin/hospitality': { title: 'Hospitality', types: ['hospitality', 'destination'] },
-    '/admin/projects': { title: 'Projects & Testimonials', types: ['project', 'testimonial'] },
-    '/admin/content': { title: 'Website Content', types: ['property', 'service', 'destination', 'gallery', 'page'] },
-    '/admin/media': { title: 'Media & Translations', types: ['media', 'translation', 'gallery'] },
-  };
-  const section = catalogue[path];
+  const section = websiteSections.find((item) => item.path === path);
   let page = <Dashboard />;
-  if (section) page = <Content key={path} {...section} />;
+  if (section) page = <WebsiteManagement key={section.path} path={section.path} types={section.types} />;
   if (path === '/admin/enquiries') page = <Enquiries canEdit={isAdministrator(user.role)} />;
   if (path === '/admin/activity') page = <ActivityPage />;
   if (path === '/admin/account') page = <AccountPage />;

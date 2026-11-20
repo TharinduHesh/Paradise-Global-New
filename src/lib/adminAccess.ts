@@ -17,15 +17,21 @@ export const manageableRoles = (role: Role): readonly Role[] => {
   return [];
 };
 
+export const websiteSections = [
+  { path: '/admin/properties', label: 'Property Listings', types: ['property'] },
+  { path: '/admin/services', label: 'Services & Divisions', types: ['service'] },
+  { path: '/admin/hospitality', label: 'Hospitality', types: ['hospitality', 'destination'] },
+  { path: '/admin/projects', label: 'Projects & Testimonials', types: ['project', 'testimonial'] },
+  { path: '/admin/content', label: 'Website Content', types: ['property', 'service', 'destination', 'gallery', 'page'] },
+  { path: '/admin/media', label: 'Media & Translations', types: ['media', 'translation', 'gallery'] },
+] as const;
+
+export const websiteManagementPath = '/admin/content';
+
 export const adminSections = [
   ['/', 'Dashboard'],
-  ['/properties', 'Property Listings'],
-  ['/services', 'Services & Divisions'],
   ['/enquiries', 'Enquiry Inbox'],
-  ['/hospitality', 'Hospitality'],
-  ['/projects', 'Projects & Testimonials'],
-  ['/content', 'Website Content'],
-  ['/media', 'Media & Translations'],
+  ['/content', 'Website Management'],
   ['/seo', 'SEO & Reports'],
   ['/users', 'Users & Settings'],
   ['/activity', 'Activity Logs'],
@@ -44,6 +50,7 @@ export const canAccessAdminPage = (user: AccessUser, pathname: string) => {
   return isAdministrator(user.role) && (
     path === '/admin' || path === '/admin/settings' || path === '/admin/maintenance-preview'
     || adminSections.some(([section]) => '/admin' + section === path)
+    || websiteSections.some((section) => section.path === path)
   );
 };
 
