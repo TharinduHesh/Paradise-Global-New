@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import i18n from '../i18n';
+import MaintenancePage from './Maintenance';
 
 type Role = 'owner' | 'admin' | 'editor';
 type User = { id: string; email: string; name: string; role: Role };
@@ -159,28 +160,28 @@ const MaintenancePreview: React.FC = () => {
     message: 'We are making improvements. Please check back soon.',
     reopeningAt: '',
   });
+  const [company, setCompany] = useState<{ email?: string; phone?: string; whatsapp?: string }>({});
   useEffect(() => {
     api<{ settings: Record<string, Record<string, unknown>> }>('settings')
-      .then((r) => setMaintenance((r.settings.maintenance ?? maintenance) as typeof maintenance))
+      .then((r) => {
+        setMaintenance((r.settings.maintenance ?? maintenance) as typeof maintenance);
+        setCompany((r.settings.company ?? {}) as typeof company);
+      })
       .catch(console.error);
   }, []);
-  const reopenText = maintenance.reopeningAt
-    ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Colombo' }).format(new Date(maintenance.reopeningAt))
-    : '';
   return (
-    <main className="fixed inset-0 z-50 grid min-h-screen grid-cols-1 bg-[#0a1628] text-white lg:grid-cols-[minmax(0,1fr)_520px]">
-      <div className="absolute inset-0 bg-cover bg-center opacity-45 lg:relative lg:opacity-100" style={{ backgroundImage: "url('/sri-lanka-golden-palm-coast.png')" }} />
-      <section className="absolute inset-0 flex items-center bg-[#0a1628]/85 p-8 lg:relative lg:bg-[#0a1628] lg:px-16">
-        <div className="mx-auto max-w-sm lg:mx-0">
-          <img src="/logo.png?v=gold" alt="Paradise Global Leisures" className="mb-7 h-24 w-24 object-contain" />
-          <h1 className="font-serif text-4xl font-bold leading-tight lg:text-5xl">{maintenance.title || "We'll Be Right Back"}</h1>
-          <div className="my-6 h-[3px] w-16 bg-[#c9a84c]" />
-          <p className="text-base leading-7 text-white/70">{maintenance.message || 'We are making improvements. Please check back soon.'}</p>
-          {reopenText && <div className="mt-7 border-t border-white/10 pt-5 text-sm text-white/60">Expected reopening<strong className="mt-1 block text-base text-[#e8b33f]">{reopenText}</strong></div>}
-        </div>
-      </section>
-      <Link to="/admin/settings" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg">Close preview</Link>
-    </main>
+    <div className="fixed inset-0 z-50 overflow-auto">
+      <MaintenancePage
+        message={maintenance.message}
+        reopeningAt={maintenance.reopeningAt}
+        email={company.email}
+        phone={company.phone}
+        whatsapp={company.whatsapp}
+      />
+      <Link to="/admin/settings" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg border border-slate-200">
+        ← Close preview
+      </Link>
+    </div>
   );
 };
 

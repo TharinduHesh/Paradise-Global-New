@@ -16,10 +16,16 @@ import Contact from './pages/Contact';
 import AdminApp from './pages/Admin';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import MaintenancePage from './pages/Maintenance';
+
+type MaintenanceSettings = { enabled: boolean; message: string; reopeningAt?: string };
+type CompanySettings = { email?: string; phone?: string; whatsapp?: string };
+type ApiSettings = { maintenance?: MaintenanceSettings; company?: CompanySettings };
 
 const App: React.FC = () => {
   const { t } = useTranslation();
-  const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
+  const [maintenance, setMaintenance] = useState<MaintenanceSettings | null>(null);
+  const [company, setCompany] = useState<CompanySettings | null>(null);
 
   useEffect(() => {
     if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
@@ -27,21 +33,23 @@ const App: React.FC = () => {
     }
     if (window.location.pathname.startsWith('/admin')) return;
     fetch('/api/settings', { cache: 'no-store' })
-      .then((response) => response.ok ? response.json() as Promise<{ settings: { maintenance?: { enabled: boolean; message: string } } }> : Promise.reject())
-      .then((result) => setMaintenance(result.settings.maintenance ?? null))
+      .then((response) => response.ok ? response.json() as Promise<{ settings: ApiSettings }> : Promise.reject())
+      .then((result) => {
+        setMaintenance(result.settings.maintenance ?? null);
+        setCompany(result.settings.company ?? null);
+      })
       .catch(() => setMaintenance(null));
   }, []);
 
   if (window.location.pathname !== '/admin' && !window.location.pathname.startsWith('/admin/') && maintenance?.enabled) {
     return (
-      <main className="grid min-h-screen place-items-center bg-navy-900 px-6 text-center text-white">
-        <div className="max-w-xl">
-          <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-2xl bg-gold-500 font-serif text-4xl font-bold">P</div>
-          <h1 className="mb-4 font-serif text-4xl md:text-5xl">{t('maintenance.title')}</h1>
-          <div className="mx-auto my-6 h-px w-16 bg-gold-500" />
-          <p className="text-lg leading-relaxed text-white/75">{maintenance.message || t('maintenance.defaultMessage')}</p>
-        </div>
-      </main>
+      <MaintenancePage
+        message={maintenance.message}
+        reopeningAt={maintenance.reopeningAt}
+        email={company?.email}
+        phone={company?.phone}
+        whatsapp={company?.whatsapp}
+      />
     );
   }
 
