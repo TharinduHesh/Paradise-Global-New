@@ -9,6 +9,7 @@ const Contact: React.FC = () => {
   const { t } = useTranslation();
   const serviceOptions = [
     { value: '', label: t('contact.servicesSelect') },
+    { value: 'Hospitality Booking', label: t('contact.services.hospitalityBooking') },
     { value: 'Plan Approvals', label: t('contact.services.planApprovals') },
     { value: 'Real Estate — Buy', label: t('contact.services.buy') },
     { value: 'Real Estate — Sell', label: t('contact.services.sell') },

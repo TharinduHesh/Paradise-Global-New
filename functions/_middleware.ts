@@ -1,17 +1,9 @@
-interface MaintenanceEnv {
-  DB: {
-    prepare(query: string): {
-      bind(...values: unknown[]): {
-        first<T = Record<string, unknown>>(): Promise<T | null>;
-      };
-      first<T = Record<string, unknown>>(): Promise<T | null>;
-    };
-  };
-}
+import { requireUser, type AdminEnv } from './_lib/admin';
+import { adminHome, canAccessAdminPage } from '../src/lib/adminAccess';
 
 interface MaintenanceContext {
   request: Request;
-  env: MaintenanceEnv;
+  env: AdminEnv;
   next(): Promise<Response>;
 }
 
@@ -20,6 +12,30 @@ const escapeHtml = (value: string): string =>
 
 export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
   const url = new URL(request.url);
+  const adminPath = url.pathname.replace(/\/+$/, '').toLowerCase();
+  if ((adminPath === '/admin' || adminPath.startsWith('/admin/')) &&
+      ['GET', 'HEAD'].includes(request.method) && adminPath !== '/admin/login') {
+    try {
+      const user = await requireUser({ request, env });
+      if (!user || (user.role !== 'owner' && user.role !== 'admin' && adminPath === '/admin')) {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: user ? adminHome(user) : '/admin/login', 'Cache-Control': 'no-store' },
+        });
+      }
+      if (!canAccessAdminPage(user, adminPath)) {
+        return new Response('You do not have permission to open this admin page.', {
+          status: 403, headers: { 'Cache-Control': 'no-store' },
+        });
+      }
+      const response = await next();
+      const headers = new Headers(response.headers);
+      headers.set('Cache-Control', 'no-store');
+      return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+    } catch {
+      return new Response('Admin access is temporarily unavailable.', { status: 503 });
+    }
+  }
 
   if (
     request.method !== 'GET'
@@ -46,8 +62,8 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
           ? new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Colombo' }).format(new Date(maintenance.reopeningAt))
           : '';
         const companyEmail = 'globalparadise99@gmail.com';
-        const companyPhone = company.phone || company.whatsapp || '';
-        const companyWhatsapp = company.whatsapp || company.phone || '';
+        const companyPhone = company.phone || company.whatsapp || '075 166 8705';
+        const companyWhatsapp = company.whatsapp || company.phone || '075 166 8705';
         const html = `<!doctype html>
 <html lang="en" dir="ltr">
 <head>
@@ -101,8 +117,9 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
     .item-title{font-size:13px;font-weight:600;color:#0a1628;margin-bottom:3px}
     .item-desc{font-size:12px;color:#64748b;line-height:1.6}
     /* Contact row */
-    .contacts{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding-top:20px;border-top:1px solid #f1f5f9}
-    .contact-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;margin-bottom:4px}
+    .contacts{display:flex;flex-direction:column;gap:8px;padding-top:20px;border-top:1px solid #f1f5f9}
+    .contact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f8fafc;border-radius:10px;padding:10px 14px}
+    .contact-label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#94a3b8;white-space:nowrap;flex-shrink:0}
     .contact-link{font-size:13px;font-weight:500;color:#0a1628;text-decoration:none;display:flex;align-items:center;gap:6px}
     .contact-link svg{width:13px;height:13px;stroke:#94a3b8;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .contact-link:hover{color:#c9a84c}
@@ -161,11 +178,11 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
         </div>
       </div>
       <div class="contacts">
-        <div>
+        <div class="contact-row">
           <div class="contact-label">Email</div>
-          <a class="contact-link" href="mailto:${escapeHtml(companyEmail)}"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${escapeHtml(companyEmail)}</a>
+          <a class="contact-link" href="mailto:${escapeHtml(companyEmail)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${escapeHtml(companyEmail)}</a>
         </div>
-        ${companyPhone ? `<div><div class="contact-label">Urgent Support</div><a class="contact-link" href="tel:${escapeHtml(companyPhone)}"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.37 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 7.69 7.69l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHtml(companyPhone)}</a></div>` : ''}
+        ${companyPhone ? `<div class="contact-row"><div class="contact-label">Urgent Support</div><a class="contact-link" href="tel:${escapeHtml(companyPhone)}"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.37 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 7.69 7.69l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHtml(companyPhone)}</a></div>` : ''}
       </div>
     </div>
   </div>

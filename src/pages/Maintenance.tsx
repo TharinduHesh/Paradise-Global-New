@@ -33,7 +33,7 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
     : '';
 
   const contactEmail = 'globalparadise99@gmail.com';
-  const contactPhone = phone || whatsapp || '';
+  const contactPhone = phone || whatsapp || '075 166 8705';
   const whatsappLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}`
     : `https://wa.me/${contactPhone.replace(/\D/g, '')}`;
@@ -186,29 +186,25 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
           <div className="my-6 h-px bg-slate-100" />
 
           {/* Contact row */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-                Email
-              </p>
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5">
+              <p className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-400">Email</p>
               <a
                 href={mailtoLink}
-                className="flex items-center gap-1.5 font-medium text-[#0a1628] hover:text-[#c9a84c]"
+                className="flex min-w-0 items-center gap-1.5 font-medium text-[#0a1628] hover:text-[#c9a84c] overflow-hidden"
               >
-                <Mail size={13} className="text-slate-400" />
-                {contactEmail}
+                <Mail size={13} className="shrink-0 text-slate-400" />
+                <span className="truncate">{contactEmail}</span>
               </a>
             </div>
             {contactPhone && (
-              <div>
-                <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Urgent Support
-                </p>
+              <div className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5">
+                <p className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-400">Urgent Support</p>
                 <a
                   href={`tel:${contactPhone}`}
                   className="flex items-center gap-1.5 font-medium text-[#0a1628] hover:text-[#c9a84c]"
                 >
-                  <Phone size={13} className="text-slate-400" />
+                  <Phone size={13} className="shrink-0 text-slate-400" />
                   {contactPhone}
                 </a>
               </div>

@@ -1,3 +1,5 @@
+import { roles, type Role, type StaffPermission } from '../../src/lib/adminAccess';
+
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
   run(): Promise<unknown>;
@@ -7,6 +9,7 @@ interface D1Statement {
 
 interface D1Database {
   prepare(query: string): D1Statement;
+  batch(statements: D1Statement[]): Promise<unknown[]>;
 }
 
 export interface AdminEnv {
@@ -14,11 +17,15 @@ export interface AdminEnv {
   OWNER_SETUP_TOKEN?: string;
 }
 
+export const isAdminRole = (role: unknown): role is AdminUser['role'] =>
+  roles.some((allowedRole) => allowedRole === role);
+
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: 'owner' | 'admin' | 'editor';
+  role: Role;
+  permissions?: StaffPermission[];
   is_active: number;
 }
 
@@ -90,11 +97,13 @@ export const requireUser = async (context: AdminContext) => {
   const token = getCookie(context.request, SESSION_COOKIE);
   if (!token) return null;
   const result = await context.env.DB.prepare(`
-    SELECT u.id, u.email, u.name, u.role, u.is_active FROM admin_sessions s
+    SELECT u.id, u.email, u.name, u.role, u.is_active, u.permissions_json FROM admin_sessions s
     JOIN admin_users u ON u.id = s.user_id
-    WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND u.is_active = 1
-  `).bind(await sha256(token)).first<AdminUser>();
-  return result ?? null;
+    WHERE s.token_hash = ? AND s.expires_at > datetime('now') AND u.is_active = 1 AND u.deleted_at IS NULL
+  `).bind(await sha256(token)).first<AdminUser & { permissions_json: string | null }>();
+  if (!result) return null;
+  const { permissions_json, ...user } = result;
+  return { ...user, permissions: permissions_json ? JSON.parse(permissions_json) as StaffPermission[] : undefined };
 };
 
 export const hasRole = (user: AdminUser, roles: AdminUser['role'][]) => roles.includes(user.role);

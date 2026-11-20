@@ -20,7 +20,7 @@ import MaintenancePage from './pages/Maintenance';
 
 type MaintenanceSettings = { enabled: boolean; message: string; reopeningAt?: string };
 type CompanySettings = { email?: string; phone?: string; whatsapp?: string };
-type ApiSettings = { maintenance?: MaintenanceSettings; company?: CompanySettings };
+type ApiSettings = { maintenance?: MaintenanceSettings; company?: CompanySettings; seo?: { title?: string; description?: string } };
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -37,6 +37,11 @@ const App: React.FC = () => {
       .then((result) => {
         setMaintenance(result.settings.maintenance ?? null);
         setCompany(result.settings.company ?? null);
+        const seo = result.settings.seo;
+        if (seo?.title?.trim()) document.title = seo.title.trim();
+        if (seo?.description?.trim()) {
+          document.querySelector('meta[name="description"]')?.setAttribute('content', seo.description.trim());
+        }
       })
       .catch(() => setMaintenance(null));
   }, []);
