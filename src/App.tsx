@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import i18n from './i18n';
 import Layout from './components/layout/Layout';
 
 // Pages
@@ -21,6 +22,9 @@ const App: React.FC = () => {
   const [maintenance, setMaintenance] = useState<{ enabled: boolean; message: string } | null>(null);
 
   useEffect(() => {
+    if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
+      void i18n.changeLanguage('en');
+    }
     if (window.location.pathname.startsWith('/admin')) return;
     fetch('/api/settings', { cache: 'no-store' })
       .then((response) => response.ok ? response.json() as Promise<{ settings: { maintenance?: { enabled: boolean; message: string } } }> : Promise.reject())

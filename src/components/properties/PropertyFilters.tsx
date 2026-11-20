@@ -83,7 +83,11 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ filters, onChange, on
             className="w-full border border-beige-300 rounded-sm px-3 py-2.5 text-sm text-navy-800 bg-white focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400"
           >
             {propertyTypes.map((type) => (
-              <option key={type} value={type === 'All Types' ? '' : type}>{type === 'All Types' ? t('filters.allTypes') : type}</option>
+              <option key={type} value={type === 'All Types' ? '' : type}>
+                {type === 'All Types'
+                  ? t('filters.allTypes')
+                  : t(`filters.propertyTypes.${type}`, { defaultValue: type })}
+              </option>
             ))}
           </select>
         </div>

@@ -44,7 +44,7 @@ const PropertyDetails: React.FC = () => {
     }
     if (property.priceUnit === 'LKR') {
       if (property.price >= 1000000) {
-        return `LKR ${(property.price / 1000000).toFixed(1)} Million`;
+        return `LKR ${(property.price / 1000000).toFixed(1)} ${t('property.million')}`;
       }
       return `LKR ${property.price.toLocaleString()}`;
     }

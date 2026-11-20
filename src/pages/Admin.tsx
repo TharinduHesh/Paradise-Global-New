@@ -5,6 +5,7 @@ import {
   Settings, Shield, Users, X, Plus, Search, Clock3, AlertTriangle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import i18n from '../i18n';
 
 type Role = 'owner' | 'admin' | 'editor';
 type User = { id: string; email: string; name: string; role: Role };
@@ -93,6 +94,7 @@ const AdminApp: React.FC = () => {
       const saved = window.localStorage.getItem('pgl-language') === 'he' ? 'he' : 'en';
       document.documentElement.lang = saved;
       document.documentElement.dir = saved === 'he' ? 'rtl' : 'ltr';
+      void i18n.changeLanguage(saved);
     };
   }, []);
 

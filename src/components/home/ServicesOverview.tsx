@@ -5,12 +5,13 @@ import SectionHeader from '../ui/SectionHeader';
 import { getPublishedContent } from '../../lib/publishedContent';
 import type { Service } from '../../types';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedText, getLocalizedList } from '../../lib/localizedContent';
 
 const services = [
   {
     icon: FileCheck,
     number: '01',
-    title: 'Plan Approvals',
+    title: 'Paradise Development Solutions',
     description:
       'Navigating Sri Lanka\'s planning process can be complex. We manage every step — from initial consultation and drawing preparation to liaising with Local Authorities, UDA, NHDA, and Coastal Zone Management on your behalf.',
     bullets: ['Local Authority submissions', 'UDA & NHDA approvals', 'Coastal zone compliance', 'Progress monitoring'],
@@ -19,7 +20,7 @@ const services = [
   {
     icon: Home,
     number: '02',
-    title: 'Real Estate',
+    title: 'Paradise Real Estate',
     description:
       'Premium property sales, acquisitions, and investment advisory across Sri Lanka\'s Southern and Western coastlines. We connect buyers with exceptional properties — villas, land, houses, apartments, and commercial assets.',
     bullets: ['Residential & commercial sales', 'Investment property advisory', 'Property valuations', 'Due diligence & market analysis'],
@@ -28,7 +29,7 @@ const services = [
   {
     icon: Building2,
     number: '03',
-    title: 'Property Management',
+    title: 'Paradise Property Care',
     description:
       'End-to-end holiday rental management so you earn maximum income with zero hassle. We handle everything from listing setup and dynamic pricing to guest communication, cleaning, maintenance, and monthly financial reports.',
     bullets: ['Airbnb & Booking.com listings', 'Guest management 24/7', 'Professional cleaning & upkeep', 'Monthly income reporting'],
@@ -37,7 +38,7 @@ const services = [
   {
     icon: Scale,
     number: '04',
-    title: 'Legal Advice & Consultation',
+    title: 'Paradise Legal Solutions',
     description:
       'Property law in Sri Lanka — especially for foreign buyers — requires specialist expertise. Our legal team handles title deed verification, sale agreements, foreign ownership structures, lease drafting, and regulatory compliance.',
     bullets: ['Title deed & due diligence', 'Sale & purchase agreements', 'Foreign ownership advisory', 'Lease agreement drafting'],
@@ -46,7 +47,7 @@ const services = [
   {
     icon: PenTool,
     number: '05',
-    title: 'Architectural & Support Services',
+    title: 'Paradise Hospitality Collection',
     description:
       'From your first sketch to permit-ready drawings, our architectural team brings creative vision and technical precision. We design properties that respond to the tropical climate, local culture, and the stunning Sri Lankan landscape.',
     bullets: ['Concept design & 3D visualisation', 'Detailed architectural drawings', 'Interior & landscape design', 'Structural engineering support'],
@@ -55,7 +56,7 @@ const services = [
   {
     icon: HardHat,
     number: '06',
-    title: 'Construction',
+    title: 'Paradise Design & Construction',
     description:
       'Full-service construction management from foundation to final handover. Our experienced team delivers high-quality villas, commercial buildings, and renovation projects across Southern Sri Lanka — on time and within budget.',
     bullets: ['New villa & house construction', 'Commercial & hospitality builds', 'Renovation & extension projects', 'Quality assurance & inspections'],
@@ -73,9 +74,9 @@ const ServicesOverview: React.FC = () => {
           setVisibleServices(published.map((item, index) => ({
             icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
             number: String(index + 1).padStart(2, '0'),
-            title: t(`services.${item.slug}.title`, { defaultValue: item.title }),
-            description: t(`services.${item.slug}.description`, { defaultValue: item.data.description }),
-            bullets: item.data.features.slice(0, 4).map((feature, featureIndex) =>
+            title: t(`services.${item.slug}.title`, { defaultValue: getLocalizedText(item.title, item.data.title_he) }),
+            description: t(`services.${item.slug}.description`, { defaultValue: getLocalizedText(item.data.description, item.data.description_he) }),
+            bullets: getLocalizedList(item.data.features, item.data.features_he).slice(0, 4).map((feature, featureIndex) =>
               t(`services.${item.slug}.feature${featureIndex + 1}`, { defaultValue: feature })),
             href: `/services/${item.slug}`,
           })));

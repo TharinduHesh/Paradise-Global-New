@@ -4,42 +4,43 @@ import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight } from 
 import { getPublishedContent } from '../../lib/publishedContent';
 import type { Service } from '../../types';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedText } from '../../lib/localizedContent';
 
 const services = [
   {
     icon: FileCheck,
-    title: 'Plan Approvals',
-    short: 'Authority approvals handled end-to-end',
+    title: 'Paradise Development Solutions',
+    short: 'Approval assistance and authority coordination',
     href: '/services/plan-approvals',
   },
   {
     icon: Home,
-    title: 'Real Estate',
-    short: 'Buy, sell & invest in coastal properties',
+    title: 'Paradise Real Estate',
+    short: 'Buy, sell, lease & invest',
     href: '/properties',
   },
   {
     icon: Building2,
-    title: 'Property Management',
-    short: 'Full holiday rental management service',
+    title: 'Paradise Property Care',
+    short: 'Reliable management and maintenance',
     href: '/services/property-management',
   },
   {
     icon: Scale,
-    title: 'Legal Consultation',
-    short: 'Title deeds, ownership & compliance',
+    title: 'Paradise Legal Solutions',
+    short: 'Legal coordination and property advice',
     href: '/services/legal-consultation',
   },
   {
-    icon: PenTool,
-    title: 'Architectural Support',
-    short: 'Design, drawings & 3D visualization',
-    href: '/services/architectural-support',
+    icon: Building2,
+    title: 'Paradise Hospitality Collection',
+    short: 'Hotels, resorts, villas & destinations',
+    href: '/destinations',
   },
   {
     icon: HardHat,
-    title: 'Construction',
-    short: 'Villas, renovations & project builds',
+    title: 'Paradise Design & Construction',
+    short: 'Architecture, engineering & construction',
     href: '/services/construction',
   },
 ];
@@ -53,8 +54,8 @@ const ServicesStrip: React.FC = () => {
         if (published.length) {
           setVisibleServices(published.map((item) => ({
             icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
-            title: item.title,
-            short: item.data.description,
+            title: getLocalizedText(item.title, item.data.title_he),
+            short: getLocalizedText(item.data.description, item.data.description_he),
             href: `/services/${item.slug}`,
           })));
         }

@@ -1,9 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import {
-  MapPin, Phone, Mail, ArrowRight,
-  ExternalLink, Globe, MessageCircle
-} from 'lucide-react';
+import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const FacebookIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
@@ -31,12 +28,8 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand Column */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-5">
-              <img src="/logo.png" alt="Paradise Global Leisures" className="h-14 w-auto" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-              <div>
-                <div className="font-serif font-bold text-xl text-white">PARADISE</div>
-                <div className="text-gold-400 text-xs tracking-widest">Global Leisures</div>
-              </div>
+            <div className="mb-5 flex h-24 items-center">
+              <img src="/logo.png" alt="Paradise Global Leisures" className="h-24 w-24 object-contain max-sm:h-20 max-sm:w-20" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
             </div>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
               {t('footer.description')}
@@ -45,9 +38,6 @@ const Footer: React.FC = () => {
               {[
                 { icon: FacebookIcon, href: '#', label: 'Facebook' },
                 { icon: InstagramIcon, href: '#', label: 'Instagram' },
-                { icon: ExternalLink, href: '#', label: 'LinkedIn' },
-                { icon: Globe, href: '#', label: 'Website' },
-                { icon: MessageCircle, href: 'https://wa.me/94770000000', label: 'WhatsApp' },
               ].map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
@@ -66,12 +56,12 @@ const Footer: React.FC = () => {
             <h4 className="font-serif text-white font-semibold text-lg mb-5">{t('footer.services')}</h4>
             <ul className="space-y-2.5">
               {[
-                { label: 'Plan Approvals', href: '/services/plan-approvals' },
-                { label: 'Real Estate', href: '/properties' },
-                { label: 'Property Management', href: '/services/property-management' },
-                { label: 'Legal Consultation', href: '/services/legal-consultation' },
-                { label: 'Architectural Support', href: '/services/architectural-support' },
-                { label: 'Construction', href: '/services/construction' },
+                { label: 'Paradise Real Estate', href: '/properties' },
+                { label: 'Paradise Development Solutions', href: '/services/plan-approvals' },
+                { label: 'Paradise Property Care', href: '/services/property-management' },
+                { label: 'Paradise Hospitality Collection', href: '/destinations' },
+                { label: 'Paradise Legal Solutions', href: '/services/legal-consultation' },
+                { label: 'Paradise Design & Construction', href: '/services/construction' },
               ].map((item) => (
                 <li key={item.href}>
                   <Link
@@ -80,12 +70,12 @@ const Footer: React.FC = () => {
                   >
                     <ArrowRight size={12} className="text-gold-500 group-hover:translate-x-1 transition-transform" />
                     {t(`nav.${{
-                      'Plan Approvals': 'planApprovals',
-                      'Real Estate': 'realEstate',
-                      'Property Management': 'propertyManagement',
-                      'Legal Consultation': 'legalConsultation',
-                      'Architectural Support': 'architecturalSupport',
-                      Construction: 'construction',
+                      'Paradise Real Estate': 'realEstate',
+                      'Paradise Development Solutions': 'planApprovals',
+                      'Paradise Property Care': 'propertyManagement',
+                      'Paradise Hospitality Collection': 'destinations',
+                      'Paradise Legal Solutions': 'legalConsultation',
+                      'Paradise Design & Construction': 'construction',
                     }[item.label] ?? ''}`, { defaultValue: item.label })}
                   </Link>
                 </li>

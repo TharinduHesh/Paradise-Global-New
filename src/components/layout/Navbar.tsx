@@ -12,12 +12,12 @@ const navLinks = [
     href: '/services',
     children: [
       { label: 'All Services', href: '/services' },
-      { label: 'Plan Approvals', href: '/services/plan-approvals' },
-      { label: 'Real Estate', href: '/properties' },
-      { label: 'Property Management', href: '/services/property-management' },
-      { label: 'Legal Consultation', href: '/services/legal-consultation' },
-      { label: 'Architectural Support', href: '/services/architectural-support' },
-      { label: 'Construction', href: '/services/construction' },
+      { label: 'Paradise Real Estate', href: '/properties' },
+      { label: 'Paradise Development Solutions', href: '/services/plan-approvals' },
+      { label: 'Paradise Property Care', href: '/services/property-management' },
+      { label: 'Paradise Hospitality Collection', href: '/destinations' },
+      { label: 'Paradise Legal Solutions', href: '/services/legal-consultation' },
+      { label: 'Paradise Design & Construction', href: '/services/construction' },
     ],
   },
   { label: 'Properties', href: '/properties' },
@@ -28,9 +28,12 @@ const navLinks = [
 const navKeys: Record<string, string> = {
   Home: 'home', About: 'about', Services: 'services', 'All Services': 'allServices',
   Properties: 'properties', Destinations: 'destinations', Contact: 'contact',
-  'Plan Approvals': 'planApprovals', 'Real Estate': 'realEstate',
-  'Property Management': 'propertyManagement', 'Legal Consultation': 'legalConsultation',
-  'Architectural Support': 'architecturalSupport', Construction: 'construction',
+  'Paradise Real Estate': 'realEstate',
+  'Paradise Development Solutions': 'planApprovals',
+  'Paradise Property Care': 'propertyManagement',
+  'Paradise Hospitality Collection': 'destinations',
+  'Paradise Legal Solutions': 'legalConsultation',
+  'Paradise Design & Construction': 'construction',
 };
 
 const Navbar: React.FC = () => {
@@ -59,26 +62,22 @@ const Navbar: React.FC = () => {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
       <div className="container-custom">
-        <div className="flex items-center justify-between h-20">
+        <div className="grid h-24 grid-cols-[220px_minmax(520px,1fr)_350px] items-center max-xl:flex max-xl:h-24 max-xl:justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 flex-shrink-0">
+          <Link to="/" className="flex h-24 items-center flex-shrink-0" aria-label="Paradise Global Leisures">
             <img
               src="/logo.png"
               alt="Paradise Global Leisures"
-              className="h-12 w-auto"
+              className="h-20 w-20 shrink-0 object-contain max-xl:h-16 max-xl:w-16"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
               }}
             />
-            <div className="leading-tight">
-              <div className="text-white font-serif font-bold text-lg tracking-wide">PARADISE</div>
-              <div className="text-gold-400 text-xs tracking-widest font-medium uppercase">Global Leisures</div>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden min-w-0 items-center justify-center gap-0 xl:flex">
             {navLinks.map((link) =>
               link.children ? (
                 <div
@@ -87,7 +86,7 @@ const Navbar: React.FC = () => {
                   onMouseEnter={() => setActiveDropdown(link.label)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <button className="flex items-center gap-1 text-white/90 hover:text-gold-400 px-4 py-2 text-sm font-medium transition-colors duration-200">
+                  <button className="flex items-center gap-1 whitespace-nowrap px-2 py-2 text-xs font-medium text-white/90 transition-colors duration-200 hover:text-gold-400">
                     {t(`nav.${navKeys[link.label] ?? 'services'}`)}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                   </button>
@@ -110,7 +109,7 @@ const Navbar: React.FC = () => {
                   key={link.href}
                   to={link.href}
                   className={({ isActive }) =>
-                    `px-4 py-2 text-sm font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
+                    `whitespace-nowrap px-2 py-2 text-xs font-medium transition-colors duration-200 ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                   }
                 >
                   {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
@@ -120,28 +119,28 @@ const Navbar: React.FC = () => {
           </nav>
 
           {/* CTA + Mobile Toggle */}
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-xs text-white/80 sm:flex">
+          <div className="flex w-[350px] shrink-0 items-center justify-end gap-2 max-xl:w-auto">
+            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-xs text-white/80 xl:flex">
               <button onClick={() => void i18n.changeLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
               <span className="text-white/40">|</span>
               <button onClick={() => void i18n.changeLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
             </div>
             <a
               href="tel:+94XXXXXXXXX"
-              className="hidden md:flex items-center gap-2 text-gold-400 text-sm font-medium hover:text-gold-300 transition-colors"
+              className="hidden xl:flex items-center gap-2 text-gold-400 text-sm whitespace-nowrap font-medium hover:text-gold-300 transition-colors"
             >
               <Phone size={15} />
               <span>+94 77 000 0000</span>
             </a>
             <Link
               to="/contact"
-              className="hidden md:inline-flex btn-primary text-sm px-5 py-2.5"
+              className="hidden xl:inline-flex btn-primary text-sm px-4 py-2.5 whitespace-nowrap"
             >
               {t('nav.consultation')}
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden text-white hover:text-gold-400 transition-colors p-1"
+              className="xl:hidden text-white hover:text-gold-400 transition-colors p-1"
               aria-label={t('nav.toggleMenu')}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -151,7 +150,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`lg:hidden bg-navy-950 transition-all duration-300 overflow-hidden ${mobileOpen ? 'max-h-screen' : 'max-h-0'}`}>
+      <div className={`xl:hidden bg-navy-950 transition-all duration-300 overflow-hidden ${mobileOpen ? 'max-h-screen' : 'max-h-0'}`}>
         <div className="container-custom py-4 flex flex-col gap-1">
           {navLinks.map((link) =>
             link.children ? (

@@ -4,8 +4,8 @@ import { en } from './en';
 import { he } from './he';
 
 const savedLanguage = window.localStorage.getItem('pgl-language');
-const selectedLanguage = savedLanguage === 'he' ? 'he' : 'en';
 if (savedLanguage === 'si') window.localStorage.setItem('pgl-language', 'en');
+const selectedLanguage = savedLanguage === 'he' ? 'he' : 'en';
 
 void i18n.use(initReactI18next).init({
   resources: { en, he },
@@ -23,7 +23,9 @@ const applyDocumentLocale = (language: string) => {
 applyDocumentLocale(selectedLanguage);
 i18n.on('languageChanged', (language) => {
   const selected = language === 'he' ? 'he' : 'en';
-  window.localStorage.setItem('pgl-language', selected);
+  if (!window.location.pathname.startsWith('/admin')) {
+    window.localStorage.setItem('pgl-language', selected);
+  }
   applyDocumentLocale(selected);
 });
 
