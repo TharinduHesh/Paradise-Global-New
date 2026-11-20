@@ -21,7 +21,6 @@ interface MaintenancePageProps {
 const MaintenancePage: React.FC<MaintenancePageProps> = ({
   message,
   reopeningAt,
-  email,
   phone,
   whatsapp,
 }) => {
@@ -33,7 +32,7 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
       }).format(new Date(reopeningAt))
     : '';
 
-  const contactEmail = email || 'info@paradiseglobal.lk';
+  const contactEmail = 'globalparadise99@gmail.com';
   const contactPhone = phone || whatsapp || '';
   const whatsappLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}`
