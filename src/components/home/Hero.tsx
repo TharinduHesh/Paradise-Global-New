@@ -28,26 +28,28 @@ const Hero: React.FC = () => {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Image with Parallax */}
-      <div
-        ref={heroRef}
-        className="absolute inset-0 bg-cover bg-center scale-110"
-        style={{
-          backgroundImage: `url("${heroImage}")`,
-        }}
-      />
+      <div ref={heroRef} className="absolute inset-0">
+        {/* Inner layer zooms on load; the outer layer carries the scroll parallax, so the two transforms don't clash. */}
+        <div
+          className="absolute inset-0 bg-cover bg-center scale-110 animate-hero-zoom"
+          style={{
+            backgroundImage: `url("${heroImage}")`,
+          }}
+        />
+      </div>
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-hero-pattern" />
       <div className="absolute inset-0 bg-gradient-to-r from-navy-900/55 via-navy-900/25 to-transparent" />
 
       {/* Gold accent line */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold-gradient opacity-70" />
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold-gradient opacity-70 animate-line-grow" />
 
       {/* Content */}
       <div className="relative container-custom py-32 lg:py-40">
         <div className="max-w-3xl">
           {/* Eyebrow */}
-          <div className="flex items-center gap-3 mb-6 animate-fade-in">
+          <div className="flex items-center gap-3 mb-6 animate-fade-in animate-delay-300">
             <div className="h-px w-12 bg-gold-400" />
             <p className="text-gold-400 text-sm font-medium uppercase tracking-[0.2em]">
               {t('home.eyebrow')}
@@ -55,22 +57,22 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Main heading */}
-          <h1 className="font-serif text-white text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-4 animate-fade-up">
+          <h1 className="font-serif text-white text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-4 animate-fade-up animate-delay-400">
             {t('home.title')}
           </h1>
 
           {/* Tagline */}
-          <p className="text-white/90 text-xl md:text-2xl font-serif italic mb-6 animate-fade-up animate-delay-100">
+          <p className="text-white/90 text-xl md:text-2xl font-serif italic mb-6 animate-fade-up animate-delay-500">
             {t('home.tagline')}
           </p>
 
           {/* Description */}
-          <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-2xl animate-fade-up animate-delay-200">
+          <p className="text-white/70 text-base md:text-lg leading-relaxed mb-10 max-w-2xl animate-fade-up animate-delay-500">
             {t('home.description')}
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 animate-fade-up animate-delay-300">
+          <div className="flex flex-col sm:flex-row gap-4 animate-fade-up animate-delay-700">
             <Link
               to="/properties"
               className="btn-primary text-base px-8 py-4 group"
@@ -87,7 +89,7 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Stats Row */}
-          <div className="flex flex-wrap gap-8 mt-14 pt-10 border-t border-white/20 animate-fade-up animate-delay-400">
+          <div className="flex flex-wrap gap-8 mt-14 pt-10 border-t border-white/20 animate-fade-up animate-delay-700">
             {[
               { value: '150+', label: t('home.managed') },
               { value: '8', label: t('home.destinations') },
