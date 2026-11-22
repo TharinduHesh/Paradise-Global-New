@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, Phone } from 'lucide-react';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
-import { phoneHref, useCompany } from '../../lib/siteContent';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -67,7 +66,6 @@ const LanguageSwitch: React.FC<{ compact?: boolean; className?: string }> = ({ c
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
-  const company = useCompany();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -92,7 +90,7 @@ const Navbar: React.FC = () => {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
       <div className="container-custom">
-        <div className="grid h-24 grid-cols-[150px_minmax(0,1fr)_330px] items-center max-xl:flex max-xl:h-24 max-xl:justify-between">
+        <div className="grid h-24 grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 max-xl:flex max-xl:h-24 max-xl:justify-between">
           {/* Logo */}
           <Link to="/" className="flex h-24 items-center flex-shrink-0" aria-label="Paradise Global Leisures">
             <img
@@ -149,16 +147,9 @@ const Navbar: React.FC = () => {
           </nav>
 
           {/* CTA + Mobile Toggle */}
-          <div className="flex w-[330px] shrink-0 items-center justify-end gap-2 max-xl:w-auto">
+          <div className="relative z-10 flex shrink-0 items-center justify-end gap-2">
             <LanguageSwitch className="hidden xl:flex" />
             <LanguageSwitch compact className="xl:hidden" />
-            <a
-              href={phoneHref(company.phone)}
-              className="hidden 2xl:flex items-center gap-2 text-gold-400 text-base whitespace-nowrap font-medium hover:text-gold-300 transition-colors"
-            >
-              <Phone size={15} />
-              <span dir="ltr">{company.phone}</span>
-            </a>
             <Link
               to="/contact"
               className="hidden xl:inline-flex btn-primary whitespace-nowrap px-4 py-2.5 text-[14px]"
@@ -219,10 +210,6 @@ const Navbar: React.FC = () => {
             )
           )}
           <div className="pt-4 pb-2 flex flex-col gap-3">
-            <a href={phoneHref(company.phone)} className="flex items-center gap-2 text-gold-400 text-sm px-4 py-2">
-              <Phone size={15} />
-              <span dir="ltr">{company.phone}</span>
-            </a>
             <Link to="/contact" className="btn-primary mx-4 text-center justify-center">
               {t('nav.consultation')}
             </Link>
