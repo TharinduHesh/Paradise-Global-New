@@ -4,6 +4,7 @@ import { CheckCircle, ArrowRight } from 'lucide-react';
 import SectionHeader from '../components/ui/SectionHeader';
 import ProcessStep from '../components/ui/ProcessStep';
 import CTABanner from '../components/home/CTABanner';
+import { Counter } from '../components/motion/primitives';
 import { services } from '../data/services';
 
 const service = services.find(s => s.slug === 'construction')!;
@@ -131,7 +132,7 @@ const Construction: React.FC = () => {
                 { value: '0', label: 'Projects Over Budget' },
               ].map(({ value, label }) => (
                 <div key={label} className="bg-white/5 border border-white/10 rounded-sm p-6 text-center">
-                  <p className="font-serif text-gold-400 text-4xl font-bold">{value}</p>
+                  <p className="font-serif text-gold-400 text-4xl font-bold"><Counter value={value} /></p>
                   <p className="text-white/60 text-sm mt-2">{label}</p>
                 </div>
               ))}

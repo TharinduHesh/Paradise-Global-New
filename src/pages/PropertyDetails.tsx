@@ -8,7 +8,9 @@ import {
 import { properties as staticProperties } from '../data/properties';
 import { usePublishedList } from '../lib/publishedContent';
 import type { Property } from '../types';
+import { AnimatePresence, motion } from 'motion/react';
 import Badge from '../components/ui/Badge';
+import { EASE_INOUT, EASE_LUXE } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
 
@@ -80,14 +82,27 @@ const PropertyDetails: React.FC = () => {
             {/* Left: Images + Details */}
             <div className="lg:col-span-2">
               {/* Main Image */}
-              <div className="relative overflow-hidden rounded-sm shadow-card mb-3 h-72 md:h-[420px]">
-                <img
-                  src={allImages[activeImage]}
-                  alt={localizedName}
-                  className="w-full h-full object-cover"
-                />
+              {/* Opens with an architectural wipe; photos crossfade with a gentle settle as you browse */}
+              <motion.div
+                data-motion="manual"
+                className="relative overflow-hidden rounded-sm shadow-card mb-3 h-72 md:h-[420px] bg-navy-900"
+                initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
+                animate={{ clipPath: 'inset(0% 0% 0% 0%)' }}
+                transition={{ duration: 1.2, ease: EASE_INOUT, delay: 0.35 }}
+              >
+                <AnimatePresence initial={false}>
+                  <motion.img
+                    key={allImages[activeImage]}
+                    src={allImages[activeImage]}
+                    alt={localizedName}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    initial={{ opacity: 0, scale: 1.08 }}
+                    animate={{ opacity: 1, scale: 1, transition: { duration: 1.1, ease: EASE_LUXE } }}
+                    exit={{ opacity: 0, transition: { duration: 0.6, ease: EASE_INOUT } }}
+                  />
+                </AnimatePresence>
                 {/* Badges */}
-                <div className="absolute top-4 left-4 flex gap-2">
+                <div className="absolute top-4 left-4 z-10 flex gap-2">
                   <Badge variant={property.priceType === 'sale' ? 'navy' : 'gold'} size="md">
                     {property.priceType === 'sale' ? t('property.forSale') : t('property.forRent')}
                   </Badge>
@@ -102,19 +117,21 @@ const PropertyDetails: React.FC = () => {
                   <>
                     <button
                       onClick={() => setActiveImage(Math.max(0, activeImage - 1))}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white shadow-md"
+                      aria-label="Previous photo"
+                      className="absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white shadow-md transition-all duration-300 hover:scale-110"
                     >
                       <ArrowLeft size={18} />
                     </button>
                     <button
                       onClick={() => setActiveImage(Math.min(allImages.length - 1, activeImage + 1))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white shadow-md"
+                      aria-label="Next photo"
+                      className="absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white shadow-md transition-all duration-300 hover:scale-110"
                     >
                       <ArrowRight size={18} />
                     </button>
                   </>
                 )}
-              </div>
+              </motion.div>
 
               {/* Thumbnail Strip */}
               {allImages.length > 1 && (
@@ -123,7 +140,7 @@ const PropertyDetails: React.FC = () => {
                     <button
                       key={i}
                       onClick={() => setActiveImage(i)}
-                      className={`flex-shrink-0 w-20 h-16 rounded-sm overflow-hidden border-2 transition-colors ${i === activeImage ? 'border-gold-500' : 'border-transparent'}`}
+                      className={`flex-shrink-0 w-20 h-16 rounded-sm overflow-hidden border-2 transition-all duration-500 ease-luxe ${i === activeImage ? 'border-gold-500 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     >
                       <img src={img} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -283,9 +300,10 @@ const PropertyDetails: React.FC = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedProperties.map((p) => (
-                  <div key={p.id} className="bg-white rounded-sm shadow-card overflow-hidden card-hover border border-beige-200">
-                    <div className="h-44 overflow-hidden">
-                      <img src={p.image} alt={getLocalizedText(p.name, p.name_he)} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  <div key={p.id} className="lux-card group bg-white rounded-sm shadow-card overflow-hidden border border-beige-200">
+                    <div className="relative h-44 overflow-hidden">
+                      <img src={p.image} alt={getLocalizedText(p.name, p.name_he)} loading="lazy" className="lux-zoom w-full h-full object-cover" />
+                      <span aria-hidden="true" className="lux-rule absolute inset-x-0 bottom-0 h-0.5 bg-gold-gradient" />
                     </div>
                     <div className="p-4">
                       <h3 className="font-serif font-semibold text-navy-900 mb-1 line-clamp-1">{getLocalizedText(p.name, p.name_he)}</h3>

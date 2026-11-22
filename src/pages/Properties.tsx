@@ -6,6 +6,8 @@ import { properties as staticProperties } from '../data/properties';
 import type { Property } from '../types';
 import type { PropertyFilters as FiltersType } from '../types';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'motion/react';
+import { EASE_INOUT, EASE_LUXE } from '../lib/motion';
 
 const defaultFilters: FiltersType = {
   priceType: 'all',
@@ -72,19 +74,35 @@ const Properties: React.FC = () => {
           {/* Results Count */}
           <div className="flex items-center justify-between mb-6">
             <p className="text-navy-600 text-sm">
-              {t('propertiesPage.showing')} <span className="font-semibold text-navy-900">{filtered.length}</span> {t('propertiesPage.of')}{' '}
+              {t('propertiesPage.showing')} <motion.span key={filtered.length} className="inline-block font-semibold text-navy-900" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_LUXE }}>{filtered.length}</motion.span> {t('propertiesPage.of')}{' '}
               <span className="font-semibold text-navy-900">{properties.length}</span> {t('propertiesPage.properties')}
             </p>
           </div>
 
-          {filtered.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+          {/* Cards glide to their new places as filters change; leavers fade back, newcomers rise in */}
+          <div data-motion="manual" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((property, index) => (
+                <motion.div
+                  key={property.id}
+                  layout
+                  initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.75, ease: EASE_LUXE, delay: Math.min(index, 8) * 0.06 } }}
+                  exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.3, ease: EASE_INOUT } }}
+                  transition={{ layout: { duration: 0.6, ease: EASE_LUXE } }}
+                >
+                  <PropertyCard property={property} />
+                </motion.div>
               ))}
-            </div>
-          ) : (
-            <div className="text-center py-20">
+            </AnimatePresence>
+          </div>
+          {filtered.length === 0 && (
+            <motion.div
+              data-motion="manual"
+              className="text-center py-20"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE_LUXE, delay: 0.2 } }}
+            >
               <Search size={48} className="text-beige-400 mx-auto mb-4" />
               <h3 className="font-serif text-navy-700 text-xl mb-2">{t('propertiesPage.noResults')}</h3>
               <p className="text-navy-500 text-sm mb-6">{t('propertiesPage.adjust')}</p>
@@ -94,7 +112,7 @@ const Properties: React.FC = () => {
               >
                 {t('propertiesPage.clear')}
               </button>
-            </div>
+            </motion.div>
           )}
         </div>
       </section>

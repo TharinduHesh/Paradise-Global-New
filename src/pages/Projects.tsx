@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { MapPin, Calendar, CheckCircle } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Badge from '../components/ui/Badge';
+import { EASE_INOUT, EASE_LUXE } from '../lib/motion';
 import CTABanner from '../components/home/CTABanner';
 import { useCatalogue, viewProject } from '../lib/catalogue';
 import { usePageImage } from '../lib/siteContent';
@@ -45,23 +47,35 @@ const Projects: React.FC = () => {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-5 py-2 rounded-md text-sm font-semibold capitalize transition-all ${filter === f ? 'bg-navy-900 text-white shadow-navy' : 'bg-white border border-beige-200 text-navy-600 hover:border-gold-300'}`}
+                aria-pressed={filter === f}
+                className={`relative px-5 py-2 rounded-md text-sm font-semibold capitalize transition-colors duration-300 ${filter === f ? 'text-white' : 'bg-white border border-beige-200 text-navy-600 hover:border-gold-300'}`}
               >
-                {f === 'all' ? 'All Projects' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {filter === f && <motion.span layoutId="project-filter" aria-hidden="true" className="absolute inset-0 rounded-md bg-navy-900 shadow-navy" transition={{ type: 'spring', stiffness: 380, damping: 34 }} />}
+                <span className="relative">{f === 'all' ? 'All Projects' : f.charAt(0).toUpperCase() + f.slice(1)}</span>
               </button>
             ))}
           </div>
 
           {/* Projects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((project) => (
-              <div key={project.id} className="group bg-white rounded-sm shadow-card card-hover overflow-hidden border border-beige-200">
+          <div data-motion="manual" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+            {filtered.map((project, index) => (
+              <motion.div
+                key={project.id}
+                layout
+                initial={{ opacity: 0, y: 40, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.75, ease: EASE_LUXE, delay: Math.min(index, 8) * 0.06 } }}
+                exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.3, ease: EASE_INOUT } }}
+                transition={{ layout: { duration: 0.6, ease: EASE_LUXE } }}
+                className="lux-card group bg-white rounded-sm shadow-card overflow-hidden border border-beige-200"
+              >
                 <div className="relative h-56 overflow-hidden">
                   <img
                     src={project.image}
                     alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="lux-zoom w-full h-full object-cover"
                   />
+                  <span aria-hidden="true" className="lux-rule absolute inset-x-0 bottom-0 h-0.5 bg-gold-gradient" />
                   <div className="absolute top-3 right-3">
                     <Badge variant={statusBadge[project.status]} size="md">
                       {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
@@ -85,8 +99,9 @@ const Projects: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
         </div>
       </section>

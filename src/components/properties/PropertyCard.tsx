@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Bed, Bath, Square, ArrowRight, Waves, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Square, ArrowRight, ArrowUpRight, Waves, MessageCircle } from 'lucide-react';
 import type { Property } from '../../types';
 import Badge from '../ui/Badge';
 import { useTranslation } from 'react-i18next';
@@ -35,15 +35,29 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const fallbackImage = `https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&q=80`;
 
   return (
-    <div className="group bg-white rounded-sm shadow-card card-hover overflow-hidden border border-beige-200">
+    <div className="lux-card group h-full bg-white rounded-sm shadow-card overflow-hidden border border-beige-200">
       {/* Image */}
       <div className="relative overflow-hidden h-56">
         <img
           src={imgError ? fallbackImage : property.image}
           alt={localizedName}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
+          className="lux-zoom w-full h-full object-cover"
           onError={() => setImgError(true)}
         />
+        {/* Hover veil with a "view" chip; the whole photo opens the listing */}
+        <Link
+          to={`/properties/${property.slug}`}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-navy-950/60 via-navy-950/15 to-transparent opacity-0 transition-opacity duration-700 ease-luxe group-hover:opacity-100"
+        >
+          <span className="flex h-14 w-14 scale-75 items-center justify-center rounded-full border border-white/50 bg-white/10 text-white backdrop-blur-sm transition-transform duration-700 ease-luxe group-hover:scale-100">
+            <ArrowUpRight size={22} />
+          </span>
+        </Link>
+        <span aria-hidden="true" className="lux-rule absolute inset-x-0 bottom-0 h-0.5 bg-gold-gradient" />
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           <Badge variant={property.priceType === 'sale' ? 'navy' : 'gold'}>

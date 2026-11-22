@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePageImage, useCompany, whatsappHref } from '../../lib/siteContent';
+import { Magnetic, ParallaxBackground } from '../motion/primitives';
 
 const CTABanner: React.FC = () => {
   const { t } = useTranslation();
@@ -11,10 +12,7 @@ const CTABanner: React.FC = () => {
   return (
     <section className="relative py-20 overflow-hidden">
       {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: `url('${background}')` }}
-      />
+      <ParallaxBackground src={background} speed={0.2} />
       <div className="absolute inset-0 bg-navy-900/85" />
 
       {/* Gold line decorations */}
@@ -32,9 +30,11 @@ const CTABanner: React.FC = () => {
           {t('home.ctaSubtitle')}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/properties" className="btn-primary text-base px-8 py-4">
-            {t('home.explore')} <ArrowRight size={18} />
-          </Link>
+          <Magnetic className="flex sm:inline-flex">
+            <Link to="/properties" className="btn-primary flex-1 justify-center text-base px-8 py-4">
+              {t('home.explore')} <ArrowRight size={18} />
+            </Link>
+          </Magnetic>
           <Link to="/contact" className="btn-outline text-base px-8 py-4">
             {t('home.consultation')} <ArrowRight size={18} />
           </Link>

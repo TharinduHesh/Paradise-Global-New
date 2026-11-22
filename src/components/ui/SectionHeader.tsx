@@ -1,4 +1,7 @@
 import React from 'react';
+import { motion } from 'motion/react';
+import { DURATION, EASE_INOUT, VIEWPORT, isRtl, luxe, revealVariants, staggerContainer } from '../../lib/motion';
+import { useIntroDone } from '../motion/intro';
 
 interface SectionHeaderProps {
   eyebrow?: string;
@@ -9,6 +12,12 @@ interface SectionHeaderProps {
   className?: string;
 }
 
+// Title rises out of a mask; the gold rule draws in beneath it.
+const titleMask = {
+  hidden: { clipPath: 'inset(-10% -5% 110% -5%)', y: '35%' },
+  visible: { clipPath: 'inset(-10% -5% -15% -5%)', y: '0%', transition: luxe(DURATION.slow) },
+};
+
 const SectionHeader: React.FC<SectionHeaderProps> = ({
   eyebrow,
   title,
@@ -17,27 +26,39 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   light = false,
   className = '',
 }) => {
+  const ready = useIntroDone();
+  const originX = centered ? 0.5 : isRtl() ? 1 : 0;
   return (
-    <div className={`${centered ? 'text-center' : ''} ${className}`}>
+    <motion.div
+      data-motion="manual"
+      className={`${centered ? 'text-center' : ''} ${className}`}
+      initial="hidden"
+      whileInView={ready ? 'visible' : undefined}
+      viewport={VIEWPORT}
+      variants={staggerContainer(0.12)}
+    >
       {eyebrow && (
-        <p className="text-gold-500 font-medium text-sm uppercase tracking-widest mb-2">
+        <motion.p className="text-gold-500 font-medium text-sm uppercase tracking-widest mb-2" variants={revealVariants('up', DURATION.base)}>
           {eyebrow}
-        </p>
+        </motion.p>
       )}
       <h2 className={`font-serif text-3xl md:text-4xl font-bold leading-tight ${light ? 'text-white' : 'text-navy-900'}`}>
-        {title}
+        <motion.span className="block" variants={titleMask}>{title}</motion.span>
       </h2>
-      {centered ? (
-        <div className="gold-divider" />
-      ) : (
-        <div className="gold-divider-left" />
-      )}
+      <motion.div
+        className={centered ? 'gold-divider' : 'gold-divider-left'}
+        style={{ originX }}
+        variants={{ hidden: { scaleX: 0 }, visible: { scaleX: 1, transition: { duration: 0.9, ease: EASE_INOUT } } }}
+      />
       {subtitle && (
-        <p className={`mt-5 text-lg leading-relaxed max-w-2xl ${centered ? 'mx-auto' : ''} ${light ? 'text-white/70' : 'text-navy-600'}`}>
+        <motion.p
+          className={`mt-5 text-lg leading-relaxed max-w-2xl ${centered ? 'mx-auto' : ''} ${light ? 'text-white/70' : 'text-navy-600'}`}
+          variants={revealVariants('up', DURATION.base)}
+        >
           {subtitle}
-        </p>
+        </motion.p>
       )}
-    </div>
+    </motion.div>
   );
 };
 

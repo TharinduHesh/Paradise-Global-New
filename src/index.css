@@ -44,6 +44,9 @@
   --shadow-card: 0 2px 15px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05);
   --shadow-card-hover: 0 10px 40px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.08);
 
+  --ease-luxe: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
   --animate-fade-up: fadeUp 0.6s ease-out forwards;
   --animate-fade-in: fadeIn 0.5s ease-out forwards;
 
@@ -212,56 +215,176 @@ html[dir='rtl'] a[href^='tel'] * {
   .animate-delay-500 { animation-delay: 500ms; }
   .animate-delay-700 { animation-delay: 700ms; }
 
-  /* Hero background eases out of a slight zoom as the page opens. */
-  .animate-hero-zoom { animation: heroZoom 2.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  @keyframes heroZoom {
-    0% { transform: scale(1.22); opacity: 0.4; }
-    100% { transform: scale(1.1); opacity: 1; }
-  }
-  /* Gold accent line draws downward. */
-  .animate-line-grow { transform-origin: top; animation: lineGrow 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both; }
-  @keyframes lineGrow {
-    0% { transform: scaleY(0); }
-    100% { transform: scaleY(1); }
+  /* ───────────────────────── Motion system ─────────────────────────
+     Shared curves: --ease-luxe (long soft settle) and --ease-inout (wipes).
+     JS-driven motion lives in src/components/motion and src/lib/motion.ts and uses the same curves. */
+
+  /* Entrance animations wait for the branded intro: until <html data-intro-done> they hold their first frame. */
+  html:not([data-intro-done]) [data-page-header] *,
+  html:not([data-intro-done]) .hero-kenburns { animation-play-state: paused; }
+
+  /* Hero photograph: an endless, slow Ken Burns drift. */
+  .hero-kenburns { transform-origin: 60% 40%; animation: kenBurns 28s ease-in-out infinite alternate; will-change: transform; }
+  @keyframes kenBurns {
+    from { transform: scale(1) translate3d(0, 0, 0); }
+    to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
   }
 
-  /* Scroll reveal: sections fade up the first time they enter the viewport (see components/ui/Reveal). */
-  .reveal {
+  /* Hero scroll cue: a gold bead travels down a fine line. */
+  .scroll-cue::after {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 40%;
+    background: linear-gradient(to bottom, transparent, var(--color-gold-400));
+    animation: scrollCue 2.2s var(--ease-inout) infinite;
+  }
+  @keyframes scrollCue {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(260%); }
+  }
+
+  /* Inner page banners (tagged by useAutoReveal): the photo drifts out of a zoom, the text rises in sequence,
+     the heading lifts out of a mask and the gold rule draws in. */
+  [data-page-header] > .bg-cover { animation: headerDrift 16s var(--ease-luxe) both; }
+  [data-page-header] .container-custom > * { animation: headerRise 1s var(--ease-luxe) both; animation-delay: 0.15s; }
+  [data-page-header] .container-custom > :nth-child(2) { animation-delay: 0.25s; }
+  [data-page-header] .container-custom > :nth-child(3) { animation-delay: 0.35s; }
+  [data-page-header] .container-custom > :nth-child(4) { animation-delay: 0.45s; }
+  [data-page-header] .container-custom > :nth-child(5) { animation-delay: 0.55s; }
+  [data-page-header] .container-custom > :nth-child(n + 6) { animation-delay: 0.65s; }
+  [data-page-header] h1 { animation-name: headerMask; animation-duration: 1.2s; }
+  [data-page-header] .gold-divider,
+  [data-page-header] .gold-divider-left { animation-name: ruleDraw; animation-duration: 1.1s; animation-timing-function: var(--ease-inout); }
+  [data-page-header] .gold-divider-left { transform-origin: left; }
+  html[dir='rtl'] [data-page-header] .gold-divider-left { transform-origin: right; }
+  @keyframes headerDrift {
+    from { transform: scale(1.22); }
+    to { transform: scale(1.04); }
+  }
+  @keyframes headerRise {
+    from { opacity: 0; transform: translate3d(0, 26px, 0); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes headerMask {
+    from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate3d(0, 40%, 0); }
+    to { opacity: 1; clip-path: inset(-10% -5% -15% -5%); transform: none; }
+  }
+  @keyframes ruleDraw {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  /* Scroll reveal states (set by useAutoReveal; removed again once settled). Doubled selectors outrank
+     component transitions such as .card-hover while the reveal runs. */
+  [data-reveal][data-reveal] {
     opacity: 0;
-    transform: translateY(40px);
-    transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translate3d(0, 44px, 0);
+    transition: opacity 0.9s var(--ease-luxe), transform 1.1s var(--ease-luxe);
     transition-delay: var(--reveal-delay, 0ms);
   }
-  .reveal.is-visible {
-    opacity: 1;
-    transform: none;
+  [data-reveal][data-revealed] { opacity: 1; transform: none; }
+  [data-reveal-img][data-reveal-img] {
+    clip-path: inset(100% 0 0 0);
+    transform: scale(1.18);
+    transition: clip-path 1.3s var(--ease-inout), transform 1.7s var(--ease-luxe);
+    transition-delay: var(--reveal-delay, 0ms);
   }
+  [data-reveal-img][data-revealed] { clip-path: inset(0 0 0 0); transform: none; }
 
-  /* Page transition: the new page fades up while a gold line sweeps across the top (see components/layout/Layout). */
-  .page-enter { animation: pageEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  @keyframes pageEnter {
-    0% { opacity: 0; transform: translateY(18px); }
-    100% { opacity: 1; transform: none; }
+  /* Buttons: soft lift, a light sheen sweeping across solid buttons, a fill wiping into outline buttons. */
+  .btn-primary,
+  .btn-navy,
+  .btn-outline {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition: background-color 0.5s var(--ease-luxe), color 0.5s var(--ease-luxe), border-color 0.5s var(--ease-luxe),
+      box-shadow 0.5s var(--ease-luxe), transform 0.5s var(--ease-luxe);
   }
-  .route-bar {
-    position: fixed; inset: 0 0 auto 0; z-index: 60; height: 3px; pointer-events: none;
-    background: linear-gradient(90deg, #b8912e, #e8b33f, #c9a84c);
-    box-shadow: 0 0 12px rgba(201, 168, 76, 0.7);
-    transform-origin: left;
-    animation: routeBar 0.75s cubic-bezier(0.65, 0, 0.35, 1) both;
+  .btn-primary::after,
+  .btn-navy::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.32) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.9s var(--ease-luxe);
   }
-  html[dir='rtl'] .route-bar { transform-origin: right; }
-  @keyframes routeBar {
-    0% { transform: scaleX(0); opacity: 1; }
-    60% { transform: scaleX(1); opacity: 1; }
-    100% { transform: scaleX(1); opacity: 0; }
+  .btn-primary:hover::after,
+  .btn-navy:hover::after { transform: translateX(120%); }
+  .btn-outline::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; background: #fff;
+    transform: scaleX(0); transform-origin: right;
+    transition: transform 0.6s var(--ease-luxe);
   }
+  .btn-outline:hover { background-color: transparent; }
+  .btn-outline:hover::before { transform: scaleX(1); transform-origin: left; }
+  html[dir='rtl'] .btn-outline::before { transform-origin: left; }
+  html[dir='rtl'] .btn-outline:hover::before { transform-origin: right; }
+
+  /* Call-to-action arrows glide forward on hover (and point the reading direction in Hebrew). */
+  a .lucide-arrow-right,
+  .btn-primary .lucide-arrow-right,
+  .btn-navy .lucide-arrow-right,
+  .btn-outline .lucide-arrow-right { transition: transform 0.5s var(--ease-luxe); }
+  a:hover .lucide-arrow-right,
+  .btn-primary:hover .lucide-arrow-right,
+  .btn-navy:hover .lucide-arrow-right,
+  .group:hover a .lucide-arrow-right { transform: translateX(4px); }
+  html[dir='rtl'] a .lucide-arrow-right,
+  html[dir='rtl'] .btn-primary .lucide-arrow-right,
+  html[dir='rtl'] .btn-navy .lucide-arrow-right,
+  html[dir='rtl'] .btn-outline .lucide-arrow-right { transform: scaleX(-1); }
+  html[dir='rtl'] a:hover .lucide-arrow-right,
+  html[dir='rtl'] .btn-primary:hover .lucide-arrow-right,
+  html[dir='rtl'] .btn-navy:hover .lucide-arrow-right,
+  html[dir='rtl'] .group:hover a .lucide-arrow-right { transform: translateX(-4px) scaleX(-1); }
+
+  /* Navigation: a fine underline draws in under hovered links (the active link has its own gliding underline). */
+  .nav-link::after {
+    content: ''; position: absolute; inset-inline: 0.625rem; bottom: -2px; height: 1.5px; border-radius: 9999px;
+    background: currentColor; opacity: 0.6;
+    transform: scaleX(0); transform-origin: right;
+    transition: transform 0.5s var(--ease-luxe);
+  }
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after { transform: scaleX(1); transform-origin: left; }
+  html[dir='rtl'] .nav-link::after { transform-origin: left; }
+  html[dir='rtl'] .nav-link:hover::after,
+  html[dir='rtl'] .nav-link:focus-visible::after { transform-origin: right; }
+  .nav-link[aria-current='page']::after { display: none; }
+
+  /* Cards: lift with a deep, soft shadow; photos zoom slowly; a gold rule draws along the image edge. */
+  .lux-card,
+  .card-hover { transition: transform 0.7s var(--ease-luxe), box-shadow 0.7s var(--ease-luxe), border-color 0.5s var(--ease-luxe); }
+  .lux-card:hover,
+  .card-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 50px -20px rgba(10, 22, 40, 0.35), 0 10px 20px -12px rgba(10, 22, 40, 0.18);
+    border-color: var(--color-gold-200);
+  }
+  .lux-zoom { transition: transform 1.4s var(--ease-luxe); }
+  .group:hover .lux-zoom { transform: scale(1.08); }
+  .lux-rule { transform: scaleX(0); transform-origin: left; transition: transform 0.8s var(--ease-luxe); }
+  html[dir='rtl'] .lux-rule { transform-origin: right; }
+  .group:hover .lux-rule { transform: scaleX(1); }
+
+  /* Language switch: the page dims and softens while the text and reading direction flip, then returns. */
+  main,
+  footer { transition: opacity 0.45s var(--ease-luxe), filter 0.45s var(--ease-luxe); }
+  html[data-lang-switching] main,
+  html[data-lang-switching] footer { opacity: 0; filter: blur(6px); transition-duration: 0.26s; }
 
   @media (prefers-reduced-motion: reduce) {
-    .page-enter, .route-bar { animation: none; }
-    .route-bar { display: none; }
-    .animate-fade-up, .animate-fade-in, .animate-hero-zoom, .animate-line-grow, .animate-bounce { animation: none; }
-    .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+    .animate-fade-up, .animate-fade-in, .animate-bounce,
+    .hero-kenburns, .scroll-cue::after,
+    [data-page-header] *, [data-page-header] > .bg-cover { animation: none; }
+    [data-reveal][data-reveal], [data-reveal-img][data-reveal-img] { opacity: 1; clip-path: none; transform: none; transition: none; }
+    .lux-card:hover, .card-hover:hover, .group:hover .lux-zoom,
+    .btn-primary:hover, .btn-navy:hover { transform: none; }
+    .btn-primary::after, .btn-navy::after { display: none; }
+    a:hover .lucide-arrow-right, .btn-primary:hover .lucide-arrow-right,
+    .btn-navy:hover .lucide-arrow-right, .group:hover a .lucide-arrow-right { transform: none; }
+    html[dir='rtl'] a:hover .lucide-arrow-right, html[dir='rtl'] .btn-primary:hover .lucide-arrow-right,
+    html[dir='rtl'] .btn-navy:hover .lucide-arrow-right, html[dir='rtl'] .group:hover a .lucide-arrow-right { transform: scaleX(-1); }
+    html[data-lang-switching] main, html[data-lang-switching] footer { opacity: 1; filter: none; }
   }
   @keyframes bounce {
     0%, 100% { transform: translateY(0); }

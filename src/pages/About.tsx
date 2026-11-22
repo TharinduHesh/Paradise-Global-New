@@ -4,6 +4,7 @@ import { Award, Globe, Users, TrendingUp, ArrowRight, CheckCircle } from 'lucide
 import SectionHeader from '../components/ui/SectionHeader';
 import CTABanner from '../components/home/CTABanner';
 import { useTranslation } from 'react-i18next';
+import { Counter } from '../components/motion/primitives';
 import { usePageImage } from '../lib/siteContent';
 
 const teamMembers = [
@@ -157,7 +158,7 @@ const About: React.FC = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
             {[0, 1, 2, 3].map((index) => (
               <div key={index}>
-                <p className="font-serif text-gold-400 text-4xl md:text-5xl font-bold">{t(`about.stats.${index}.value`)}</p>
+                <p className="font-serif text-gold-400 text-4xl md:text-5xl font-bold"><Counter value={t(`about.stats.${index}.value`)} /></p>
                 <p className="text-white/60 text-sm mt-2">{t(`about.stats.${index}.label`)}</p>
               </div>
             ))}
