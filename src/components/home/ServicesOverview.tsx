@@ -1,89 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
-import { getPublishedContent } from '../../lib/publishedContent';
-import type { Service } from '../../types';
 import { useTranslation } from 'react-i18next';
-import { getLocalizedText, getLocalizedList } from '../../lib/localizedContent';
-
-const services = [
-  {
-    icon: FileCheck,
-    number: '01',
-    title: 'Paradise Development Solutions',
-    description:
-      'Navigating Sri Lanka\'s planning process can be complex. We manage every step — from initial consultation and drawing preparation to liaising with Local Authorities, UDA, NHDA, and Coastal Zone Management on your behalf.',
-    bullets: ['Local Authority submissions', 'UDA & NHDA approvals', 'Coastal zone compliance', 'Progress monitoring'],
-    href: '/services/plan-approvals',
-  },
-  {
-    icon: Home,
-    number: '02',
-    title: 'Paradise Real Estate',
-    description:
-      'Premium property sales, acquisitions, and investment advisory across Sri Lanka\'s Southern and Western coastlines. We connect buyers with exceptional properties — villas, land, houses, apartments, and commercial assets.',
-    bullets: ['Residential & commercial sales', 'Investment property advisory', 'Property valuations', 'Due diligence & market analysis'],
-    href: '/properties',
-  },
-  {
-    icon: Building2,
-    number: '03',
-    title: 'Paradise Property Care',
-    description:
-      'End-to-end holiday rental management so you earn maximum income with zero hassle. We handle everything from listing setup and dynamic pricing to guest communication, cleaning, maintenance, and monthly financial reports.',
-    bullets: ['Airbnb & Booking.com listings', 'Guest management 24/7', 'Professional cleaning & upkeep', 'Monthly income reporting'],
-    href: '/services/property-management',
-  },
-  {
-    icon: Scale,
-    number: '04',
-    title: 'Paradise Legal Solutions',
-    description:
-      'Property law in Sri Lanka — especially for foreign buyers — requires specialist expertise. Our legal team handles title deed verification, sale agreements, foreign ownership structures, lease drafting, and regulatory compliance.',
-    bullets: ['Title deed & due diligence', 'Sale & purchase agreements', 'Foreign ownership advisory', 'Lease agreement drafting'],
-    href: '/services/legal-consultation',
-  },
-  {
-    icon: PenTool,
-    number: '05',
-    title: 'Paradise Hospitality Collection',
-    description:
-      'From your first sketch to permit-ready drawings, our architectural team brings creative vision and technical precision. We design properties that respond to the tropical climate, local culture, and the stunning Sri Lankan landscape.',
-    bullets: ['Concept design & 3D visualisation', 'Detailed architectural drawings', 'Interior & landscape design', 'Structural engineering support'],
-    href: '/services/architectural-support',
-  },
-  {
-    icon: HardHat,
-    number: '06',
-    title: 'Paradise Design & Construction',
-    description:
-      'Full-service construction management from foundation to final handover. Our experienced team delivers high-quality villas, commercial buildings, and renovation projects across Southern Sri Lanka — on time and within budget.',
-    bullets: ['New villa & house construction', 'Commercial & hospitality builds', 'Renovation & extension projects', 'Quality assurance & inspections'],
-    href: '/services/construction',
-  },
-];
+import { useCatalogue, viewService } from '../../lib/catalogue';
+import { serviceIcon } from '../../lib/serviceIcons';
 
 const ServicesOverview: React.FC = () => {
   const { t } = useTranslation();
-  const [visibleServices, setVisibleServices] = useState(services);
-  useEffect(() => {
-    getPublishedContent<Service>('service')
-      .then((published) => {
-        if (published.length) {
-          setVisibleServices(published.map((item, index) => ({
-            icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
-            number: String(index + 1).padStart(2, '0'),
-            title: t(`services.${item.slug}.title`, { defaultValue: getLocalizedText(item.title, item.data.title_he) }),
-            description: t(`services.${item.slug}.description`, { defaultValue: getLocalizedText(item.data.description, item.data.description_he) }),
-            bullets: getLocalizedList(item.data.features, item.data.features_he).slice(0, 4).map((feature, featureIndex) =>
-              t(`services.${item.slug}.feature${featureIndex + 1}`, { defaultValue: feature })),
-            href: `/services/${item.slug}`,
-          })));
-        }
-      })
-      .catch(() => undefined);
-  }, [t]);
+  const visibleServices = useCatalogue<Record<string, unknown>>('service').map(viewService);
   return (
     <section className="section-padding bg-beige-50">
       <div className="container-custom">
@@ -95,15 +20,12 @@ const ServicesOverview: React.FC = () => {
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-14">
-          {visibleServices.map(({ icon: Icon, number, title, description, bullets, href }) => {
-            const slug = href === '/properties' ? 'real-estate' : href.split('/').pop() ?? '';
-            const localizedTitle = t(`services.${slug}.title`, { defaultValue: title });
-            const localizedDescription = t(`services.${slug}.description`, { defaultValue: description });
-            const localizedBullets = bullets.map((bullet, index) =>
-              t(`services.${slug}.feature${index + 1}`, { defaultValue: bullet }));
+          {visibleServices.map(({ id, icon, title: localizedTitle, summary: localizedDescription, highlights: localizedBullets, href }, index) => {
+            const Icon = serviceIcon(icon);
+            const number = String(index + 1).padStart(2, '0');
             return (
             <div
-              key={title}
+              key={id}
               className="group bg-white rounded-sm shadow-card border border-beige-200 overflow-hidden card-hover flex flex-col"
             >
               {/* Top accent bar */}

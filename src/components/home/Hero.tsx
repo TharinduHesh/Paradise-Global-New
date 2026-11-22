@@ -2,10 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import heroImage from '../../Blue Hour Villa on Sri Lanka’s Coast.png';
+import builtInHeroImage from '../../Blue Hour Villa on Sri Lanka’s Coast.png';
+import { usePageImage } from '../../lib/siteContent';
 
 const Hero: React.FC = () => {
   const { t } = useTranslation();
+  const heroImage = usePageImage('home', 'hero') || builtInHeroImage;
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

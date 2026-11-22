@@ -6,6 +6,7 @@ import FeaturedProperties from '../components/home/FeaturedProperties';
 import DestinationsSection from '../components/home/DestinationsSection';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import CTABanner from '../components/home/CTABanner';
+import Testimonials from '../components/home/Testimonials';
 
 const Home: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const Home: React.FC = () => {
       <FeaturedProperties />
       <DestinationsSection />
       <WhyChooseUs />
+      <Testimonials />
       <CTABanner />
     </>
   );

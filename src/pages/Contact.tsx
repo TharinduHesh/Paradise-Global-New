@@ -4,9 +4,12 @@ import SectionHeader from '../components/ui/SectionHeader';
 import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
 import { Turnstile } from '../components/ui/Turnstile';
 import { useTranslation } from 'react-i18next';
+import { phoneHref, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
 
 const Contact: React.FC = () => {
   const { t } = useTranslation();
+  const company = useCompany();
+  const headerImage = usePageImage('contact', 'header');
   const serviceOptions = [
     { value: '', label: t('contact.servicesSelect') },
     { value: 'Hospitality Booking', label: t('contact.services.hospitalityBooking') },
@@ -78,7 +81,7 @@ const Contact: React.FC = () => {
       {/* Page Header */}
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1920&q=80')` }} />
+          style={{ backgroundImage: `url('${headerImage}')` }} />
         <div className="relative container-custom text-center">
           <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('contact.eyebrow')}</p>
           <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">{t('contact.title')}</h1>
@@ -109,9 +112,8 @@ const Contact: React.FC = () => {
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.ourOffice')}</p>
                     <p className="text-navy-500 text-sm leading-relaxed">
-                      Paradise Global Leisures (PVT) LTD<br />
-                      Kandy &amp; Colombo<br />
-                      Sri Lanka
+                      {company.name}
+                      {company.address.split(/,s*/).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                     </p>
                   </div>
                 </div>
@@ -123,7 +125,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.phoneLabel')}</p>
-                    <a href="tel:+94751668705" className="text-navy-500 text-sm block hover:text-gold-600 transition-colors">075 166 8705</a>
+                    <a href={phoneHref(company.phone)} className="text-navy-500 text-sm block hover:text-gold-600 transition-colors">{company.phone}</a>
                   </div>
                 </div>
 
@@ -134,13 +136,13 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.emailLabel')}</p>
-                    <a href="mailto:info@paradisegloballeisures.com" className="text-navy-500 text-sm hover:text-gold-600 transition-colors">info@paradisegloballeisures.com</a>
+                    <a href={`mailto:${company.email}`} className="text-navy-500 text-sm hover:text-gold-600 transition-colors">{company.email}</a>
                   </div>
                 </div>
 
                 {/* WhatsApp */}
                 <a
-                  href="https://wa.me/94751668705"
+                  href={whatsappHref(company.whatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex gap-4 bg-green-50 p-5 rounded-sm shadow-card border border-green-200 hover:border-green-400 transition-colors group"

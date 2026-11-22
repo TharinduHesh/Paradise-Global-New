@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useCatalogue, viewDestination } from '../../lib/catalogue';
+import { phoneHref, useCompany } from '../../lib/siteContent';
 
 const FacebookIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -20,6 +22,8 @@ const InstagramIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
 const Footer: React.FC = () => {
   const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
+  const destinations = useCatalogue<Record<string, unknown>>('destination').map(viewDestination);
+  const company = useCompany();
 
   return (
     <footer className="bg-navy-950 text-white">
@@ -87,17 +91,14 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-serif text-white font-semibold text-lg mb-5">{t('footer.destinations')}</h4>
             <ul className="space-y-2.5">
-              {[
-                'Galle', 'Unawatuna', 'Weligama', 'Mirissa',
-                'Hiriketiya', 'Tangalle', 'Matara', 'Dikwella'
-              ].map((dest) => (
-                <li key={dest}>
+              {destinations.map((dest) => (
+                <li key={dest.id}>
                   <Link
                     to={`/destinations`}
                     className="flex items-center gap-2 text-white/60 text-sm hover:text-gold-400 transition-colors duration-200 group"
                   >
                     <MapPin size={12} className="text-gold-500" />
-                    {t(`destinationNames.${dest}`, { defaultValue: dest })}
+                    {dest.name}
                   </Link>
                 </li>
               ))}
@@ -119,14 +120,13 @@ const Footer: React.FC = () => {
               <li className="flex gap-3">
                 <Phone size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <a href="tel:+94770000000" className="text-white/60 hover:text-gold-400 transition-colors block">+94 77 000 0000</a>
-                  <a href="tel:+94912000000" className="text-white/60 hover:text-gold-400 transition-colors block">+94 91 200 0000</a>
+                  <a href={phoneHref(company.phone)} className="text-white/60 hover:text-gold-400 transition-colors block">{company.phone}</a>
                 </div>
               </li>
               <li className="flex gap-3">
                 <Mail size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
-                <a href="mailto:info@paradisegloballeiures.com" className="text-white/60 text-sm hover:text-gold-400 transition-colors">
-                  info@paradisegloballeisures.com
+                <a href={`mailto:${company.email}`} className="text-white/60 text-sm hover:text-gold-400 transition-colors">
+                  {company.email}
                 </a>
               </li>
             </ul>

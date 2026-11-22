@@ -5,7 +5,9 @@ import {
   CheckCircle, MessageCircle, Phone, Waves,
   Home, Calendar
 } from 'lucide-react';
-import { properties } from '../data/properties';
+import { properties as staticProperties } from '../data/properties';
+import { usePublishedList } from '../lib/publishedContent';
+import type { Property } from '../types';
 import Badge from '../components/ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
@@ -13,6 +15,7 @@ import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
 const PropertyDetails: React.FC = () => {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
+  const properties = usePublishedList<Property>('property', staticProperties, (item) => item.data);
   const property = properties.find((p) => p.slug === slug);
   const [activeImage, setActiveImage] = useState(0);
 

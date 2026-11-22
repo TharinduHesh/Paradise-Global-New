@@ -1,26 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle } from 'lucide-react';
-import { FileCheck, Home, Building2, Scale, PenTool, HardHat } from 'lucide-react';
 import CTABanner from '../components/home/CTABanner';
-import { services } from '../data/services';
-import type { Service } from '../types';
-import { getPublishedContent } from '../lib/publishedContent';
 import { useTranslation } from 'react-i18next';
-import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
-
-const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  FileCheck, Home, Building2, Scale, PenTool, HardHat
-};
+import { useCatalogue, viewService } from '../lib/catalogue';
+import { serviceIcon } from '../lib/serviceIcons';
+import { usePageImage } from '../lib/siteContent';
 
 const Services: React.FC = () => {
   const { t } = useTranslation();
-  const [items, setItems] = useState<Service[]>(services);
-  useEffect(() => {
-    getPublishedContent<Service>('service')
-      .then((published) => { if (published.length) setItems(published.map((item) => ({ ...item.data, id: item.id, slug: item.slug, title: item.title }))); })
-      .catch(() => undefined);
-  }, []);
+  const items = useCatalogue<Record<string, unknown>>('service').map(viewService);
+  const headerImage = usePageImage('services', 'header');
   return (
     <>
       <title>{t('nav.services')} — Paradise Global Leisures</title>
@@ -28,7 +18,7 @@ const Services: React.FC = () => {
       {/* Page Header */}
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80')` }} />
+          style={{ backgroundImage: `url('${headerImage}')` }} />
         <div className="relative container-custom text-center">
           <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('home.servicesEyebrow')}</p>
           <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">{t('nav.services')}</h1>
@@ -44,7 +34,7 @@ const Services: React.FC = () => {
         <div className="container-custom">
           <div className="grid grid-cols-1 gap-12">
             {items.map((service, idx) => {
-              const Icon = iconMap[service.icon] || FileCheck;
+              const Icon = serviceIcon(service.icon);
               const isEven = idx % 2 === 0;
 
               return (
@@ -71,17 +61,17 @@ const Services: React.FC = () => {
                         Service {String(idx + 1).padStart(2, '0')}
                       </p>
                       <h2 className="font-serif text-navy-900 text-2xl md:text-3xl font-bold mb-4">
-                        {getLocalizedText(service.title, service.title_he)}
+                        {service.title}
                       </h2>
                       <p className="text-navy-600 leading-relaxed mb-6">
-                        {getLocalizedText(service.description, service.description_he)}
+                        {service.description}
                       </p>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                        {getLocalizedList(service.features, service.features_he).map((feature, featureIndex) => (
+                        {service.features.map((feature) => (
                           <div key={feature} className="flex items-start gap-2.5">
                             <CheckCircle size={15} className="text-gold-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-navy-700 text-sm">{t(`services.${service.slug}.feature${featureIndex + 1}`, { defaultValue: feature })}</span>
+                            <span className="text-navy-700 text-sm">{feature}</span>
                           </div>
                         ))}
                       </div>

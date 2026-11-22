@@ -12,6 +12,8 @@ void i18n.use(initReactI18next).init({
   lng: selectedLanguage,
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
+  // Re-render when admin-edited text is added at runtime (see SiteContentProvider).
+  react: { bindI18nStore: 'added' },
 });
 
 const applyDocumentLocale = (language: string) => {

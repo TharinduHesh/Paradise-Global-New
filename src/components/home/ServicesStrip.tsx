@@ -1,67 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileCheck, Home, Building2, Scale, PenTool, HardHat, ArrowRight } from 'lucide-react';
-import { getPublishedContent } from '../../lib/publishedContent';
-import type { Service } from '../../types';
+import { ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getLocalizedText } from '../../lib/localizedContent';
-
-const services = [
-  {
-    icon: FileCheck,
-    title: 'Paradise Development Solutions',
-    short: 'Approval assistance and authority coordination',
-    href: '/services/plan-approvals',
-  },
-  {
-    icon: Home,
-    title: 'Paradise Real Estate',
-    short: 'Buy, sell, lease & invest',
-    href: '/properties',
-  },
-  {
-    icon: Building2,
-    title: 'Paradise Property Care',
-    short: 'Reliable management and maintenance',
-    href: '/services/property-management',
-  },
-  {
-    icon: Scale,
-    title: 'Paradise Legal Solutions',
-    short: 'Legal coordination and property advice',
-    href: '/services/legal-consultation',
-  },
-  {
-    icon: Building2,
-    title: 'Paradise Hospitality Collection',
-    short: 'Hotels, resorts, villas & destinations',
-    href: '/destinations',
-  },
-  {
-    icon: HardHat,
-    title: 'Paradise Design & Construction',
-    short: 'Architecture, engineering & construction',
-    href: '/services/construction',
-  },
-];
+import { useCatalogue, viewService } from '../../lib/catalogue';
+import { serviceIcon } from '../../lib/serviceIcons';
 
 const ServicesStrip: React.FC = () => {
   const { t } = useTranslation();
-  const [visibleServices, setVisibleServices] = useState(services);
-  useEffect(() => {
-    getPublishedContent<Service>('service')
-      .then((published) => {
-        if (published.length) {
-          setVisibleServices(published.map((item) => ({
-            icon: ({ FileCheck, Home, Building2, Scale, PenTool, HardHat } as Record<string, typeof FileCheck>)[item.data.icon] ?? FileCheck,
-            title: getLocalizedText(item.title, item.data.title_he),
-            short: getLocalizedText(item.data.description, item.data.description_he),
-            href: `/services/${item.slug}`,
-          })));
-        }
-      })
-      .catch(() => undefined);
-  }, []);
+  const visibleServices = useCatalogue<Record<string, unknown>>('service').map(viewService);
   return (
     <section className="bg-navy-950 border-t border-white/10">
       {/* Label bar */}
@@ -82,11 +28,11 @@ const ServicesStrip: React.FC = () => {
       {/* 6 service tiles */}
       <div className="container-custom">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-x divide-y lg:divide-y-0 divide-white/10">
-          {visibleServices.map(({ icon: Icon, title, short, href }) => {
-            const slug = href.split('/').pop() ?? '';
+          {visibleServices.map(({ id, icon, title, short, href }) => {
+            const Icon = serviceIcon(icon);
             return (
             <Link
-              key={title}
+              key={id}
               to={href}
               className="group flex flex-col items-center text-center gap-3 px-4 py-6 border border-transparent transition-all duration-300 hover:border-gold-400 hover:bg-gold-900/20"
             >
@@ -95,10 +41,10 @@ const ServicesStrip: React.FC = () => {
               </div>
               <div>
                 <p className="font-semibold text-sm text-white group-hover:text-gold-400 transition-colors leading-tight mb-1">
-                  {t(`services.${slug}.title`, { defaultValue: title })}
+                  {title}
                 </p>
                 <p className="text-white/40 text-xs leading-tight group-hover:text-white/60 transition-colors">
-                  {t(`services.${slug}.short`, { defaultValue: short })}
+                  {short}
                 </p>
               </div>
             </Link>

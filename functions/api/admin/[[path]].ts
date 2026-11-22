@@ -1,5 +1,6 @@
 import { canReadStaffSection, isAdministrator } from '../../../src/lib/adminAccess';
 import { enquiryCategories, enquiryCategorySql } from '../../../src/lib/enquiryCategories';
+import { builtInContent, importedContentSettingKey } from '../../../src/lib/builtInContent';
 import { manageAccounts } from '../../_lib/adminAccounts';
 import {
   AdminContext, AdminEnv, AdminUser, clearSession, createSession, error, hashPassword, logActivity,
@@ -9,6 +10,22 @@ import {
 interface Body { email?: string; password?: string; name?: string; role?: AdminUser['role']; userId?: string; currentPassword?: string; newPassword?: string; }
 interface SetupBody extends Body { setupToken?: string; }
 interface ContentBody { id?: string; contentType?: string; slug?: string; title?: string; data?: Record<string, unknown>; sortOrder?: number; isPublished?: boolean; }
+
+/** Copies the website's built-in records for a type into the catalogue once, so they can be edited or deleted like any other record. */
+const importBuiltInContent = async (context: AdminContext, userId: string, type: string) => {
+  const items = builtInContent[type];
+  if (!items?.length) return;
+  const setting = await context.env.DB.prepare('SELECT value_json FROM site_settings WHERE key = ?').bind(importedContentSettingKey).first<{ value_json: string }>();
+  const imported = setting ? JSON.parse(setting.value_json) as string[] : [];
+  if (imported.includes(type)) return;
+  const statements = items.map((item, index) => context.env.DB.prepare(`INSERT OR IGNORE INTO content_items (id, content_type, slug, title, data_json, sort_order, is_published)
+    VALUES (?, ?, ?, ?, ?, ?, 1)`).bind(randomId(), type, item.slug, item.title, JSON.stringify(item.data), index + 1));
+  statements.push(context.env.DB.prepare(`INSERT INTO site_settings (key, value_json, updated_by) VALUES (?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_by = excluded.updated_by, updated_at = datetime('now')`)
+    .bind(importedContentSettingKey, JSON.stringify([...imported, type]), userId));
+  await context.env.DB.batch(statements);
+  await logActivity(context.env, userId, 'import', 'content', undefined, { type, count: items.length });
+};
 
 const route = (request: Request) => new URL(request.url).pathname.replace(/^\/api\/admin\/?/, '').replace(/\/$/, '') || 'me';
 const rateKey = (request: Request) => request.headers.get('CF-Connecting-IP') ?? 'unknown';
@@ -152,6 +169,8 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
     }
     if (path === 'content' && context.request.method === 'GET') {
       const type = new URL(context.request.url).searchParams.get('type') ?? '';
+      // A failed import must not hide the catalogue; it is retried on the next visit.
+      await importBuiltInContent(context, user.id, type).catch((reason) => console.error('Unable to import built-in content:', reason));
       const result = await context.env.DB.prepare('SELECT * FROM content_items WHERE (? = "" OR content_type = ?) ORDER BY content_type, sort_order, updated_at DESC').bind(type, type).all();
       return json({ items: result.results });
     }
@@ -171,6 +190,13 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       if (!existing) return error('Content item not found.', 404);
       await context.env.DB.prepare('DELETE FROM content_items WHERE id = ?').bind(id).run();
       await logActivity(context.env, user.id, 'delete', 'content', id, { type: existing.content_type, slug: existing.slug });
+      return json({ ok: true });
+    }
+    if (path === 'content/reorder' && context.request.method === 'POST') {
+      const body = await readJson<{ contentType?: string; ids?: string[] }>(context.request);
+      if (!body?.contentType || !Array.isArray(body.ids) || !body.ids.length || body.ids.some((id) => typeof id !== 'string')) return error('Content type and ordered ids are required.');
+      await context.env.DB.batch(body.ids.map((id, index) => context.env.DB.prepare('UPDATE content_items SET sort_order = ?, updated_at = datetime("now") WHERE id = ? AND content_type = ?').bind(index + 1, id, body.contentType)));
+      await logActivity(context.env, user.id, 'reorder', 'content', undefined, { type: body.contentType });
       return json({ ok: true });
     }
     if (path === 'content/publish' && context.request.method === 'POST') {

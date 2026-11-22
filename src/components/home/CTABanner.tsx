@@ -2,15 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { usePageImage, useCompany, whatsappHref } from '../../lib/siteContent';
 
 const CTABanner: React.FC = () => {
   const { t } = useTranslation();
+  const company = useCompany();
+  const background = usePageImage('home', 'cta');
   return (
     <section className="relative py-20 overflow-hidden">
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: `url('https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=1920&q=80')` }}
+        style={{ backgroundImage: `url('${background}')` }}
       />
       <div className="absolute inset-0 bg-navy-900/85" />
 
@@ -36,7 +39,7 @@ const CTABanner: React.FC = () => {
             {t('home.consultation')} <ArrowRight size={18} />
           </Link>
           <a
-            href="https://wa.me/94770000000"
+            href={whatsappHref(company.whatsapp)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-green-500 text-white font-semibold rounded-md hover:bg-green-600 transition-colors text-base"

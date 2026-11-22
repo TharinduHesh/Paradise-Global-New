@@ -23,8 +23,8 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>(staticProperties);
   useEffect(() => {
     fetch('/api/content?type=property')
-      .then((response) => response.ok ? response.json() as Promise<{ items: { data: Property }[] }> : Promise.reject(new Error('Content unavailable')))
-      .then((result) => { if (result.items.length) setProperties(result.items.map((item) => item.data)); })
+      .then((response) => response.ok ? response.json() as Promise<{ items: { data: Property }[]; managed?: boolean }> : Promise.reject(new Error('Content unavailable')))
+      .then((result) => { if (result.items.length || result.managed) setProperties(result.items.map((item) => item.data)); })
       .catch(() => undefined);
   }, []);
 

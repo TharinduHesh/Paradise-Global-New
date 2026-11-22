@@ -20,10 +20,10 @@ export const manageableRoles = (role: Role): readonly Role[] => {
 export const websiteSections = [
   { path: '/admin/properties', label: 'Property Listings', types: ['property'] },
   { path: '/admin/services', label: 'Services & Divisions', types: ['service'] },
-  { path: '/admin/hospitality', label: 'Hospitality', types: ['hospitality', 'destination'] },
+  { path: '/admin/hospitality', label: 'Hospitality', types: ['destination'] },
   { path: '/admin/projects', label: 'Projects & Testimonials', types: ['project', 'testimonial'] },
-  { path: '/admin/content', label: 'Website Content', types: ['property', 'service', 'destination', 'gallery', 'page'] },
-  { path: '/admin/media', label: 'Media & Translations', types: ['media', 'translation', 'gallery'] },
+  { path: '/admin/content', label: 'Website Content', types: ['page'] },
+  { path: '/admin/media', label: 'Media & Translations', types: ['media', 'translation'] },
 ] as const;
 
 export const websiteManagementPath = '/admin/content';

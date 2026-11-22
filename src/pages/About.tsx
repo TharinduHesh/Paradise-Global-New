@@ -4,6 +4,7 @@ import { Award, Globe, Users, TrendingUp, ArrowRight, CheckCircle } from 'lucide
 import SectionHeader from '../components/ui/SectionHeader';
 import CTABanner from '../components/home/CTABanner';
 import { useTranslation } from 'react-i18next';
+import { usePageImage } from '../lib/siteContent';
 
 const teamMembers = [
   {
@@ -41,13 +42,16 @@ const values = [
 
 const About: React.FC = () => {
   const { t } = useTranslation();
+  const headerImage = usePageImage('about', 'header');
+  const storyImage = usePageImage('about', 'story');
+  const teamImages = [usePageImage('about', 'team0'), usePageImage('about', 'team1'), usePageImage('about', 'team2'), usePageImage('about', 'team3')];
   return (
     <>
       <title>{t('about.title')} — Paradise Global Leisures</title>
 
       {/* Page Header */}
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1526089828737-46cdda0c2d4f?w=1920&q=80')` }} />
+        <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url('${headerImage}')` }} />
         <div className="relative container-custom text-center">
           <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">{t('about.title')}</p>
           <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">Paradise Global Leisures</h1>
@@ -83,7 +87,7 @@ const About: React.FC = () => {
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80"
+                src={storyImage}
                 alt="Sri Lanka coastal property"
                 className="w-full h-80 object-cover rounded-sm shadow-2xl md:h-[420px]"
               />
@@ -132,7 +136,7 @@ const About: React.FC = () => {
               <div key={member.name} className="group text-center">
                 <div className="relative overflow-hidden rounded-sm mb-4 shadow-card">
                   <img
-                    src={member.image}
+                    src={teamImages[index] ?? member.image}
                     alt={member.name}
                     className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
                   />

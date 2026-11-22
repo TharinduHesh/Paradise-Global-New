@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { MapPin, Calendar, CheckCircle } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import CTABanner from '../components/home/CTABanner';
-import { projects } from '../data/services';
-import type { Project } from '../types';
+import { useCatalogue, viewProject } from '../lib/catalogue';
+import { usePageImage } from '../lib/siteContent';
 
 type FilterType = 'all' | 'completed' | 'ongoing' | 'upcoming';
 
@@ -15,6 +15,8 @@ const statusBadge: Record<string, 'gold' | 'green' | 'beige'> = {
 
 const Projects: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('all');
+  const projects = useCatalogue<Record<string, unknown>>('project').map(viewProject);
+  const headerImage = usePageImage('projects', 'header');
 
   const filtered = filter === 'all' ? projects : projects.filter(p => p.status === filter);
 
@@ -24,7 +26,7 @@ const Projects: React.FC = () => {
 
       <div className="relative pt-32 pb-20 bg-navy-900 overflow-hidden">
         <div className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80')` }} />
+          style={{ backgroundImage: `url('${headerImage}')` }} />
         <div className="relative container-custom text-center">
           <p className="text-gold-400 text-sm font-medium uppercase tracking-widest mb-3">Our Work</p>
           <h1 className="font-serif text-white text-4xl md:text-5xl font-bold mb-4">Portfolio & Projects</h1>
@@ -52,7 +54,7 @@ const Projects: React.FC = () => {
 
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((project: Project) => (
+            {filtered.map((project) => (
               <div key={project.id} className="group bg-white rounded-sm shadow-card card-hover overflow-hidden border border-beige-200">
                 <div className="relative h-56 overflow-hidden">
                   <img

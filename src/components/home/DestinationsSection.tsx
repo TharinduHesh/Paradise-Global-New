@@ -2,11 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
-import { destinations } from '../../data/destinations';
+import { useCatalogue, viewDestination } from '../../lib/catalogue';
 import { useTranslation } from 'react-i18next';
 
 const DestinationsSection: React.FC = () => {
   const { t } = useTranslation();
+  const destinations = useCatalogue<Record<string, unknown>>('destination').map(viewDestination);
   const featured = destinations.slice(0, 6);
 
   return (
@@ -40,7 +41,7 @@ const DestinationsSection: React.FC = () => {
                 <div className="absolute inset-0 p-6 flex flex-col justify-end">
                   <div className="flex items-center gap-1.5 text-gold-400 text-xs mb-2 uppercase tracking-widest">
                     <MapPin size={12} />
-                    {dest.district} {t('common.district', { defaultValue: 'District' })}
+                    {dest.districtLabel} {t('common.district', { defaultValue: 'District' })}
                   </div>
                   <h3 className="font-serif text-white text-2xl font-bold mb-1 group-hover:text-gold-400 transition-colors">
                     {dest.name}

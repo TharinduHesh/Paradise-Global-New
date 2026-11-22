@@ -5,6 +5,7 @@ import type { Property } from '../../types';
 import Badge from '../ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedText } from '../../lib/localizedContent';
+import { useCompany, whatsappHref } from '../../lib/siteContent';
 
 interface PropertyCardProps {
   property: Property;
@@ -12,6 +13,7 @@ interface PropertyCardProps {
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const { t } = useTranslation();
+  const company = useCompany();
   const [imgError, setImgError] = useState(false);
   const localizedName = getLocalizedText(property.name, property.name_he);
 
@@ -118,7 +120,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             {t('property.viewDetails')} <ArrowRight size={14} />
           </Link>
           <a
-            href={`https://wa.me/94770000000?text=${encodeURIComponent(`I'm interested in ${localizedName} in ${property.location}`)}`}
+            href={whatsappHref(company.whatsapp, `I'm interested in ${localizedName} in ${property.location}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-4 py-2.5 bg-green-500 text-white text-sm font-semibold rounded-md hover:bg-green-600 transition-colors"

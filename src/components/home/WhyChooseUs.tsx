@@ -2,6 +2,7 @@ import React from 'react';
 import { Shield, Star, Clock, Users, Award, TrendingUp } from 'lucide-react';
 import SectionHeader from '../ui/SectionHeader';
 import { useTranslation } from 'react-i18next';
+import { usePageImage } from '../../lib/siteContent';
 
 const reasons = [
   {
@@ -38,6 +39,7 @@ const reasons = [
 
 const WhyChooseUs: React.FC = () => {
   const { t } = useTranslation();
+  const image = usePageImage('home', 'why');
   return (
     <section className="section-padding bg-beige-50">
       <div className="container-custom">
@@ -46,7 +48,7 @@ const WhyChooseUs: React.FC = () => {
           <div className="relative">
             <div className="relative rounded-sm overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80"
+                src={image}
                 alt={t('home.teamAlt')}
                 className="w-full h-80 object-cover md:h-[420px]"
               />

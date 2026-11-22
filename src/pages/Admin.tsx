@@ -10,6 +10,8 @@ import i18n from '../i18n';
 import MaintenancePage from './Maintenance';
 import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, isAdministrator, manageableRoles, staffPermissions, websiteManagementPath, websiteSections, type AccessUser, type Role, type StaffPermission } from '../lib/adminAccess';
 import { enquiryCategories, type EnquiryCategory } from '../lib/enquiryCategories';
+import { api, Header, inputClass } from '../components/admin/adminUi';
+import WebsiteManagement from './AdminWebsite';
 
 type User = AccessUser & { id: string; email: string; name: string };
 type Enquiry = {
@@ -17,16 +19,7 @@ type Enquiry = {
   message: string; status: string; created_at: string; category: EnquiryCategory;
   assigned_to: string | null; assignee: string | null;
 };
-type ContentItem = { id: string; content_type: string; slug: string; title: string; data_json: string; is_published: number; sort_order: number };
 
-const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`/api/admin/${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) } });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error ?? 'Request failed.');
-  return body as T;
-};
-
-const inputClass = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#c9a84c] focus:ring-2 focus:ring-[#c9a84c]/20';
 const statusClass: Record<string, string> = { new: 'bg-blue-50 text-blue-700', in_progress: 'bg-amber-50 text-amber-700', resolved: 'bg-emerald-50 text-emerald-700', archived: 'bg-slate-100 text-slate-500' };
 const ADMIN_SESSION_MS = 5 * 60 * 1000;
 
@@ -148,7 +141,6 @@ const Sidebar: React.FC<{ user: User; open: boolean; setOpen: (value: boolean) =
 ))}</nav><div className="absolute bottom-5 left-5 right-5 border-t border-white/10 pt-4"><div className="mb-3 flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#c9a84c] text-sm font-bold">{user.name.charAt(0).toUpperCase()}</div><div className="min-w-0"><p className="truncate text-sm font-medium">{user.name}</p><p className="text-xs capitalize text-white/50">{user.role}</p></div></div><button onClick={onLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/60 hover:bg-white/10 hover:text-white"><LogOut size={16} /> Sign out</button></div></aside></>;
 };
 
-const Header: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#b8912e]">Paradise Global Leisures</p><h1 className="font-serif text-3xl font-bold text-[#0a1628]">{title}</h1><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div><Link to="/" target="_blank" className="text-sm font-medium text-[#9a7425] hover:underline">View website ↗</Link></header>;
 
 const Dashboard: React.FC = () => { const [data, setData] = useState<{ metrics: { newEnquiries?: number; publishedContent?: number; activeUsers?: number; maintenance?: { enabled?: boolean } }; activity: { action: string; entity_type: string; user_name: string; created_at: string }[] }>(); useEffect(() => { api<typeof data>('dashboard').then(setData).catch(console.error); }, []); const m = data?.metrics; const cards: { label: string; value: string | number; Icon: LucideIcon; style: string }[] = [{ label: 'New enquiries', value: m?.newEnquiries ?? 0, Icon: ClipboardList, style: 'text-blue-600 bg-blue-50' }, { label: 'Published content', value: m?.publishedContent ?? 0, Icon: FileText, style: 'text-emerald-600 bg-emerald-50' }, { label: 'Active users', value: m?.activeUsers ?? 0, Icon: Users, style: 'text-violet-600 bg-violet-50' }, { label: 'Maintenance', value: m?.maintenance?.enabled ? 'On' : 'Off', Icon: AlertTriangle, style: m?.maintenance?.enabled ? 'text-amber-600 bg-amber-50' : 'text-emerald-600 bg-emerald-50' }]; return <><Header title="Dashboard" subtitle="A quick view of your business and website health." /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(({ label, value, Icon, style }) => <div key={label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-3xl font-bold text-[#0a1628]">{value}</p></div><div className={`rounded-lg p-3 ${style}`}><Icon size={21} /></div></div></div>)}</div><div className="mt-6 grid gap-6 lg:grid-cols-2"><div className="rounded-xl border border-slate-200 bg-white p-6"><h2 className="mb-4 font-serif text-xl font-bold text-[#0a1628]">Common actions</h2><div className="grid gap-3 sm:grid-cols-2"><Link to="/admin/enquiries" className="flex items-center gap-3 rounded-lg bg-[#f9f6f0] p-4 text-sm font-medium text-[#0a1628] hover:bg-[#f5f0e8]"><ClipboardList size={18} className="text-[#c9a84c]" /> Review enquiries</Link><Link to="/admin/content" className="flex items-center gap-3 rounded-lg bg-[#f9f6f0] p-4 text-sm font-medium text-[#0a1628] hover:bg-[#f5f0e8]"><Plus size={18} className="text-[#c9a84c]" /> Add website content</Link><Link to="/admin/settings" className="flex items-center gap-3 rounded-lg bg-[#f9f6f0] p-4 text-sm font-medium text-[#0a1628] hover:bg-[#f5f0e8]"><Settings size={18} className="text-[#c9a84c]" /> Update business info</Link><Link to="/admin/users" className="flex items-center gap-3 rounded-lg bg-[#f9f6f0] p-4 text-sm font-medium text-[#0a1628] hover:bg-[#f5f0e8]"><Shield size={18} className="text-[#c9a84c]" /> Manage access</Link></div></div><div className="rounded-xl border border-slate-200 bg-white p-6"><h2 className="mb-4 font-serif text-xl font-bold text-[#0a1628]">Recent activity</h2>{data?.activity?.length ? <div className="space-y-3">{data.activity.slice(0, 6).map((item, index) => <div key={`${item.created_at}-${index}`} className="flex gap-3 border-b border-slate-100 pb-3 last:border-0"><Clock3 size={16} className="mt-0.5 text-[#c9a84c]" /><p className="text-sm text-slate-600"><strong className="text-[#0a1628]">{item.user_name ?? 'System'}</strong> {item.action} {item.entity_type}<span className="block text-xs text-slate-400">{new Date(item.created_at).toLocaleString()}</span></p></div>)}</div> : <p className="text-sm text-slate-400">No activity recorded yet.</p>}</div></div></>; };
 
@@ -289,51 +281,6 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
       </section>
     </div>}
   </>;
-};
-
-const WebsiteManagement: React.FC<{ path: string; types: readonly string[] }> = ({ path, types }) => {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [type, setType] = useState(types[0]);
-  const [editingId, setEditingId] = useState<string>();
-  const [form, setForm] = useState({ title: '', slug: '', image: '', data: '{\n  "description": "",\n  "icon": "FileCheck",\n  "features": []\n}', isPublished: false });
-  const load = () => api<{ items: ContentItem[] }>(`content?type=${type}`).then((r) => setItems(r.items)).catch(console.error);
-  useEffect(() => { load(); }, [type]);
-  const reset = () => { setEditingId(undefined); setForm({ title: '', slug: '', image: '', data: '{\n  "description": "",\n  "icon": "FileCheck",\n  "features": []\n}', isPublished: false }); };
-  const save = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      const data = JSON.parse(form.data) as Record<string, unknown>;
-      if (type === 'service') data.image = form.image.trim();
-      await api('content', { method: 'POST', body: JSON.stringify({ id: editingId, contentType: type, title: form.title, slug: form.slug, data, sortOrder: items.find((item) => item.id === editingId)?.sort_order, isPublished: form.isPublished }) });
-      reset(); load();
-    } catch (error) { alert(error instanceof Error ? error.message : 'Invalid content'); }
-  };
-  return <>
-    <Header title="Website Management" subtitle="Manage records in the website content catalogue." />
-    <nav aria-label="Website management sections" className="mb-6 flex flex-wrap gap-2">
-      {websiteSections.map((section) => (
-        <Link
-          key={section.path}
-          to={section.path}
-          aria-current={section.path === path ? 'page' : undefined}
-          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${section.path === path
-            ? 'border-[#0a1628] bg-[#0a1628] text-white'
-            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'}`}
-        >
-          {section.label}
-        </Link>
-      ))}
-    </nav>
-    <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-      <div>
-        <div className="mb-4 flex gap-2 overflow-x-auto">{types.map((value) => <button key={value} onClick={() => { setType(value); reset(); }} className={`rounded-full px-4 py-2 text-sm capitalize ${type === value ? 'bg-[#0a1628] text-white' : 'bg-white text-slate-600 ring-1 ring-slate-200'}`}>{value}s</button>)}</div>
-        <div className="space-y-3">{items.map((item) => <div key={item.id} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div><p className="font-medium text-[#0a1628]">{item.title}</p><p className="text-xs text-slate-500">/{item.slug} · {item.is_published ? 'Published' : 'Draft'}</p></div>
-          <div className="flex gap-2"><button onClick={() => { const data = JSON.parse(item.data_json) as { image?: string }; setEditingId(item.id); setForm({ title: item.title, slug: item.slug, image: data.image ?? '', data: JSON.stringify(JSON.parse(item.data_json), null, 2), isPublished: Boolean(item.is_published) }); }} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Edit</button><button onClick={async () => { await api('content/publish', { method: 'POST', body: JSON.stringify({ id: item.id, published: !item.is_published }) }); load(); }} className={`rounded-lg px-3 py-2 text-xs font-semibold ${item.is_published ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{item.is_published ? 'Unpublish' : 'Publish'}</button><button onClick={async () => { if (window.confirm(`Delete ${item.title}?`)) { await api(`content/${item.id}`, { method: 'DELETE' }); if (editingId === item.id) reset(); load(); } }} className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">Delete</button></div>
-        </div>)}{!items.length && <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-400">No {type}s yet. Add the first one.</div>}</div>
-      </div>
-      <form onSubmit={save} className="h-fit rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-bold text-[#0a1628]"><Plus size={19} className="text-[#c9a84c]" /> {editingId ? 'Edit' : 'Add'} {type}</h2><div className="space-y-3"><input className={inputClass} required placeholder="Title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /><input className={inputClass} required placeholder="URL slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />{type === 'service' && <input className={inputClass} aria-label="Service image URL" placeholder="Image URL or /image-path (optional)" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />}<textarea className={`${inputClass} min-h-48 font-mono text-xs`} required value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />{type === 'service' && <p className="text-xs text-slate-500">Edit the description, icon, features, and process in JSON.</p>}<label className="flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Publish now</label><div className="flex gap-2"><button className="flex-1 rounded-lg bg-[#c9a84c] px-4 py-3 font-semibold text-white hover:bg-[#b8912e]">{editingId ? 'Update' : 'Save'} content</button>{editingId && <button type="button" onClick={reset} className="rounded-lg bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">Cancel</button>}</div></div></form>
-    </div></>;
 };
 
 const MaintenancePreview: React.FC = () => {

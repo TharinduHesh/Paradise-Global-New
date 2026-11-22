@@ -17,6 +17,8 @@ import AdminApp from './pages/Admin';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import MaintenancePage from './pages/Maintenance';
+import Projects from './pages/Projects';
+import { SiteContentProvider } from './lib/siteContent';
 
 type MaintenanceSettings = { enabled: boolean; message: string; reopeningAt?: string };
 type CompanySettings = { email?: string; phone?: string; whatsapp?: string };
@@ -61,7 +63,7 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/admin/*" element={<AdminApp />} />
-      <Route path="*" element={<Layout><Routes>
+      <Route path="*" element={<SiteContentProvider><Layout><Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
@@ -70,6 +72,7 @@ const App: React.FC = () => {
         <Route path="/properties/:slug" element={<PropertyDetails />} />
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/projects" element={<Projects />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         {/* 404 */}
@@ -82,7 +85,7 @@ const App: React.FC = () => {
             </div>
           </div>
         } />
-      </Routes></Layout>} />
+      </Routes></Layout></SiteContentProvider>} />
     </Routes>
   );
 };
