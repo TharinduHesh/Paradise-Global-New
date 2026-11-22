@@ -232,7 +232,7 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       }
       if (body.key === 'company') {
         const company = body.value as Record<string, unknown>;
-        const allowed = ['name', 'phone', 'whatsapp', 'email', 'address', 'address_he', 'hours', 'hours_he', 'facebook', 'instagram'];
+        const allowed = ['name', 'phone', 'whatsapp', 'email', 'address', 'hours', 'facebook', 'instagram'];
         if (Object.entries(company).some(([key, value]) => !allowed.includes(key) || typeof value !== 'string' || value.length > 300)) return error('Invalid business information.');
         if (['facebook', 'instagram'].some((key) => company[key] && !/^https:\/\/\S+$/i.test(String(company[key])))) return error('Social media links must start with https://');
         if (company.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(company.email))) return error('Enter a valid email address.');

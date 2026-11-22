@@ -3,8 +3,11 @@ import { initReactI18next } from 'react-i18next';
 import { en } from './en';
 import { he } from './he';
 
-const savedLanguage = window.localStorage.getItem('pgl-language');
-if (savedLanguage === 'si') window.localStorage.setItem('pgl-language', 'en');
+// Storage can be unavailable (private browsing, in-app browsers); the site must still load and switch language.
+const readLanguage = () => { try { return window.localStorage.getItem('pgl-language'); } catch { return null; } };
+const saveLanguage = (language: string) => { try { window.localStorage.setItem('pgl-language', language); } catch { /* not remembered */ } };
+const savedLanguage = readLanguage();
+if (savedLanguage === 'si') saveLanguage('en');
 const selectedLanguage = savedLanguage === 'he' ? 'he' : 'en';
 
 void i18n.use(initReactI18next).init({
@@ -26,7 +29,7 @@ applyDocumentLocale(selectedLanguage);
 i18n.on('languageChanged', (language) => {
   const selected = language === 'he' ? 'he' : 'en';
   if (!window.location.pathname.startsWith('/admin')) {
-    window.localStorage.setItem('pgl-language', selected);
+    saveLanguage(selected);
   }
   applyDocumentLocale(selected);
 });

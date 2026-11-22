@@ -20,7 +20,7 @@ const InstagramIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
 );
 
 const Footer: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
   const destinations = useCatalogue<Record<string, unknown>>('destination').map(viewDestination);
   const company = useCompany();
@@ -116,7 +116,7 @@ const Footer: React.FC = () => {
                 <span className="text-white/60 text-sm">
                   {company.name}<br />
                   {t('footer.locationLine')}
-                  {companyLines(company, 'address', i18n.language).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
+                  {companyLines(company, 'address').map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                 </span>
               </li>
               <li className="flex gap-3">

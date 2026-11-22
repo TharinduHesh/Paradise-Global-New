@@ -7,9 +7,9 @@ import { useTranslation } from 'react-i18next';
 import { companyLines, phoneHref, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
 
 const Contact: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const company = useCompany();
-  const addressLines = companyLines(company, 'address', i18n.language);
+  const addressLines = companyLines(company, 'address');
   const headerImage = usePageImage('contact', 'header');
   const serviceOptions = [
     { value: '', label: t('contact.servicesSelect') },
@@ -114,7 +114,7 @@ const Contact: React.FC = () => {
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.ourOffice')}</p>
                     <p className="text-navy-500 text-sm leading-relaxed">
                       {company.name}
-                      {companyLines(company, 'address', i18n.language).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
+                      {companyLines(company, 'address').map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                     </p>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ const Contact: React.FC = () => {
                     <MessageCircle size={18} className="text-green-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-green-800 text-sm mb-1">WhatsApp</p>
+                    <p className="font-semibold text-green-800 text-sm mb-1">{t('serviceDetail.whatsappLabel')}</p>
                     <p className="text-green-600 text-sm group-hover:underline">{t('contact.chat')}</p>
                   </div>
                 </a>
@@ -164,7 +164,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.officeHours')}</p>
-                    {companyLines(company, 'hours', i18n.language).map((line) => <p key={line} className="text-navy-500 text-sm">{line}</p>)}
+                    {companyLines(company, 'hours').map((line) => <p key={line} className="text-navy-500 text-sm">{line}</p>)}
                     <p className="text-navy-400 text-xs mt-1">{t('contact.sriLankaTime')}</p>
                   </div>
                 </div>

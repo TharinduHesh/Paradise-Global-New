@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import { phoneHref, useCompany } from '../../lib/siteContent';
 
 const navLinks = [
   { label: 'Home', href: '/' },
@@ -36,15 +37,37 @@ const navKeys: Record<string, string> = {
   'Paradise Design & Construction': 'construction',
 };
 
+// Switch first: saving the choice can throw where storage is blocked (private browsing, in-app browsers).
 const setWebsiteLanguage = (language: 'en' | 'he') => {
-  window.localStorage.setItem('pgl-language', language);
   document.documentElement.lang = language;
   document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr';
   void i18n.changeLanguage(language);
+  try { window.localStorage.setItem('pgl-language', language); } catch { /* the choice just won't be remembered */ }
+};
+
+/** Segmented English / Hebrew switch with large tap targets. `compact` shows short labels for the mobile header. */
+const LanguageSwitch: React.FC<{ compact?: boolean; className?: string }> = ({ compact = false, className = '' }) => {
+  const { t, i18n: instance } = useTranslation();
+  const current = instance.resolvedLanguage === 'he' || instance.language === 'he' ? 'he' : 'en';
+  const options = [
+    { code: 'en' as const, label: compact ? 'EN' : t('language.english'), name: 'English' },
+    { code: 'he' as const, label: compact ? 'עב' : t('language.hebrew'), name: 'עברית' },
+  ];
+  return (
+    <div role="group" aria-label="Language / שפה" dir="ltr" className={`flex items-center rounded-full border border-white/25 p-0.5 ${className}`}>
+      {options.map(({ code, label, name }) => (
+        <button key={code} type="button" lang={code} aria-label={name} aria-pressed={current === code} onClick={() => setWebsiteLanguage(code)}
+          className={`min-h-[34px] min-w-[40px] rounded-full px-3 text-[13px] font-semibold transition-colors ${current === code ? 'bg-gold-500 text-navy-950' : 'text-white/85 hover:text-gold-400'}`}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 };
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
+  const company = useCompany();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -127,17 +150,14 @@ const Navbar: React.FC = () => {
 
           {/* CTA + Mobile Toggle */}
           <div className="flex w-[330px] shrink-0 items-center justify-end gap-2 max-xl:w-auto">
-            <div className="hidden items-center gap-1 rounded-full border border-white/20 px-2 py-1 text-[13px] text-white/80 xl:flex 2xl:text-sm">
-              <button type="button" onClick={() => setWebsiteLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.english')}</button>
-              <span className="text-white/40">|</span>
-              <button type="button" onClick={() => setWebsiteLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : 'hover:text-gold-400'}>{t('language.hebrew')}</button>
-            </div>
+            <LanguageSwitch className="hidden xl:flex" />
+            <LanguageSwitch compact className="xl:hidden" />
             <a
-              href="tel:+94XXXXXXXXX"
+              href={phoneHref(company.phone)}
               className="hidden 2xl:flex items-center gap-2 text-gold-400 text-base whitespace-nowrap font-medium hover:text-gold-300 transition-colors"
             >
               <Phone size={15} />
-              <span>+94 77 000 0000</span>
+              <span dir="ltr">{company.phone}</span>
             </a>
             <Link
               to="/contact"
@@ -147,8 +167,9 @@ const Navbar: React.FC = () => {
             </Link>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="xl:hidden text-white hover:text-gold-400 transition-colors p-1"
+              className="xl:hidden flex h-11 w-11 items-center justify-center rounded-lg text-white hover:text-gold-400 transition-colors"
               aria-label={t('nav.toggleMenu')}
+              aria-expanded={mobileOpen}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -157,7 +178,7 @@ const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`xl:hidden bg-navy-950 transition-all duration-300 overflow-hidden ${mobileOpen ? 'max-h-screen' : 'max-h-0'}`}>
+      <div className={`xl:hidden bg-navy-950 transition-all duration-300 ${mobileOpen ? 'max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain' : 'max-h-0 overflow-hidden'}`}>
         <div className="container-custom py-4 flex flex-col gap-1">
           {navLinks.map((link) =>
             link.children ? (
@@ -170,7 +191,7 @@ const Navbar: React.FC = () => {
                   <ChevronDown size={14} className={`transition-transform ${activeDropdown === link.label ? 'rotate-180' : ''}`} />
                 </button>
                 {activeDropdown === link.label && (
-                  <div className="ml-4 border-l-2 border-gold-500/30 pl-4">
+                  <div className="ms-4 border-s-2 border-gold-500/30 ps-4">
                     {link.children.map((child) => (
                       <NavLink
                         key={child.href}
@@ -198,14 +219,9 @@ const Navbar: React.FC = () => {
             )
           )}
           <div className="pt-4 pb-2 flex flex-col gap-3">
-            <div className="mx-4 flex items-center justify-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs text-white/80">
-              <button type="button" onClick={() => setWebsiteLanguage('en')} className={i18n.language === 'en' ? 'font-semibold text-gold-400' : ''}>{t('language.english')}</button>
-              <span>|</span>
-              <button type="button" onClick={() => setWebsiteLanguage('he')} className={i18n.language === 'he' ? 'font-semibold text-gold-400' : ''}>{t('language.hebrew')}</button>
-            </div>
-            <a href="tel:+94XXXXXXXXX" className="flex items-center gap-2 text-gold-400 text-sm px-4">
+            <a href={phoneHref(company.phone)} className="flex items-center gap-2 text-gold-400 text-sm px-4 py-2">
               <Phone size={15} />
-              +94 77 000 0000
+              <span dir="ltr">{company.phone}</span>
             </a>
             <Link to="/contact" className="btn-primary mx-4 text-center justify-center">
               {t('nav.consultation')}

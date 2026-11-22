@@ -1,5 +1,5 @@
-import React from 'react';
-import { SlidersHorizontal, X, Waves } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, SlidersHorizontal, X, Waves } from 'lucide-react';
 import type { PropertyFilters as FiltersType } from '../../types';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +15,8 @@ const bedroomOptions = ['Any', '1', '2', '3', '4', '5+'];
 
 const PropertyFilters: React.FC<PropertyFiltersProps> = ({ filters, onChange, onReset }) => {
   const { t } = useTranslation();
+  // On phones the filters start collapsed so listings are visible straight away.
+  const [open, setOpen] = useState(false);
   const update = (key: keyof FiltersType, value: FiltersType[keyof FiltersType]) => {
     onChange({ ...filters, [key]: value });
   };
@@ -28,11 +30,14 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ filters, onChange, on
 
   return (
     <div className="bg-white border border-beige-200 rounded-sm shadow-card p-5 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-navy-900 font-semibold">
+      <div className={`flex items-center justify-between gap-3 lg:mb-4 ${open ? 'mb-4' : ''}`}>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="property-filter-fields"
+          className="flex min-h-[40px] items-center gap-2 text-navy-900 font-semibold lg:pointer-events-none">
           <SlidersHorizontal size={18} className="text-gold-500" />
           {t('filters.title')}
-        </div>
+          {hasActiveFilters && <span className="h-2 w-2 rounded-full bg-gold-500 lg:hidden" aria-hidden="true" />}
+          <ChevronDown size={16} className={`text-navy-400 transition-transform lg:hidden ${open ? 'rotate-180' : ''}`} />
+        </button>
         {hasActiveFilters && (
           <button
             onClick={onReset}
@@ -43,7 +48,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ filters, onChange, on
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div id="property-filter-fields" className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 ${open ? '' : 'max-lg:hidden'}`}>
         {/* Buy / Rent */}
         <div>
           <label className="block text-xs font-medium text-navy-500 mb-1.5 uppercase tracking-wide">{t('filters.type')}</label>

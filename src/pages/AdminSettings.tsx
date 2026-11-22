@@ -15,7 +15,7 @@ const Notice: React.FC<{ notice: { ok: boolean; text: string } | null }> = ({ no
 
 /* ------------------------------------------------------------------ Business info */
 
-interface BusinessField { key: string; label: string; icon: LucideIcon; placeholder: string; multiline?: boolean; hebrew?: boolean; help?: string }
+interface BusinessField { key: string; label: string; icon: LucideIcon; placeholder: string; multiline?: boolean; help?: string }
 
 const businessGroups: { title: string; fields: BusinessField[] }[] = [
   { title: 'Contact details', fields: [
@@ -26,15 +26,15 @@ const businessGroups: { title: string; fields: BusinessField[] }[] = [
   ] },
   { title: 'Address & business hours', fields: [
     { key: 'address', label: 'Address', icon: MapPin, placeholder: defaultCompany.address, multiline: true, help: 'Separate lines with commas.' },
-    { key: 'address_he', label: 'Address (Hebrew)', icon: MapPin, placeholder: 'Optional — shown on the Hebrew website', multiline: true, hebrew: true },
     { key: 'hours', label: 'Business hours', icon: Clock3, placeholder: defaultCompany.hours, multiline: true, help: 'Separate days with a semicolon, e.g. "Mon–Fri: 9 AM – 6 PM; Sat: 9 AM – 1 PM".' },
-    { key: 'hours_he', label: 'Business hours (Hebrew)', icon: Clock3, placeholder: 'Optional — shown on the Hebrew website', multiline: true, hebrew: true },
   ] },
   { title: 'Social media', fields: [
     { key: 'facebook', label: 'Facebook page link', icon: Globe, placeholder: 'https://www.facebook.com/…', help: 'Leave empty to hide the Facebook icon on the website.' },
     { key: 'instagram', label: 'Instagram profile link', icon: Camera, placeholder: 'https://www.instagram.com/…', help: 'Leave empty to hide the Instagram icon on the website.' },
   ] },
 ];
+
+const businessKeys = businessGroups.flatMap((group) => group.fields.map((field) => field.key));
 
 export const BusinessInfoPage: React.FC = () => {
   const [company, setCompany] = useState<Record<string, string>>({});
@@ -54,10 +54,11 @@ export const BusinessInfoPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const changed = JSON.stringify(company) !== JSON.stringify(saved);
+  const changed = businessKeys.some((key) => (company[key] ?? '') !== (saved[key] ?? ''));
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
-    const value = Object.fromEntries(Object.entries(company).map(([key, text]) => [key, text.trim()]));
+    // Only send the fields this form edits; older keys (e.g. retired Hebrew fields) are dropped.
+    const value = Object.fromEntries(businessKeys.map((key) => [key, (company[key] ?? '').trim()]));
     setSaving(true);
     try {
       await saveSetting('company', value);
@@ -76,9 +77,9 @@ export const BusinessInfoPage: React.FC = () => {
       {businessGroups.map((group) => <section key={group.title} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-5 font-serif text-xl font-bold text-[#0a1628]">{group.title}</h2>
         <div className="grid gap-5 md:grid-cols-2">
-          {group.fields.map(({ key, label, icon: Icon, placeholder, multiline, hebrew, help }) => {
+          {group.fields.map(({ key, label, icon: Icon, placeholder, multiline, help }) => {
             const value = company[key] ?? '';
-            const props = { id: `company-${key}`, dir: hebrew ? 'rtl' : undefined, className: `${inputClass} pr-9`, placeholder, value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCompany({ ...company, [key]: event.target.value }) };
+            const props = { id: `company-${key}`, className: `${inputClass} pr-9`, placeholder, value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCompany({ ...company, [key]: event.target.value }) };
             return <div key={key}>
               <label htmlFor={`company-${key}`} className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500"><Icon size={14} className="text-[#c9a84c]" /> {label}</label>
               <div className="relative">

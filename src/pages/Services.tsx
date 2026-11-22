@@ -49,7 +49,7 @@ const Services: React.FC = () => {
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="text-center">
                             <Icon size={60} className="text-gold-400 mx-auto mb-4" />
-                            <p className="text-white/60 text-sm uppercase tracking-widest">Service {String(idx + 1).padStart(2, '0')}</p>
+                            <p className="text-white/60 text-sm uppercase tracking-widest">{t('serviceDetail.serviceLabel')} {String(idx + 1).padStart(2, '0')}</p>
                           </div>
                         </div>
                       </div>
@@ -58,7 +58,7 @@ const Services: React.FC = () => {
                     {/* Content Side */}
                     <div className={`p-8 lg:p-10 ${!isEven ? 'lg:order-1' : ''}`}>
                       <p className="text-gold-500 text-xs uppercase tracking-widest font-medium mb-3">
-                        Service {String(idx + 1).padStart(2, '0')}
+                        {t('serviceDetail.serviceLabel')} {String(idx + 1).padStart(2, '0')}
                       </p>
                       <h2 className="font-serif text-navy-900 text-2xl md:text-3xl font-bold mb-4">
                         {service.title}

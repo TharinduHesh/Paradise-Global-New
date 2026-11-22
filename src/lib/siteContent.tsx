@@ -6,7 +6,7 @@ import { unflatten, type TextOverrides } from './siteText';
 
 export interface CompanyInfo {
   name: string; phone: string; whatsapp: string; email: string;
-  address: string; address_he: string; hours: string; hours_he: string;
+  address: string; hours: string;
   facebook: string; instagram: string;
 }
 
@@ -18,8 +18,6 @@ export const defaultCompany: CompanyInfo = {
   email: 'info@paradisegloballeisures.com',
   address: 'Kandy & Colombo, Sri Lanka',
   hours: 'Mon–Fri: 9:00 AM – 6:00 PM; Sat: 9:00 AM – 1:00 PM',
-  address_he: '',
-  hours_he: '',
   facebook: '',
   instagram: '',
 };
@@ -67,10 +65,9 @@ export const usePageImage = (page: string, key: string) => {
 
 export const useCompany = () => useContext(SiteContentContext).company;
 
-/** Address and hours in the visitor's language, split into display lines (address on commas, hours on semicolons). */
-export const companyLines = (company: CompanyInfo, field: 'address' | 'hours', language: string) => {
-  const text = (language === 'he' && company[`${field}_he`].trim()) || company[field];
-  return text.split(field === 'address' ? /\s*[,\n]\s*/ : /\s*[;\n]\s*/).filter(Boolean);
+/** Address and hours split into display lines (address on commas, hours on semicolons). */
+export const companyLines = (company: CompanyInfo, field: 'address' | 'hours') => {
+  return company[field].split(field === 'address' ? /\s*[,\n]\s*/ : /\s*[;\n]\s*/).filter(Boolean);
 };
 
 export const phoneHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '').replace(/^0/, '+94')}`;

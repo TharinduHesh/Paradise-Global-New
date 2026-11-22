@@ -99,6 +99,12 @@
   }
 }
 
+/* Never let a stray wide element make the whole page scroll sideways on phones. 'clip' keeps sticky positioning working. */
+html,
+body {
+  overflow-x: clip;
+}
+
 html[dir='rtl'] {
   direction: rtl;
   text-align: right;

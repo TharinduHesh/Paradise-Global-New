@@ -141,7 +141,7 @@ const PropertyDetails: React.FC = () => {
                       {property.location}, {property.district}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex items-center gap-3 sm:flex-col sm:items-end">
                     <p className="font-serif text-gold-600 text-2xl md:text-3xl font-bold">{formatPrice()}</p>
                     <Badge variant="beige">{property.propertyType}</Badge>
                   </div>
