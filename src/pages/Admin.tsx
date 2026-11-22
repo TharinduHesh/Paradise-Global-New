@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity, BarChart3, ClipboardList, FileText, LogOut, Menu,
   Settings, Shield, Users, X, Plus, Clock3, AlertTriangle,
-  Eye, EyeOff, Mail, LockKeyhole, ArrowLeft, LogIn,
+  Eye, EyeOff, Mail, LockKeyhole, ArrowLeft, LogIn, Building2, Wrench, Trash2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import i18n from '../i18n';
@@ -12,6 +12,7 @@ import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, 
 import { enquiryCategories, type EnquiryCategory } from '../lib/enquiryCategories';
 import { api, Header, inputClass } from '../components/admin/adminUi';
 import WebsiteManagement from './AdminWebsite';
+import { BusinessInfoPage, MaintenanceModePage } from './AdminSettings';
 
 type User = AccessUser & { id: string; email: string; name: string };
 type Enquiry = {
@@ -115,7 +116,7 @@ const Sidebar: React.FC<{ user: User; open: boolean; setOpen: (value: boolean) =
   const path = useLocation().pathname.replace(/\/+$/, '').toLowerCase();
   const inWebsiteManagement = websiteSections.some((section) => section.path === path);
   const icons: Record<string, LucideIcon> = {
-    '/': BarChart3, '/enquiries': ClipboardList, '/content': FileText,
+    '/': BarChart3, '/enquiries': ClipboardList, '/content': FileText, '/business': Building2, '/maintenance': Wrench,
     '/seo': BarChart3, '/users': Users, '/activity': Activity, '/account': Shield,
   };
   const links = adminSections.flatMap(([section, title]) => {
@@ -212,6 +213,19 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
     }
   };
 
+  const remove = async (item: Enquiry) => {
+    if (!window.confirm(`Delete the enquiry from ${item.name}? This also deletes its internal notes and cannot be undone.`)) return;
+    setError('');
+    try {
+      await api(`enquiries/${item.id}`, { method: 'DELETE' });
+      if (selected?.id === item.id) setSelected(null);
+      if (items.length === 1 && page > 1) setPage(page - 1);
+      setRevision((value) => value + 1);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to delete enquiry.');
+    }
+  };
+
   const changeFilter = (key: keyof typeof filters, value: string) => {
     setPage(1);
     setFilters({ ...filters, [key]: value });
@@ -235,14 +249,16 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
     {!selected && error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
       <table className="w-full min-w-[680px] text-left text-sm">
-        <thead className="bg-slate-50 text-slate-600"><tr>{['Enquirer', 'Type', 'Status', 'Assigned to', 'Received'].map((label) =>
-          <th key={label} className="px-4 py-3">{label}</th>)}</tr></thead>
+        <thead className="bg-slate-50 text-slate-600"><tr>{['Enquirer', 'Type', 'Status', 'Assigned to', 'Received', ...(canEdit ? [''] : [])].map((label, index) =>
+          <th key={index} className="px-4 py-3">{label || <span className="sr-only">Actions</span>}</th>)}</tr></thead>
         <tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id}>
           <td className="px-4 py-3"><button onClick={() => select(item)} className="font-semibold text-[#0a1628] underline">{item.name}</button><p>{item.email}</p></td>
           <td className="px-4 py-3">{enquiryCategories[item.category]}</td>
           <td className="px-4 py-3"><span className={`rounded-full px-2 py-1 ${statusClass[item.status] ?? statusClass.new}`}>{item.status.replace('_', ' ')}</span></td>
           <td className="px-4 py-3">{item.assignee ?? 'Unassigned'}</td>
           <td className="px-4 py-3">{new Date(item.created_at).toLocaleDateString()}</td>
+          {canEdit && <td className="px-4 py-3 text-right"><button onClick={() => void remove(item)} aria-label={`Delete enquiry from ${item.name}`} title="Delete enquiry"
+            className="rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={16} /></button></td>}
         </tr>)}</tbody>
       </table>
       {!items.length && <p className="p-8 text-center text-sm text-slate-500">No enquiries found.</p>}
@@ -275,7 +291,10 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
               {assignees.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>
             <label className="block">Add internal note<textarea className={inputClass} maxLength={4000} value={draft.note}
               onChange={(event) => setDraft({ ...draft, note: event.target.value })} /></label>
-            <button disabled={saving} className="rounded-lg bg-[#0a1628] px-4 py-2 font-semibold text-white">Save enquiry</button>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button disabled={saving} className="rounded-lg bg-[#0a1628] px-4 py-2 font-semibold text-white">Save enquiry</button>
+              <button type="button" disabled={saving} onClick={() => void remove(selected)} className="flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-2 font-semibold text-red-700 hover:bg-red-100"><Trash2 size={15} /> Delete enquiry</button>
+            </div>
           </form>}
         </div>
       </section>
@@ -308,57 +327,10 @@ const MaintenancePreview: React.FC = () => {
         phone={company.phone}
         whatsapp={company.whatsapp}
       />
-      <Link to="/admin/settings" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg border border-slate-200">
+      <Link to="/admin/maintenance" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg border border-slate-200">
         ← Close preview
       </Link>
     </div>
-  );
-};
-
-const SettingsPage: React.FC = () => {
-  const [settings, setSettings] = useState<Record<string, Record<string, unknown>>>({});
-  const [message, setMessage] = useState('');
-  useEffect(() => { api<{ settings: Record<string, Record<string, unknown>> }>('settings').then((r) => setSettings(r.settings)).catch(console.error); }, []);
-  const company = (settings.company ?? {}) as Record<string, string>;
-  const maintenance = (settings.maintenance ?? { enabled: false, title: "We'll Be Right Back", message: '', reopeningAt: '' }) as { enabled: boolean; title: string; message: string; reopeningAt: string };
-  const update = async (key: string, value: unknown) => {
-    try {
-      await api('settings', { method: 'POST', body: JSON.stringify({ key, value }) });
-      setSettings({ ...settings, [key]: value as Record<string, unknown> });
-      setMessage('Saved successfully.');
-    } catch (caught) {
-      setMessage(caught instanceof Error ? caught.message : 'Unable to save settings.');
-    }
-  };
-  return (
-    <>
-      <Header title="Business & appearance" subtitle="Keep contact information, branding, SEO and maintenance settings current." />
-      {message && <div role="status" className="mb-4 rounded-lg bg-slate-100 px-4 py-3 text-sm text-slate-700">{message}</div>}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 font-serif text-xl font-bold text-[#0a1628]">Business information</h2>
-          <div className="space-y-3">
-            {[['name', 'Company name'], ['phone', 'Phone'], ['whatsapp', 'WhatsApp'], ['email', 'Email'], ['address', 'Address'], ['hours', 'Opening hours']].map(([key, label]) =>
-              <label key={key} className="block text-xs font-semibold uppercase tracking-wide text-slate-500">{label}<input className={`${inputClass} mt-1 normal-case font-normal`} value={company[key] ?? ''} onChange={(e) => setSettings({ ...settings, company: { ...company, [key]: e.target.value } })} /></label>
-            )}
-            <button onClick={() => update('company', company)} className="mt-2 rounded-lg bg-[#0a1628] px-4 py-2.5 text-sm font-semibold text-white">Save business info</button>
-          </div>
-        </section>
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 flex items-center gap-2 font-serif text-xl font-bold text-[#0a1628]"><Settings size={20} className="text-[#c9a84c]" /> Maintenance mode</h2>
-          <label className="flex items-center gap-3 text-sm font-medium text-slate-700"><input type="checkbox" checked={maintenance.enabled} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, enabled: e.target.checked } })} /> Show maintenance page to public visitors</label>
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Page title *<input className={`${inputClass} mt-1 normal-case font-normal`} value={maintenance.title ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, title: e.target.value } })} /></label>
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Message *<textarea className={`${inputClass} mt-1 normal-case font-normal`} rows={4} value={maintenance.message ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, message: e.target.value } })} /></label>
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Expected reopening<input type="datetime-local" className={`${inputClass} mt-1 normal-case font-normal`} value={maintenance.reopeningAt ?? ''} onChange={(e) => setSettings({ ...settings, maintenance: { ...maintenance, reopeningAt: e.target.value } })} /></label>
-          <p className="mt-2 text-xs text-slate-400">Leave empty when no exact reopening time is available.</p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button onClick={() => update('maintenance', maintenance)} className="rounded-lg bg-[#c9a84c] px-4 py-2.5 text-sm font-semibold text-white">Save maintenance settings</button>
-            <Link to="/admin/maintenance-preview" className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700">Preview maintenance page</Link>
-          </div>
-          <div className="mt-6 rounded-lg bg-amber-50 p-4 text-xs leading-relaxed text-amber-800">Authorized dashboard pages remain available while maintenance mode is enabled.</div>
-        </section>
-      </div>
-    </>
   );
 };
 
@@ -414,7 +386,7 @@ const UsersPage: React.FC<{ user: User }> = ({ user }) => {
 
   return <>
     <Header title={user.role === 'manager' ? 'Staff Accounts' : 'Users & Settings'} subtitle="Create and manage staff accounts and their permissions." />
-    {isAdministrator(user.role) && <Link to="/admin/settings" className="mb-5 inline-block rounded-lg bg-slate-100 px-4 py-2 font-semibold">Business settings & maintenance</Link>}
+    {isAdministrator(user.role) && <div className="mb-5 flex flex-wrap gap-2"><Link to="/admin/business" className="rounded-lg bg-slate-100 px-4 py-2 font-semibold">Business info</Link><Link to="/admin/maintenance" className="rounded-lg bg-slate-100 px-4 py-2 font-semibold">Maintenance mode</Link></div>}
     {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
     {notice && <p role="status" className="mb-4 text-sm text-emerald-700">{notice}</p>}
     <div className="grid gap-5 xl:grid-cols-[1fr_350px]">
@@ -582,7 +554,8 @@ const AdminApp: React.FC = () => {
   if (path === '/admin/activity') page = <ActivityPage />;
   if (path === '/admin/account') page = <AccountPage />;
   if (path === '/admin/maintenance-preview') page = <MaintenancePreview />;
-  if (path === '/admin/settings') page = <SettingsPage />;
+  if (path === '/admin/settings' || path === '/admin/business') page = <BusinessInfoPage />;
+  if (path === '/admin/maintenance') page = <MaintenanceModePage />;
   if (path === '/admin/users') page = <UsersPage user={user} />;
   if (path === '/admin/seo') page = <SeoPage />;
   return <div className="min-h-screen bg-[#f8fafc]"><Sidebar user={user} open={open} setOpen={setOpen} onLogout={async () => { await api('logout', { method: 'POST', credentials: 'include' }); setUser(null); navigate('/admin/login', { replace: true }); }} /><main className="min-h-screen px-4 py-8 lg:ml-64 lg:px-10">{page}</main></div>;

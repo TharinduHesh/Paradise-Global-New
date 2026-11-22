@@ -145,6 +145,17 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
         WHERE n.enquiry_id = ? ORDER BY n.created_at, n.id`).bind(enquiry[1]).all();
       return json({ notes: notes.results });
     }
+    if (enquiry && method === 'DELETE') {
+      const id = enquiry[1];
+      const existing = await context.env.DB.prepare('SELECT name, email FROM contact_enquiries WHERE id = ?').bind(id).first<{ name: string; email: string }>();
+      if (!existing) return error('Enquiry not found.', 404);
+      await context.env.DB.batch([
+        context.env.DB.prepare('DELETE FROM enquiry_notes WHERE enquiry_id = ?').bind(id),
+        context.env.DB.prepare('DELETE FROM contact_enquiries WHERE id = ?').bind(id),
+      ]);
+      await logActivity(context.env, user.id, 'delete', 'enquiry', id, { name: existing.name });
+      return json({ ok: true });
+    }
     if (enquiry && method === 'PATCH') {
       const id = enquiry[1];
       const body = await readJson<{ status?: string; note?: string; assignedTo?: string | null }>(context.request);
@@ -218,6 +229,13 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
         const seo = body.value as { title?: unknown; description?: unknown };
         if (typeof seo.title !== 'string' || seo.title.length > 120
           || typeof seo.description !== 'string' || seo.description.length > 320) return error('Invalid SEO settings.');
+      }
+      if (body.key === 'company') {
+        const company = body.value as Record<string, unknown>;
+        const allowed = ['name', 'phone', 'whatsapp', 'email', 'address', 'address_he', 'hours', 'hours_he', 'facebook', 'instagram'];
+        if (Object.entries(company).some(([key, value]) => !allowed.includes(key) || typeof value !== 'string' || value.length > 300)) return error('Invalid business information.');
+        if (['facebook', 'instagram'].some((key) => company[key] && !/^https:\/\/\S+$/i.test(String(company[key])))) return error('Social media links must start with https://');
+        if (company.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(company.email))) return error('Enter a valid email address.');
       }
       const maintenance = body.key === 'maintenance' ? body.value as { enabled?: unknown } : null;
       if (maintenance && typeof maintenance.enabled !== 'boolean') return error('Invalid maintenance state.');

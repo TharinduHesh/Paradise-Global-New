@@ -4,11 +4,12 @@ import SectionHeader from '../components/ui/SectionHeader';
 import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
 import { Turnstile } from '../components/ui/Turnstile';
 import { useTranslation } from 'react-i18next';
-import { phoneHref, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
+import { companyLines, phoneHref, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
 
 const Contact: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const company = useCompany();
+  const addressLines = companyLines(company, 'address', i18n.language);
   const headerImage = usePageImage('contact', 'header');
   const serviceOptions = [
     { value: '', label: t('contact.servicesSelect') },
@@ -113,7 +114,7 @@ const Contact: React.FC = () => {
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.ourOffice')}</p>
                     <p className="text-navy-500 text-sm leading-relaxed">
                       {company.name}
-                      {company.address.split(/,s*/).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
+                      {companyLines(company, 'address', i18n.language).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                     </p>
                   </div>
                 </div>
@@ -163,8 +164,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.officeHours')}</p>
-                    <p className="text-navy-500 text-sm">{t('contact.hoursWeekday')}</p>
-                    <p className="text-navy-500 text-sm">{t('contact.hoursSaturday')}</p>
+                    {companyLines(company, 'hours', i18n.language).map((line) => <p key={line} className="text-navy-500 text-sm">{line}</p>)}
                     <p className="text-navy-400 text-xs mt-1">{t('contact.sriLankaTime')}</p>
                   </div>
                 </div>
@@ -304,10 +304,10 @@ const Contact: React.FC = () => {
               <div className="h-72 bg-gradient-to-br from-beige-100 to-beige-200 flex items-center justify-center">
                 <div className="text-center">
                   <MapPin size={50} className="text-gold-400 mx-auto mb-3" />
-                  <p className="font-serif text-navy-800 text-xl font-semibold">{t('contact.mapTitle')}</p>
-                  <p className="text-navy-500 text-sm mt-1">Sri Lanka</p>
+                  <p className="font-serif text-navy-800 text-xl font-semibold">{addressLines.length > 1 ? addressLines.slice(0, -1).join(', ') : addressLines[0]}</p>
+                  {addressLines.length > 1 && <p className="text-navy-500 text-sm mt-1">{addressLines[addressLines.length - 1]}</p>}
                   <a
-                    href="https://maps.google.com/?q=Kandy+Colombo+Sri+Lanka"
+                    href={`https://maps.google.com/?q=${encodeURIComponent(company.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 btn-primary inline-flex text-sm"

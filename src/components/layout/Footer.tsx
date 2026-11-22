@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCatalogue, viewDestination } from '../../lib/catalogue';
-import { phoneHref, useCompany } from '../../lib/siteContent';
+import { companyLines, phoneHref, useCompany } from '../../lib/siteContent';
 
 const FacebookIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -20,7 +20,7 @@ const InstagramIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
 );
 
 const Footer: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentYear = new Date().getFullYear();
   const destinations = useCatalogue<Record<string, unknown>>('destination').map(viewDestination);
   const company = useCompany();
@@ -40,12 +40,14 @@ const Footer: React.FC = () => {
             </p>
             <div className="flex gap-3">
               {[
-                { icon: FacebookIcon, href: '#', label: 'Facebook' },
-                { icon: InstagramIcon, href: '#', label: 'Instagram' },
-              ].map(({ icon: Icon, href, label }) => (
+                { icon: FacebookIcon, href: company.facebook, label: 'Facebook' },
+                { icon: InstagramIcon, href: company.instagram, label: 'Instagram' },
+              ].filter(({ href }) => href).map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
                   className="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-gold-400 hover:border-gold-400 transition-colors duration-200"
                 >
@@ -112,9 +114,9 @@ const Footer: React.FC = () => {
               <li className="flex gap-3">
                 <MapPin size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
                 <span className="text-white/60 text-sm">
-                  {t('footer.address')}<br />
-                  {t('footer.locationLine')}<br />
-                  {t('footer.province')}
+                  {company.name}<br />
+                  {t('footer.locationLine')}
+                  {companyLines(company, 'address', i18n.language).map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                 </span>
               </li>
               <li className="flex gap-3">

@@ -4,7 +4,11 @@ import { getPublishedContent } from './publishedContent';
 import { pageImageDefaults } from './pageImages';
 import { unflatten, type TextOverrides } from './siteText';
 
-export interface CompanyInfo { name: string; phone: string; whatsapp: string; email: string; address: string; hours: string }
+export interface CompanyInfo {
+  name: string; phone: string; whatsapp: string; email: string;
+  address: string; address_he: string; hours: string; hours_he: string;
+  facebook: string; instagram: string;
+}
 
 /** Used until the saved business info loads, and for any field left blank in Settings. */
 export const defaultCompany: CompanyInfo = {
@@ -14,6 +18,10 @@ export const defaultCompany: CompanyInfo = {
   email: 'info@paradisegloballeisures.com',
   address: 'Kandy & Colombo, Sri Lanka',
   hours: 'Mon–Fri: 9:00 AM – 6:00 PM; Sat: 9:00 AM – 1:00 PM',
+  address_he: '',
+  hours_he: '',
+  facebook: '',
+  instagram: '',
 };
 
 interface SiteContent { images: Record<string, Record<string, string>>; company: CompanyInfo }
@@ -58,6 +66,12 @@ export const usePageImage = (page: string, key: string) => {
 };
 
 export const useCompany = () => useContext(SiteContentContext).company;
+
+/** Address and hours in the visitor's language, split into display lines (address on commas, hours on semicolons). */
+export const companyLines = (company: CompanyInfo, field: 'address' | 'hours', language: string) => {
+  const text = (language === 'he' && company[`${field}_he`].trim()) || company[field];
+  return text.split(field === 'address' ? /\s*[,\n]\s*/ : /\s*[;\n]\s*/).filter(Boolean);
+};
 
 export const phoneHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '').replace(/^0/, '+94')}`;
 export const whatsappHref = (number: string, text?: string) =>

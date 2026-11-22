@@ -32,6 +32,8 @@ export const adminSections = [
   ['/', 'Dashboard'],
   ['/enquiries', 'Enquiry Inbox'],
   ['/content', 'Website Management'],
+  ['/business', 'Business Info'],
+  ['/maintenance', 'Maintenance Mode'],
   ['/seo', 'SEO & Reports'],
   ['/users', 'Users & Settings'],
   ['/activity', 'Activity Logs'],
