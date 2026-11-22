@@ -237,7 +237,29 @@ html[dir='rtl'] a[href^='tel'] * {
     transform: none;
   }
 
+  /* Page transition: the new page fades up while a gold line sweeps across the top (see components/layout/Layout). */
+  .page-enter { animation: pageEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @keyframes pageEnter {
+    0% { opacity: 0; transform: translateY(18px); }
+    100% { opacity: 1; transform: none; }
+  }
+  .route-bar {
+    position: fixed; inset: 0 0 auto 0; z-index: 60; height: 3px; pointer-events: none;
+    background: linear-gradient(90deg, #b8912e, #e8b33f, #c9a84c);
+    box-shadow: 0 0 12px rgba(201, 168, 76, 0.7);
+    transform-origin: left;
+    animation: routeBar 0.75s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+  html[dir='rtl'] .route-bar { transform-origin: right; }
+  @keyframes routeBar {
+    0% { transform: scaleX(0); opacity: 1; }
+    60% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(1); opacity: 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .page-enter, .route-bar { animation: none; }
+    .route-bar { display: none; }
     .animate-fade-up, .animate-fade-in, .animate-hero-zoom, .animate-line-grow, .animate-bounce { animation: none; }
     .reveal, .reveal.is-visible { opacity: 1; transform: none; transition: none; }
   }
