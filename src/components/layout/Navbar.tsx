@@ -90,7 +90,7 @@ const Navbar: React.FC = () => {
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
       <div className="container-custom">
-        <div className="grid h-24 grid-cols-[150px_minmax(0,1fr)_auto] items-center gap-4 max-xl:flex max-xl:h-24 max-xl:justify-between">
+        <div className="grid h-24 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6 2xl:gap-10 max-xl:flex max-xl:h-24 max-xl:justify-between">
           {/* Logo */}
           <Link to="/" className="flex h-24 items-center flex-shrink-0" aria-label="Paradise Global Leisures">
             <img
@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden min-w-0 items-center justify-start gap-0 -translate-x-4 xl:flex">
+          <nav className="hidden min-w-0 items-center justify-center gap-1 xl:flex 2xl:gap-3">
             {navLinks.map((link) =>
               link.children ? (
                 <div
@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
                   onMouseEnter={() => setActiveDropdown(link.label)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <button className="flex items-center gap-1 whitespace-nowrap px-2 py-2 text-[14px] font-medium text-white/90 transition-colors duration-200 hover:text-gold-400 2xl:text-[15px]">
+                  <button className="flex items-center gap-1 whitespace-nowrap px-2.5 py-2 text-[14px] font-medium text-white/90 transition-colors duration-200 hover:text-gold-400 2xl:text-[15px]">
                     {t(`nav.${navKeys[link.label] ?? 'services'}`)}
                     <ChevronDown size={14} className="transition-transform group-hover:rotate-180" />
                   </button>
@@ -137,7 +137,7 @@ const Navbar: React.FC = () => {
                   key={link.href}
                   to={link.href}
                   className={({ isActive }) =>
-                    `whitespace-nowrap px-2 py-2 text-[14px] font-medium transition-colors duration-200 2xl:text-[15px] ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
+                    `whitespace-nowrap px-2.5 py-2 text-[14px] font-medium transition-colors duration-200 2xl:text-[15px] ${isActive ? 'text-gold-400' : 'text-white/90 hover:text-gold-400'}`
                   }
                 >
                   {t(`nav.${navKeys[link.label] ?? ''}`, { defaultValue: link.label })}
@@ -147,7 +147,7 @@ const Navbar: React.FC = () => {
           </nav>
 
           {/* CTA + Mobile Toggle */}
-          <div className="relative z-10 flex shrink-0 items-center justify-end gap-2">
+          <div className="relative z-10 flex shrink-0 items-center justify-end gap-3 2xl:gap-4">
             <LanguageSwitch className="hidden xl:flex" />
             <LanguageSwitch compact className="xl:hidden" />
             <Link
