@@ -6,7 +6,7 @@ import type { TFunction } from 'i18next';
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'motion/react';
 import i18n from '../../i18n';
 import { EASE_INOUT, EASE_LUXE, luxe, staggerContainer } from '../../lib/motion';
-import { useCompany, phoneHref } from '../../lib/siteContent';
+import { useCompany, phoneHref, phoneNumbers } from '../../lib/siteContent';
 import { Magnetic } from '../motion/primitives';
 
 const navLinks = [
@@ -397,11 +397,11 @@ const Navbar: React.FC = () => {
                   {t('nav.consultation')} <ArrowRight size={16} />
                 </Link>
                 <div className="flex flex-col gap-2 text-sm text-white/60 sm:flex-row sm:gap-6">
-                  {company.phone && (
-                    <a href={phoneHref(company.phone)} className="inline-flex items-center gap-2 transition-colors hover:text-gold-400">
-                      <Phone size={14} className="text-gold-500" /> {company.phone}
+                  {phoneNumbers(company.phone).map((number) => (
+                    <a key={number} href={phoneHref(number)} className="inline-flex items-center gap-2 transition-colors hover:text-gold-400">
+                      <Phone size={14} className="text-gold-500" /> {number}
                     </a>
-                  )}
+                  ))}
                   {company.email && (
                     <a href={`mailto:${company.email}`} className="inline-flex items-center gap-2 transition-colors hover:text-gold-400">
                       <Mail size={14} className="text-gold-500" /> {company.email}

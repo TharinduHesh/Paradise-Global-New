@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useCatalogue, viewDestination } from '../../lib/catalogue';
-import { companyLines, phoneHref, useCompany } from '../../lib/siteContent';
+import { companyLines, phoneHref, phoneNumbers, useCompany } from '../../lib/siteContent';
 
 const FacebookIcon: React.FC<{ size?: number }> = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -115,14 +115,13 @@ const Footer: React.FC = () => {
                 <MapPin size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
                 <span className="text-white/60 text-sm">
                   {company.name}<br />
-                  {t('footer.locationLine')}
                   {companyLines(company, 'address').map((line) => <React.Fragment key={line}><br />{line}</React.Fragment>)}
                 </span>
               </li>
               <li className="flex gap-3">
                 <Phone size={16} className="text-gold-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm">
-                  <a href={phoneHref(company.phone)} className="text-white/60 hover:text-gold-400 transition-colors block">{company.phone}</a>
+                <div className="space-y-1 text-sm">
+                  {phoneNumbers(company.phone).map((number) => <a key={number} href={phoneHref(number)} className="text-white/60 hover:text-gold-400 transition-colors block">{number}</a>)}
                 </div>
               </li>
               <li className="flex gap-3">

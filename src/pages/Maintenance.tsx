@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Wrench,
 } from 'lucide-react';
+import { phoneHref, phoneNumbers } from '../lib/siteContent';
 
 interface MaintenancePageProps {
   message?: string;
@@ -21,6 +22,7 @@ interface MaintenancePageProps {
 const MaintenancePage: React.FC<MaintenancePageProps> = ({
   message,
   reopeningAt,
+  email,
   phone,
   whatsapp,
 }) => {
@@ -32,7 +34,8 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
       }).format(new Date(reopeningAt))
     : '';
 
-  const contactEmail = 'info@paradisegloballeisures.com';
+  const contactEmail = email || 'info@paradisegloballeisures.com';
+  const phoneLines = phoneNumbers(phone || whatsapp || '075 166 8705');
   const contactPhone = phone || whatsapp || '075 166 8705';
   const whatsappLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}`
@@ -198,15 +201,20 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
               </a>
             </div>
             {contactPhone && (
-              <div className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5">
-                <p className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-400">Urgent Support</p>
-                <a
-                  href={`tel:${contactPhone}`}
-                  className="flex items-center gap-1.5 font-medium text-[#0a1628] hover:text-[#c9a84c]"
-                >
-                  <Phone size={13} className="shrink-0 text-slate-400" />
-                  {contactPhone}
-                </a>
+              <div className="flex items-start justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5">
+                <p className="shrink-0 pt-0.5 text-xs font-bold uppercase tracking-widest text-slate-400">Urgent Support</p>
+                <div className="flex flex-col items-end gap-1">
+                  {phoneLines.map((number) => (
+                    <a
+                      key={number}
+                      href={phoneHref(number)}
+                      className="flex items-center gap-1.5 font-medium text-[#0a1628] hover:text-[#c9a84c]"
+                    >
+                      <Phone size={13} className="shrink-0 text-slate-400" />
+                      {number}
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>

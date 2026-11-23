@@ -230,16 +230,6 @@ html[dir='rtl'] a[href^='tel'] * {
     to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
   }
 
-  /* Hero scroll cue: a gold bead travels down a fine line. */
-  .scroll-cue::after {
-    content: ''; position: absolute; inset: 0 0 auto 0; height: 40%;
-    background: linear-gradient(to bottom, transparent, var(--color-gold-400));
-    animation: scrollCue 2.2s var(--ease-inout) infinite;
-  }
-  @keyframes scrollCue {
-    from { transform: translateY(-100%); }
-    to { transform: translateY(260%); }
-  }
 
   /* Inner page banners (tagged by useAutoReveal): the photo drifts out of a zoom, the text rises in sequence,
      the heading lifts out of a mask and the gold rule draws in. */
@@ -374,7 +364,7 @@ html[dir='rtl'] a[href^='tel'] * {
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .animate-fade-up, .animate-fade-in, .animate-bounce,
-    .hero-kenburns, .scroll-cue::after,
+    .hero-kenburns,
     [data-page-header] *, [data-page-header] > .bg-cover { animation: none; }
     [data-reveal][data-reveal], [data-reveal-img][data-reveal-img] { opacity: 1; clip-path: none; transform: none; transition: none; }
     .lux-card:hover, .card-hover:hover, .group:hover .lux-zoom,

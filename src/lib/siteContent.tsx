@@ -70,6 +70,9 @@ export const companyLines = (company: CompanyInfo, field: 'address' | 'hours') =
   return company[field].split(field === 'address' ? /\s*[,\n]\s*/ : /\s*[;\n]\s*/).filter(Boolean);
 };
 
+/** Splits the phone setting into separate numbers, e.g. "Uvindu - 077… / Chandika - 077…" gives two entries. */
+export const phoneNumbers = (phone: string) => phone.split(/\s*[/;\n]\s*/).map((entry) => entry.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
 export const phoneHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '').replace(/^0/, '+94')}`;
 export const whatsappHref = (number: string, text?: string) =>
   `https://wa.me/${number.replace(/\D/g, '').replace(/^0/, '94')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;

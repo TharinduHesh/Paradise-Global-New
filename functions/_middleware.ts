@@ -61,8 +61,10 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
         const reopenText = maintenance.reopeningAt
           ? new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Colombo' }).format(new Date(maintenance.reopeningAt))
           : '';
-        const companyEmail = 'info@paradisegloballeisures.com';
+        const companyEmail = company.email || 'info@paradisegloballeisures.com';
         const companyPhone = company.phone || company.whatsapp || '075 166 8705';
+        const companyPhones = companyPhone.split(/\s*[/;\n]\s*/).map((entry) => entry.replace(/\s+/g, ' ').trim()).filter(Boolean);
+        const telNumber = (entry: string) => entry.replace(/[^\d+]/g, '').replace(/^0/, '+94');
         const companyWhatsapp = company.whatsapp || company.phone || '075 166 8705';
         const html = `<!doctype html>
 <html lang="en" dir="ltr">
@@ -123,6 +125,7 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
     .contact-link{font-size:13px;font-weight:500;color:#0a1628;text-decoration:none;display:flex;align-items:center;gap:6px}
     .contact-link svg{width:13px;height:13px;stroke:#94a3b8;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .contact-link:hover{color:#c9a84c}
+    .contact-phones{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
     /* Responsive */
     @media(max-width:900px){
       .wrap{grid-template-columns:1fr;padding:40px 20px}
@@ -182,7 +185,7 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
           <div class="contact-label">Email</div>
           <a class="contact-link" href="mailto:${escapeHtml(companyEmail)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${escapeHtml(companyEmail)}</a>
         </div>
-        ${companyPhone ? `<div class="contact-row"><div class="contact-label">Urgent Support</div><a class="contact-link" href="tel:${escapeHtml(companyPhone)}"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.37 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 7.69 7.69l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHtml(companyPhone)}</a></div>` : ''}
+        ${companyPhone ? `<div class="contact-row"><div class="contact-label">Urgent Support</div><div class="contact-phones">${companyPhones.map((number) => `<a class="contact-link" href="tel:${escapeHtml(telNumber(number))}"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.37 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.4a16 16 0 0 0 7.69 7.69l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>${escapeHtml(number)}</a>`).join('')}</div></div>` : ''}
       </div>
     </div>
   </div>

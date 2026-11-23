@@ -4,7 +4,7 @@ import SectionHeader from '../components/ui/SectionHeader';
 import { getContactSiteKey, saveContactEnquiry } from '../lib/contactApi';
 import { Turnstile } from '../components/ui/Turnstile';
 import { useTranslation } from 'react-i18next';
-import { companyLines, phoneHref, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
+import { companyLines, phoneHref, phoneNumbers, usePageImage, useCompany, whatsappHref } from '../lib/siteContent';
 
 const Contact: React.FC = () => {
   const { t } = useTranslation();
@@ -126,7 +126,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-navy-900 text-sm mb-1">{t('contact.phoneLabel')}</p>
-                    <a href={phoneHref(company.phone)} className="text-navy-500 text-sm block hover:text-gold-600 transition-colors">{company.phone}</a>
+                    {phoneNumbers(company.phone).map((number) => <a key={number} href={phoneHref(number)} className="text-navy-500 text-sm block hover:text-gold-600 transition-colors">{number}</a>)}
                   </div>
                 </div>
 

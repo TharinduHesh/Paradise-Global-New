@@ -127,7 +127,6 @@ const About: React.FC = () => {
       <section className="section-padding bg-white">
         <div className="container-custom">
           <SectionHeader
-            eyebrow={t('about.people')}
             title={t('about.team')}
             subtitle={t('about.teamSubtitle')}
             centered

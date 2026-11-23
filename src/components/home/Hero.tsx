@@ -44,9 +44,6 @@ const Hero: React.FC = () => {
   const contentY = useTransform(scrollYProgress, [0, 1], ['0%', '14%']);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
-  const scrollToContent = () => {
-    window.scrollTo({ top: window.innerHeight, behavior: reduce ? 'auto' : 'smooth' });
-  };
 
   const stats = [
     { value: '150+', label: t('home.managed') },
@@ -160,20 +157,6 @@ const Hero: React.FC = () => {
           </motion.div>
         </motion.div>
       </motion.div>
-
-      {/* Scroll cue: a gold bead travels down a fine line */}
-      <motion.button
-        type="button"
-        onClick={scrollToContent}
-        className="group absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-3 text-white/55 hover:text-gold-400 transition-colors"
-        aria-label={t('common.scrollDown')}
-        initial={{ opacity: 0 }}
-        animate={ready ? { opacity: 1 } : undefined}
-        transition={{ duration: 1, delay: BASE_DELAY + 1.6 }}
-      >
-        <span className="text-[11px] uppercase tracking-[0.3em]">{t('common.scrollDown')}</span>
-        <span aria-hidden="true" className="scroll-cue relative block h-12 w-px overflow-hidden bg-white/20" />
-      </motion.button>
     </section>
   );
 };
