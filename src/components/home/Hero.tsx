@@ -165,7 +165,7 @@ const Hero: React.FC = () => {
       <motion.button
         type="button"
         onClick={scrollToContent}
-        className="group absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-white/55 hover:text-gold-400 transition-colors"
+        className="group absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-3 text-white/55 hover:text-gold-400 transition-colors"
         aria-label={t('common.scrollDown')}
         initial={{ opacity: 0 }}
         animate={ready ? { opacity: 1 } : undefined}

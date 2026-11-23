@@ -61,7 +61,7 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
         const reopenText = maintenance.reopeningAt
           ? new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Colombo' }).format(new Date(maintenance.reopeningAt))
           : '';
-        const companyEmail = 'globalparadise99@gmail.com';
+        const companyEmail = 'info@paradisegloballeisures.com';
         const companyPhone = company.phone || company.whatsapp || '075 166 8705';
         const companyWhatsapp = company.whatsapp || company.phone || '075 166 8705';
         const html = `<!doctype html>

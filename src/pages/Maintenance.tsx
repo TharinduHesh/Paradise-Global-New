@@ -32,7 +32,7 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
       }).format(new Date(reopeningAt))
     : '';
 
-  const contactEmail = 'globalparadise99@gmail.com';
+  const contactEmail = 'info@paradisegloballeisures.com';
   const contactPhone = phone || whatsapp || '075 166 8705';
   const whatsappLink = whatsapp
     ? `https://wa.me/${whatsapp.replace(/\D/g, '')}`
