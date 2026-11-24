@@ -1,10 +1,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// The session's anti-CSRF token, kept in memory only. /api/admin/me provides it after sign-in and on every page load.
+let csrfToken = '';
+
+/** An error from the admin API; `code` carries a machine-readable reason such as "password_change_required". */
+export class ApiError extends Error {
+  readonly code?: string;
+  constructor(message: string, code?: string) { super(message); this.code = code; }
+}
+
 export const api = async <T,>(path: string, init?: RequestInit): Promise<T> => {
-  const response = await fetch(`/api/admin/${path}`, { ...init, credentials: 'include', headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) } });
+  const method = (init?.method ?? 'GET').toUpperCase();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(method !== 'GET' && csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) };
+  const response = await fetch(`/api/admin/${path}`, { ...init, credentials: 'include', headers: { ...headers, ...(init?.headers as Record<string, string> | undefined ?? {}) } });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.error ?? 'Request failed.');
+  if (path === 'logout') csrfToken = '';
+  if (!response.ok) throw new ApiError(body.error ?? 'Request failed.', body.code);
+  if (typeof body.csrfToken === 'string') csrfToken = body.csrfToken;
   return body as T;
 };
 

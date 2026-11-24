@@ -5,8 +5,8 @@ import { passwordProblem } from '../../../src/lib/passwordPolicy';
 import { manageAccounts } from '../../_lib/adminAccounts';
 import { validateTurnstile } from '../../_lib/turnstile';
 import {
-  AdminContext, AdminEnv, AdminUser, clearSession, createSession, error, hashPassword, logActivity,
-  randomId, readJson, sha256, verifyPassword, withAuth, json, cookie, SESSION_SECONDS,
+  AdminContext, AdminEnv, AdminUser, clearSession, createSession, csrfTokenFor, error, getCookie, hashPassword, hasValidCsrfToken, logActivity,
+  randomId, readJson, sha256, verifyPassword, withAuth, json, cookie, SESSION_COOKIE, SESSION_SECONDS,
 } from '../../_lib/admin';
 
 interface Body { email?: string; password?: string; name?: string; role?: AdminUser['role']; userId?: string; currentPassword?: string; newPassword?: string; }
@@ -73,8 +73,8 @@ const login = async (context: AdminContext) => {
   const ipKey = `ip:${rateKey(context.request)}`;
   const accountKey = `account:${await sha256(email.toLowerCase())}`;
   if (await isLocked(context.env, ipKey) || await isLocked(context.env, accountKey)) return error('Too many login attempts. Try again later.', 429);
-  const user = await context.env.DB.prepare('SELECT id, is_active, password_hash FROM admin_users WHERE email = ? AND deleted_at IS NULL')
-    .bind(email).first<{ id: string; is_active: number; password_hash: string }>();
+  const user = await context.env.DB.prepare('SELECT id, email, name, is_active, password_hash FROM admin_users WHERE email = ? AND deleted_at IS NULL')
+    .bind(email).first<{ id: string; email: string; name: string; is_active: number; password_hash: string }>();
   const passwordMatches = await verifyPassword(body.password, user?.password_hash || DUMMY_PASSWORD_HASH);
   if (!user || !user.is_active || !passwordMatches) {
     const [, accountLocked] = await Promise.all([
@@ -84,6 +84,22 @@ const login = async (context: AdminContext) => {
     // Shows in the Activity log so administrators can see an account under attack.
     if (accountLocked && user) await logActivity(context.env, undefined, 'login_locked', 'user', user.id, { failedAttempts: ACCOUNT_ATTEMPT_LIMIT });
     return error('Invalid email or password.', 401);
+  }
+  // PGL-001: a correct password that fails the current policy (such as "CompanyName@Admin123") cannot be used to sign in.
+  // The person must choose a strong new password in the same step; no session is created until they do.
+  if (passwordProblem(body.password, user)) {
+    const changeRequired = (message: string, status: number) => json({ error: message, code: 'password_change_required' }, { status });
+    if (typeof body.newPassword !== 'string' || !body.newPassword) {
+      return changeRequired('Your password no longer meets the security policy. Choose a new password to continue.', 403);
+    }
+    const weakNewPassword = passwordProblem(body.newPassword, user);
+    if (weakNewPassword) return changeRequired(weakNewPassword, 400);
+    if (body.newPassword === body.password) return changeRequired('Choose a new password that is different from the current one.', 400);
+    await context.env.DB.batch([
+      context.env.DB.prepare('UPDATE admin_users SET password_hash = ?, updated_at = datetime("now") WHERE id = ?').bind(await hashPassword(body.newPassword), user.id),
+      context.env.DB.prepare('DELETE FROM admin_sessions WHERE user_id = ?').bind(user.id),
+    ]);
+    await logActivity(context.env, user.id, 'replace_weak_password', 'user', user.id);
   }
   await context.env.DB.batch([ipKey, accountKey].map((key) => context.env.DB.prepare('DELETE FROM admin_login_attempts WHERE key = ?').bind(key)));
   const token = await createSession(context.env, user.id);
@@ -120,14 +136,20 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
   try {
     if (path === 'login' && context.request.method === 'POST') return await login(admin);
     if (path === 'setup' && context.request.method === 'POST') return await setup(admin);
-    if (path === 'logout' && context.request.method === 'POST') return new Response(null, { status: 204, headers: await clearSession(context.env, context.request) });
+    const invalidCsrf = () => error('Your security token is missing or out of date. Refresh the page and try again.', 403);
+    if (path === 'logout' && context.request.method === 'POST') {
+      if (getCookie(context.request, SESSION_COOKIE) && !await hasValidCsrfToken(context.request)) return invalidCsrf();
+      return new Response(null, { status: 204, headers: await clearSession(context.env, context.request) });
+    }
     const auth = await withAuth(admin);
     if (auth.response) return auth.response;
     const user = auth.user;
     const method = context.request.method;
+    // Every state-changing request from a signed-in user must carry the session's anti-CSRF token.
+    if (!['GET', 'HEAD'].includes(method) && !await hasValidCsrfToken(context.request)) return invalidCsrf();
     const adminAccess = isAdministrator(user.role);
     const enquiry = /^enquiries\/(\d+)$/.exec(path);
-    if (path === 'me' && method === 'GET') return json({ user });
+    if (path === 'me' && method === 'GET') return json({ user, csrfToken: await csrfTokenFor(context.request) });
     if (/^users(?:\/[^/]+(?:\/password)?)?$/.test(path)) return await manageAccounts(context.env, context.request, user, path);
     const staffRead = method === 'GET' && (
       ((path === 'enquiries' || enquiry) && canReadStaffSection(user, 'enquiries'))
@@ -287,7 +309,7 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       const current = await context.env.DB.prepare('SELECT password_hash FROM admin_users WHERE id = ?').bind(user.id).first<{ password_hash: string }>();
       if (!body?.currentPassword || !current || !(await verifyPassword(body.currentPassword, current.password_hash))) return error('Current password is incorrect.');
       const weakPassword = passwordProblem(body.newPassword, user);
-      if (weakPassword) return error(weakPassword);
+      if (weakPassword || typeof body.newPassword !== 'string') return error(weakPassword ?? 'A new password is required.');
       if (body.newPassword === body.currentPassword) return error('Choose a new password that is different from the current one.');
       await context.env.DB.prepare('UPDATE admin_users SET password_hash = ?, updated_at = datetime("now") WHERE id = ?').bind(await hashPassword(body.newPassword), user.id).run();
       await context.env.DB.prepare('DELETE FROM admin_sessions WHERE user_id = ?').bind(user.id).run();

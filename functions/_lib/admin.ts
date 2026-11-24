@@ -82,9 +82,14 @@ export const getCookie = (request: Request, name: string) => request.headers.get
 const cookie = (value: string, maxAge: number) => `${SESSION_COOKIE}=${value}; Max-Age=${maxAge}; Path=/; HttpOnly; Secure; SameSite=Strict`;
 
 export const createSession = async (env: AdminEnv, userId: string) => {
+  // Only a SHA-256 hash of the session token is stored, so a database leak cannot be replayed as a login.
   const token = bytesToHex(crypto.getRandomValues(new Uint8Array(32)));
-  await env.DB.prepare('INSERT INTO admin_sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, datetime("now", "+5 minutes"))')
-    .bind(randomId(), userId, await sha256(token)).run();
+  await env.DB.batch([
+    // Housekeeping: expired sessions are useless, so they are removed instead of piling up.
+    env.DB.prepare("DELETE FROM admin_sessions WHERE expires_at <= datetime('now')"),
+    env.DB.prepare('INSERT INTO admin_sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, datetime("now", "+5 minutes"))')
+      .bind(randomId(), userId, await sha256(token)),
+  ]);
   return token;
 };
 
@@ -105,6 +110,26 @@ export const requireUser = async (context: AdminContext) => {
   if (!result) return null;
   const { permissions_json, ...user } = result;
   return { ...user, permissions: permissions_json ? JSON.parse(permissions_json) as StaffPermission[] : undefined };
+};
+
+/**
+ * Anti-CSRF token (PGL-009). It is derived from the HttpOnly session token, so it is unique per session, needs no
+ * storage and stops working when the session ends. The page receives it from /api/admin/me and sends it back in the
+ * X-CSRF-Token header on every state-changing request; another website can neither read nor guess it.
+ */
+export const csrfTokenFor = async (request: Request) => {
+  const token = getCookie(request, SESSION_COOKIE);
+  return token ? sha256(`csrf:${token}`) : null;
+};
+const sameText = (a: string, b: string) => {
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let index = 0; index < a.length; index += 1) difference |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  return difference === 0;
+};
+export const hasValidCsrfToken = async (request: Request) => {
+  const expected = await csrfTokenFor(request);
+  return expected !== null && sameText(expected, request.headers.get('X-CSRF-Token') ?? '');
 };
 
 export const hasRole = (user: AdminUser, roles: AdminUser['role'][]) => roles.includes(user.role);

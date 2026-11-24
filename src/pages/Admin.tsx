@@ -10,7 +10,7 @@ import i18n from '../i18n';
 import MaintenancePage from './Maintenance';
 import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, isAdministrator, manageableRoles, staffPermissions, websiteManagementPath, websiteSections, type AccessUser, type Role, type StaffPermission } from '../lib/adminAccess';
 import { enquiryCategories, type EnquiryCategory } from '../lib/enquiryCategories';
-import { api, Header, inputClass } from '../components/admin/adminUi';
+import { api, ApiError, Header, inputClass } from '../components/admin/adminUi';
 import WebsiteManagement from './AdminWebsite';
 import { Turnstile } from '../components/ui/Turnstile';
 import { passwordHint } from '../lib/passwordPolicy';
@@ -31,6 +31,9 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
   const [setup, setSetup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', setupToken: '' });
+  // Set when the server reports that the current password is too weak and must be replaced to sign in.
+  const [mustChange, setMustChange] = useState(false);
+  const [newPassword, setNewPassword] = useState({ value: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   // Security check (Cloudflare Turnstile) for sign-in; each token works once, so the widget is reset after every attempt.
@@ -45,18 +48,25 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (needsCheck && !turnstileToken) { setError('Please complete the security check.'); return; }
+    if (mustChange && newPassword.value !== newPassword.confirm) { setError('The new passwords do not match.'); return; }
     setLoading(true);
     setError('');
     try {
-      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password, turnstileToken }) });
+      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password, turnstileToken, ...(mustChange ? { newPassword: newPassword.value } : {}) }) });
       const { user } = await api<{ user: User }>('me');
       onAuthenticated(user);
       navigate(adminHome(user), { replace: true });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to sign in.');
+      if (caught instanceof ApiError && caught.code === 'password_change_required') setMustChange(true);
+    } finally {
+      // Never keep a typed password (or the setup token) in memory after the attempt, whether it succeeded or not.
+      setForm((current) => ({ ...current, password: '', setupToken: '' }));
+      setNewPassword({ value: '', confirm: '' });
+      // Each security-check token works once, so the widget is reset after every attempt.
       setTurnstileToken(null);
       setWidgetAttempt((attempt) => attempt + 1);
-    } finally {
+      setShowPassword(false);
       setLoading(false);
     }
   };
@@ -104,6 +114,17 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
               </div>
               {setup && <span className="mt-1.5 block text-xs text-slate-500">{passwordHint}</span>}
             </label>
+            {mustChange && !setup && <>
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">Enter your current password again and choose a new one. {passwordHint}</p>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#0a1628]">New password</span>
+                <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.value} onChange={(e) => setNewPassword({ ...newPassword, value: e.target.value })} />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Confirm new password</span>
+                <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.confirm} onChange={(e) => setNewPassword({ ...newPassword, confirm: e.target.value })} />
+              </label>
+            </>}
             {setup && (
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Owner setup token</span>
@@ -113,10 +134,10 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
             {needsCheck && siteKey && <div className="flex justify-center"><Turnstile key={widgetAttempt} siteKey={siteKey} action="admin_login" onToken={setTurnstileToken} onError={handleVerificationError} /></div>}
             {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</p>}
             <button disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#c9a84c] px-4 font-semibold text-white shadow-[0_10px_24px_rgba(201,168,76,0.25)] transition hover:bg-[#b8912e] disabled:opacity-60">
-              {loading ? 'Please wait...' : <><LogIn size={18} />{setup ? 'Create owner account' : 'Sign in securely'}</>}
+              {loading ? 'Please wait...' : <><LogIn size={18} />{setup ? 'Create owner account' : mustChange ? 'Change password and sign in' : 'Sign in securely'}</>}
             </button>
           </form>
-          <button onClick={() => { setSetup(!setup); setShowPassword(false); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">
+          <button onClick={() => { setSetup(!setup); setMustChange(false); setShowPassword(false); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">
             {setup ? 'Already have an account? Sign in' : 'First deployment? Set up Owner'}
           </button>
         </div>
