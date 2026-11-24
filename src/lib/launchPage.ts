@@ -93,7 +93,7 @@ const illustration = `<svg class="lp-art" viewBox="0 0 680 500" role="img" aria-
     <path d="M150 370h430l-24 26H174z" fill="url(#lpBase)"/>
     <path d="M335 370h60l-4 6h-52z" fill="#8f96a5"/>
   </g>
-  <g class="lp-gear" transform="translate(365 232)">
+  <g transform="translate(365 232)"><g class="lp-gear">
     <g fill="#e9ecf2">
       <rect x="-9" y="-48" width="18" height="20" rx="3"/><rect x="-9" y="-48" width="18" height="20" rx="3" transform="rotate(45)"/>
       <rect x="-9" y="-48" width="18" height="20" rx="3" transform="rotate(90)"/><rect x="-9" y="-48" width="18" height="20" rx="3" transform="rotate(135)"/>
@@ -102,7 +102,7 @@ const illustration = `<svg class="lp-art" viewBox="0 0 680 500" role="img" aria-
       <circle r="34"/>
     </g>
     <circle r="15" fill="#14294d"/>
-  </g>
+  </g></g>
   <rect x="262" y="292" width="206" height="16" rx="8" fill="#0b1a33" stroke="#e9ecf2" stroke-width="2"/>
   <rect class="lp-progress" x="266" y="296" width="132" height="8" rx="4" fill="url(#lpBarStripes)"/>
   <text x="365" y="337" text-anchor="middle" fill="#fff" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="500">Under Development…</text>
@@ -145,7 +145,7 @@ export const launchPageStyles = `@import url('https://fonts.googleapis.com/css2?
   color: #0a1628; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 .lp a { color: inherit; text-decoration: none; }
 .lp-main { position: relative; z-index: 1; flex: 1; width: 100%; max-width: 1240px; margin: 0 auto; padding: 40px 24px 24px;
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: center; align-content: center; }
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: center; align-content: safe center; }
 .lp-brand { display: flex; align-items: center; gap: 18px; }
 .lp-brand img { width: 84px; height: 84px; object-fit: contain; }
 .lp-brand-rule { width: 1px; align-self: stretch; background: #d8cdb6; }
@@ -188,8 +188,22 @@ export const launchPageStyles = `@import url('https://fonts.googleapis.com/css2?
 @keyframes lp-load { from { width: 70px; } to { width: 190px; } }
 @keyframes lp-float { 50% { transform: translate(6px, -8px); } }
 @media (min-width: 960px) {
-  .lp-main { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); padding: 36px 48px 0; gap: 32px; }
-  .lp-art { transform: scale(1.12); transform-origin: center; }
+  /* Sizes follow the window height too, so the whole page fits on one laptop or desktop screen. */
+  .lp { height: 100vh; height: 100dvh; min-height: 600px; }
+  .lp-main { grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr); padding: 3vh 48px 0; gap: 32px; min-height: 0; }
+  .lp-brand img { width: clamp(52px, 8.5vh, 84px); height: clamp(52px, 8.5vh, 84px); }
+  .lp-brand-name { font-size: clamp(22px, 3.3vh, 30px); }
+  .lp-badge { margin-top: 3.2vh; }
+  .lp-title { margin-top: 2.2vh; font-size: clamp(2.2rem, min(4.6vw, 7.4vh), 4.1rem); }
+  .lp-text { margin-top: 1.6vh; font-size: clamp(1rem, 2vh, 1.15rem); }
+  .lp-date { margin-top: 2.8vh; padding: 1.7vh 28px; }
+  .lp-date svg { width: clamp(34px, 4.8vh, 44px); height: clamp(34px, 4.8vh, 44px); }
+  .lp-date-value { font-size: clamp(1.4rem, min(2.6vw, 4vh), 2.1rem); }
+  .lp-tuned { margin-top: 2.4vh; }
+  .lp-tuned-script { font-size: clamp(2.2rem, min(4.6vw, 6.4vh), 3.6rem); }
+  .lp-art { max-height: calc(100dvh - 190px); }
+  .lp-footer { padding: clamp(40px, 7vh, 70px) 24px clamp(12px, 2.2vh, 22px); }
+  .lp-social a { width: clamp(36px, 4.6vh, 42px); height: clamp(36px, 4.6vh, 42px); }
 }
 @media (max-width: 600px) {
   .lp-main { padding: 28px 16px 12px; }
