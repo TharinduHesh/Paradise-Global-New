@@ -317,7 +317,7 @@ const Navbar: React.FC = () => {
               aria-hidden="true"
               src="/logo.png?v=gold"
               alt=""
-              className="pointer-events-none absolute -bottom-10 -end-10 w-72 opacity-[0.05]"
+              className="pointer-events-none absolute bottom-8 end-4 w-48 opacity-[0.05] sm:bottom-10 sm:end-10 sm:w-64"
               initial={{ scale: 1.2, rotate: -6 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ duration: 1.6, ease: EASE_LUXE }}
@@ -388,7 +388,7 @@ const Navbar: React.FC = () => {
               </motion.ul>
 
               <motion.div
-                className="mt-auto flex flex-col gap-5 pt-10"
+                className="mt-8 flex flex-col gap-5"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0, transition: { ...luxe(0.8), delay: 0.65 } }}
                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
