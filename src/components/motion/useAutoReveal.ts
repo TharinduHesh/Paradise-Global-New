@@ -20,6 +20,7 @@ const STAGGER_MS = 90;
 const MAX_STAGGER_STEPS = 6;
 const SETTLE_MS = { item: 1000, image: 1700 };
 const LARGE_IMAGE_PX = 300;
+const REVEAL_RATIO = 0.12;
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -59,13 +60,17 @@ export function useAutoReveal(rootRef: RefObject<HTMLElement | null>) {
     };
 
     const observer = new IntersectionObserver((entries) => {
-      const sentinels = entries.filter((entry) => entry.isIntersecting).map((entry) => entry.target);
+      // A block taller than the screen can never be 12% visible (e.g. a long legal page on a phone), so it reveals as soon as it appears.
+      const sentinels = entries.filter((entry) => entry.isIntersecting && (
+        entry.intersectionRatio >= REVEAL_RATIO
+        || entry.boundingClientRect.height * REVEAL_RATIO > (entry.rootBounds?.height ?? window.innerHeight)
+      )).map((entry) => entry.target);
       if (!sentinels.length) return;
       sentinels.forEach((element) => observer.unobserve(element));
       const entering = sentinels.flatMap((sentinel) => watchedFor.get(sentinel) ?? [sentinel]);
       if (isIntroDone()) show(entering);
       else waiting.push(...entering); // hold until the loading screen has lifted
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.12 });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: [0, REVEAL_RATIO] });
 
     const unsubscribe = subscribeIntro(() => {
       show(waiting);
