@@ -22,7 +22,7 @@ import Projects from './pages/Projects';
 import { SiteContentProvider } from './lib/siteContent';
 
 type MaintenanceSettings = { enabled: boolean; design?: string; message: string; reopeningAt?: string };
-type CompanySettings = { email?: string; phone?: string; whatsapp?: string };
+type CompanySettings = { email?: string; phone?: string; whatsapp?: string; facebook?: string; instagram?: string };
 type ApiSettings = { maintenance?: MaintenanceSettings; company?: CompanySettings; seo?: { title?: string; description?: string } };
 
 /** Public pages. The routes render against a fixed location so the outgoing page can finish its exit transition. */
@@ -90,6 +90,8 @@ const App: React.FC = () => {
         email={company?.email}
         phone={company?.phone}
         whatsapp={company?.whatsapp}
+        facebook={company?.facebook}
+        instagram={company?.instagram}
       />
     );
   }

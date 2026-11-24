@@ -326,7 +326,7 @@ const MaintenancePreview: React.FC = () => {
     message: 'We are making improvements. Please check back soon.',
     reopeningAt: '',
   });
-  const [company, setCompany] = useState<{ email?: string; phone?: string; whatsapp?: string }>({});
+  const [company, setCompany] = useState<{ email?: string; phone?: string; whatsapp?: string; facebook?: string; instagram?: string }>({});
   useEffect(() => {
     api<{ settings: Record<string, Record<string, unknown>> }>('settings')
       .then((r) => {
@@ -344,6 +344,8 @@ const MaintenancePreview: React.FC = () => {
         email={company.email}
         phone={company.phone}
         whatsapp={company.whatsapp}
+        facebook={company.facebook}
+        instagram={company.instagram}
       />
       <Link to="/admin/maintenance" className="fixed right-5 top-5 z-[60] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#0a1628] shadow-lg border border-slate-200">
         ← Close preview

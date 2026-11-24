@@ -158,19 +158,18 @@ export const MaintenanceModePage: React.FC = () => {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {([
               { value: 'standard', label: 'Scheduled maintenance', hint: 'Your title, message, reopening time and contact details.' },
-              { value: 'launch', label: 'Launching soon image', hint: 'The full-screen "Our Website is Launching Soon!" artwork.' },
+              { value: 'launch', label: 'Launching soon', hint: '"Our Website is Launching Soon!" with the official launch date and your social links.' },
             ] as { value: MaintenanceDesign; label: string; hint: string }[]).map((option) => (
               <label key={option.value} className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${maintenance.design === option.value ? 'border-[#c9a84c] bg-[#f9f6f0]' : 'border-slate-200'}`}>
                 <input type="radio" name="maintenance-design" className="mt-1 accent-[#c9a84c]" checked={maintenance.design === option.value} onChange={() => setMaintenance({ ...maintenance, design: option.value })} />
                 <span>
                   <span className="block text-sm font-semibold text-[#0a1628]">{option.label}</span>
                   <span className="mt-0.5 block text-xs text-slate-500">{option.hint}</span>
-                  {option.value === 'launch' && <img src="/maintenance-launching-soon.jpg" alt="" className="mt-2 w-full rounded border border-slate-200" />}
                 </span>
               </label>
             ))}
           </div>
-          <p className="mt-2 text-xs text-slate-400">Save page content to apply the design. With the image design, the message below is used as the image's description for screen readers.</p>
+          <p className="mt-2 text-xs text-slate-400">Save page content to apply the design. The Launching soon design uses "Expected reopening" as the official launch date, and shows the Facebook, Instagram, WhatsApp and email links from Business Info.</p>
         </fieldset>
         <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Page title *<input required className={`${inputClass} mt-1 font-normal normal-case`} value={maintenance.title} onChange={(event) => setMaintenance({ ...maintenance, title: event.target.value })} /></label>
         <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Message *<textarea required rows={4} className={`${inputClass} mt-1 font-normal normal-case`} value={maintenance.message} onChange={(event) => setMaintenance({ ...maintenance, message: event.target.value })} /></label>

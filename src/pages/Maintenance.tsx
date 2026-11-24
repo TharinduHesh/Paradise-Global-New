@@ -10,6 +10,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { phoneHref, phoneNumbers } from '../lib/siteContent';
+import { launchPageBody, launchPageStyles } from '../lib/launchPage';
 
 interface MaintenancePageProps {
   design?: string;
@@ -18,6 +19,8 @@ interface MaintenancePageProps {
   email?: string;
   phone?: string;
   whatsapp?: string;
+  facebook?: string;
+  instagram?: string;
 }
 
 const MaintenancePage: React.FC<MaintenancePageProps> = ({
@@ -27,17 +30,13 @@ const MaintenancePage: React.FC<MaintenancePageProps> = ({
   email,
   phone,
   whatsapp,
+  facebook,
+  instagram,
 }) => {
   if (design === 'launch') {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#fbf6ee]">
-        <img
-          src="/maintenance-launching-soon.jpg"
-          alt={message || 'Paradise Global Leisures — our website is launching soon. Stay tuned!'}
-          className="block max-h-screen w-full object-contain"
-        />
-      </main>
-    );
+    // The same markup the server sends, so the page looks identical before and after the app loads.
+    const html = `<style>${launchPageStyles}</style>${launchPageBody({ launchDate: reopeningAt, email, whatsapp, facebook, instagram })}`;
+    return <div dangerouslySetInnerHTML={{ __html: html }} />;
   }
 
   const reopenText = reopeningAt
