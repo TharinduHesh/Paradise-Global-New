@@ -102,8 +102,9 @@ export const BusinessInfoPage: React.FC = () => {
 
 /* ------------------------------------------------------------------ Maintenance */
 
-interface Maintenance { enabled: boolean; title: string; message: string; reopeningAt: string }
-const defaultMaintenance: Maintenance = { enabled: false, title: "We'll Be Right Back", message: 'We are making improvements. Please check back soon.', reopeningAt: '' };
+type MaintenanceDesign = 'standard' | 'launch';
+interface Maintenance { enabled: boolean; design: MaintenanceDesign; title: string; message: string; reopeningAt: string }
+const defaultMaintenance: Maintenance = { enabled: false, design: 'standard', title: "We'll Be Right Back", message: 'We are making improvements. Please check back soon.', reopeningAt: '' };
 
 export const MaintenanceModePage: React.FC = () => {
   const [maintenance, setMaintenance] = useState<Maintenance>(defaultMaintenance);
@@ -152,6 +153,25 @@ export const MaintenanceModePage: React.FC = () => {
       </section>
       <form onSubmit={(event) => { event.preventDefault(); void persist(maintenance, 'Maintenance page content saved.'); }} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="mb-5 font-serif text-xl font-bold text-[#0a1628]">Maintenance page content</h2>
+        <fieldset className="mb-5">
+          <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">Page design</legend>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            {([
+              { value: 'standard', label: 'Scheduled maintenance', hint: 'Your title, message, reopening time and contact details.' },
+              { value: 'launch', label: 'Launching soon image', hint: 'The full-screen "Our Website is Launching Soon!" artwork.' },
+            ] as { value: MaintenanceDesign; label: string; hint: string }[]).map((option) => (
+              <label key={option.value} className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${maintenance.design === option.value ? 'border-[#c9a84c] bg-[#f9f6f0]' : 'border-slate-200'}`}>
+                <input type="radio" name="maintenance-design" className="mt-1 accent-[#c9a84c]" checked={maintenance.design === option.value} onChange={() => setMaintenance({ ...maintenance, design: option.value })} />
+                <span>
+                  <span className="block text-sm font-semibold text-[#0a1628]">{option.label}</span>
+                  <span className="mt-0.5 block text-xs text-slate-500">{option.hint}</span>
+                  {option.value === 'launch' && <img src="/maintenance-launching-soon.jpg" alt="" className="mt-2 w-full rounded border border-slate-200" />}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-slate-400">Save page content to apply the design. With the image design, the message below is used as the image's description for screen readers.</p>
+        </fieldset>
         <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Page title *<input required className={`${inputClass} mt-1 font-normal normal-case`} value={maintenance.title} onChange={(event) => setMaintenance({ ...maintenance, title: event.target.value })} /></label>
         <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Message *<textarea required rows={4} className={`${inputClass} mt-1 font-normal normal-case`} value={maintenance.message} onChange={(event) => setMaintenance({ ...maintenance, message: event.target.value })} /></label>
         <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-500">Expected reopening<input type="datetime-local" className={`${inputClass} mt-1 font-normal normal-case`} value={maintenance.reopeningAt} onChange={(event) => setMaintenance({ ...maintenance, reopeningAt: event.target.value })} /></label>

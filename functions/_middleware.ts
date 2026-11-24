@@ -10,6 +10,27 @@ interface MaintenanceContext {
 const escapeHtml = (value: string): string =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
+// The "Launching soon" design: the artwork in public/maintenance-launching-soon.jpg, shown full screen.
+const launchPageHtml = (message: string) => `<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Launching Soon — Paradise Global Leisures</title>
+  <link rel="icon" href="/favicon.svg" />
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #fbf6ee; }
+    body { display: flex; min-height: 100vh; min-height: 100dvh; align-items: center; justify-content: center; }
+    img { display: block; width: 100%; height: 100vh; height: 100dvh; object-fit: contain; }
+    @media (max-aspect-ratio: 16/9) { img { height: auto; } }
+  </style>
+</head>
+<body>
+  <img src="/maintenance-launching-soon.jpg" alt="${escapeHtml(message || 'Paradise Global Leisures — our website is launching soon. Stay tuned!')}" />
+</body>
+</html>`;
+
 export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
   const url = new URL(request.url);
   const adminPath = url.pathname.replace(/\/+$/, '').toLowerCase();
@@ -55,7 +76,13 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
     ]);
 
     if (maintenanceRow) {
-      const maintenance = JSON.parse(maintenanceRow.value_json) as { enabled?: boolean; title?: string; message?: string; reopeningAt?: string };
+      const maintenance = JSON.parse(maintenanceRow.value_json) as { enabled?: boolean; design?: string; title?: string; message?: string; reopeningAt?: string };
+      if (maintenance.enabled && maintenance.design === 'launch') {
+        return new Response(launchPageHtml(maintenance.message?.trim() || ''), {
+          status: 503,
+          headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'Retry-After': '3600', 'Strict-Transport-Security': 'max-age=31536000' },
+        });
+      }
       if (maintenance.enabled) {
         const company = companyRow ? JSON.parse(companyRow.value_json) as { email?: string; phone?: string; whatsapp?: string } : {};
         const message = escapeHtml(maintenance.message?.trim() || 'We are making improvements. Please check back soon.');

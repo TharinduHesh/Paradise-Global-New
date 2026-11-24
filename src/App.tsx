@@ -21,7 +21,7 @@ import MaintenancePage from './pages/Maintenance';
 import Projects from './pages/Projects';
 import { SiteContentProvider } from './lib/siteContent';
 
-type MaintenanceSettings = { enabled: boolean; message: string; reopeningAt?: string };
+type MaintenanceSettings = { enabled: boolean; design?: string; message: string; reopeningAt?: string };
 type CompanySettings = { email?: string; phone?: string; whatsapp?: string };
 type ApiSettings = { maintenance?: MaintenanceSettings; company?: CompanySettings; seo?: { title?: string; description?: string } };
 
@@ -84,6 +84,7 @@ const App: React.FC = () => {
   if (window.location.pathname !== '/admin' && !window.location.pathname.startsWith('/admin/') && maintenance?.enabled) {
     return (
       <MaintenancePage
+        design={maintenance.design}
         message={maintenance.message}
         reopeningAt={maintenance.reopeningAt}
         email={company?.email}

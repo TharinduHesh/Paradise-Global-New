@@ -320,7 +320,7 @@ const Enquiries: React.FC<{ canEdit: boolean }> = ({ canEdit }) => {
 };
 
 const MaintenancePreview: React.FC = () => {
-  const [maintenance, setMaintenance] = useState<{ enabled: boolean; title: string; message: string; reopeningAt: string }>({
+  const [maintenance, setMaintenance] = useState<{ enabled: boolean; design?: string; title: string; message: string; reopeningAt: string }>({
     enabled: false,
     title: "We'll Be Right Back",
     message: 'We are making improvements. Please check back soon.',
@@ -338,6 +338,7 @@ const MaintenancePreview: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 overflow-auto">
       <MaintenancePage
+        design={maintenance.design}
         message={maintenance.message}
         reopeningAt={maintenance.reopeningAt}
         email={company.email}

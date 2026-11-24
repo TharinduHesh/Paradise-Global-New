@@ -12,6 +12,7 @@ import {
 import { phoneHref, phoneNumbers } from '../lib/siteContent';
 
 interface MaintenancePageProps {
+  design?: string;
   message?: string;
   reopeningAt?: string;
   email?: string;
@@ -20,12 +21,25 @@ interface MaintenancePageProps {
 }
 
 const MaintenancePage: React.FC<MaintenancePageProps> = ({
+  design,
   message,
   reopeningAt,
   email,
   phone,
   whatsapp,
 }) => {
+  if (design === 'launch') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#fbf6ee]">
+        <img
+          src="/maintenance-launching-soon.jpg"
+          alt={message || 'Paradise Global Leisures — our website is launching soon. Stay tuned!'}
+          className="block max-h-screen w-full object-contain"
+        />
+      </main>
+    );
+  }
+
   const reopenText = reopeningAt
     ? new Intl.DateTimeFormat('en-US', {
         dateStyle: 'long',
