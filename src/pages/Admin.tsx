@@ -26,6 +26,17 @@ type Enquiry = {
 const statusClass: Record<string, string> = { new: 'bg-blue-50 text-blue-700', in_progress: 'bg-amber-50 text-amber-700', resolved: 'bg-emerald-50 text-emerald-700', archived: 'bg-slate-100 text-slate-500' };
 const ADMIN_SESSION_MS = 5 * 60 * 1000;
 
+/** A password input with its own show/hide (eye) button. */
+const PasswordInput: React.FC<Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { wrapperClassName?: string }> = ({ className = '', wrapperClassName = '', ...props }) => {
+  const [visible, setVisible] = useState(false);
+  return <div className={`relative ${wrapperClassName}`}>
+    <input {...props} type={visible ? 'text' : 'password'} className={`${className} pr-12`} />
+    <button type="button" onClick={() => setVisible((shown) => !shown)} className="absolute right-2 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-[#9a7425]" aria-label={visible ? 'Hide password' : 'Show password'}>
+      {visible ? <EyeOff size={19} /> : <Eye size={19} />}
+    </button>
+  </div>;
+};
+
 const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenticated }) => {
   const navigate = useNavigate();
   const [setup, setSetup] = useState(false);
@@ -118,11 +129,11 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">Enter your current password again and choose a new one. {passwordHint}</p>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[#0a1628]">New password</span>
-                <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.value} onChange={(e) => setNewPassword({ ...newPassword, value: e.target.value })} />
+                <PasswordInput className={`${inputClass} h-12`} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.value} onChange={(e) => setNewPassword({ ...newPassword, value: e.target.value })} />
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Confirm new password</span>
-                <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.confirm} onChange={(e) => setNewPassword({ ...newPassword, confirm: e.target.value })} />
+                <PasswordInput className={`${inputClass} h-12`} autoComplete="new-password" minLength={12} maxLength={256} required value={newPassword.confirm} onChange={(e) => setNewPassword({ ...newPassword, confirm: e.target.value })} />
               </label>
             </>}
             {setup && (
@@ -463,7 +474,7 @@ const UsersPage: React.FC<{ user: User }> = ({ user }) => {
         }, 'Password reset and existing sessions ended.');
       }}>
         <h2 className="text-lg font-semibold">Reset password for {resetTarget.name}</h2>
-        <label className="block">New password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>
+        <label className="block">New password<PasswordInput className={inputClass} autoComplete="new-password" minLength={12} maxLength={256} required value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>
         <button disabled={busy} className="rounded-lg bg-[#0a1628] px-4 py-2 text-white">Reset password</button>
         <button disabled={busy} type="button" className="ml-3" onClick={() => { setResetTarget(undefined); setResetPassword(''); }}>Cancel</button>
       </form> : <form className="space-y-3 rounded-xl border border-slate-200 bg-white p-5" onSubmit={save}>
@@ -482,7 +493,7 @@ const UsersPage: React.FC<{ user: User }> = ({ user }) => {
           </label>)}
         </fieldset>}
         {editingId ? <label className="flex items-center gap-2"><input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />Active</label>
-          : <label className="block">Temporary password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>}
+          : <label className="block">Temporary password<PasswordInput className={inputClass} autoComplete="new-password" minLength={12} maxLength={256} required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>}
         <button disabled={busy} className="rounded-lg bg-[#0a1628] px-4 py-2 text-white">{editingId ? 'Save changes' : 'Create user'}</button>
         {editingId && <button disabled={busy} type="button" className="ml-3" onClick={clearForm}>Cancel</button>}
       </form>}
@@ -540,7 +551,7 @@ const SeoPage: React.FC = () => {
   </>;
 };
 
-const AccountPage: React.FC = () => { const [form, setForm] = useState({ currentPassword: '', newPassword: '' }); const [message, setMessage] = useState(''); const [error, setError] = useState(''); return <><Header title="My account" subtitle="Change your password and protect your admin session." /><form onSubmit={async (event) => { event.preventDefault(); setMessage(''); setError(''); try { await api('password', { method: 'POST', body: JSON.stringify(form) }); setMessage('Password changed. Please sign in again.'); setForm({ currentPassword: '', newPassword: '' }); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to change password.'); } }} className="max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><div className="space-y-4"><label className="block text-xs font-semibold uppercase text-slate-500">Current password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label className="block text-xs font-semibold uppercase text-slate-500">New password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" minLength={12} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}{message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}<button className="rounded-lg bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white">Change password</button></div></form></>; };
+const AccountPage: React.FC = () => { const [form, setForm] = useState({ currentPassword: '', newPassword: '' }); const [message, setMessage] = useState(''); const [error, setError] = useState(''); return <><Header title="My account" subtitle="Change your password and protect your admin session." /><form onSubmit={async (event) => { event.preventDefault(); setMessage(''); setError(''); try { await api('password', { method: 'POST', body: JSON.stringify(form) }); setMessage('Password changed. Please sign in again.'); setForm({ currentPassword: '', newPassword: '' }); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to change password.'); } }} className="max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><div className="space-y-4"><label className="block text-xs font-semibold uppercase text-slate-500">Current password<PasswordInput wrapperClassName="mt-1" className={`${inputClass} normal-case font-normal`} autoComplete="current-password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label className="block text-xs font-semibold uppercase text-slate-500">New password<PasswordInput wrapperClassName="mt-1" className={`${inputClass} normal-case font-normal`} autoComplete="new-password" minLength={12} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}{message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}<button className="rounded-lg bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white">Change password</button></div></form></>; };
 
 const AdminApp: React.FC = () => {
   const location = useLocation();
