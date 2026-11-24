@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Award, Globe, Users, TrendingUp, ArrowRight, CheckCircle } from 'lucide-react';
+import { Award, Globe, Users, TrendingUp, ArrowRight, CheckCircle, MapPin } from 'lucide-react';
 import SectionHeader from '../components/ui/SectionHeader';
 import CTABanner from '../components/home/CTABanner';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,10 @@ const values = [
 ];
 
 const About: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const profileSections = t('about.profileSections', { returnObjects: true }) as unknown as { title: string; text: string }[];
+  // The profile may only exist in English; keep it left to right on the Hebrew site.
+  const profileLang = i18n.language === 'he' && !i18n.getResource('he', 'translation', 'about.profileTitle') ? 'en' : undefined;
   const headerImage = usePageImage('about', 'header');
   const storyImage = usePageImage('about', 'story');
   const teamImages = [usePageImage('about', 'team0'), usePageImage('about', 'team1'), usePageImage('about', 'team2'), usePageImage('about', 'team3')];
@@ -101,8 +104,33 @@ const About: React.FC = () => {
         </div>
       </section>
 
+      {/* Company profile */}
+      <section className="section-padding bg-beige-50" lang={profileLang} dir={profileLang === 'en' ? 'ltr' : undefined}>
+        <div className="container-custom">
+          <SectionHeader eyebrow={t('about.profileEyebrow')} title={t('about.profileTitle')} subtitle={t('about.profileIntro')} />
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {profileSections.map((section) => (
+              <article key={section.title} className="rounded-sm border border-beige-200 bg-white p-6 shadow-card">
+                <h3 className="mb-3 font-serif text-xl font-semibold text-navy-900">{section.title}</h3>
+                <p className="text-sm leading-relaxed text-navy-600">{section.text}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-col gap-4 rounded-sm bg-navy-900 p-6 text-white md:flex-row md:items-center md:gap-8 md:p-8">
+            <div className="flex items-center gap-3">
+              <MapPin size={22} className="shrink-0 text-gold-400" />
+              <h3 className="font-serif text-xl font-semibold text-gold-400">{t('about.officeTitle')}</h3>
+            </div>
+            <p className="text-sm leading-relaxed text-white/75">
+              {t('about.officeCompany')} <span className="text-white/40">|</span> {t('about.officeRegistration')}<br />
+              {t('about.officeAddress')}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Values */}
-      <section className="section-padding bg-beige-50">
+      <section className="section-padding bg-white">
         <div className="container-custom">
           <SectionHeader
             eyebrow={t('about.drives')}
@@ -124,7 +152,7 @@ const About: React.FC = () => {
       </section>
 
       {/* Team */}
-      <section className="section-padding bg-white">
+      <section className="section-padding bg-beige-50">
         <div className="container-custom">
           <SectionHeader
             title={t('about.team')}

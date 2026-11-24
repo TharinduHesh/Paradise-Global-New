@@ -1,5 +1,6 @@
 import { properties } from '../data/properties';
 import { services, projects } from '../data/services';
+import { serviceDetails } from '../data/serviceDetails';
 import { destinations } from '../data/destinations';
 import { en } from '../i18n/en';
 import { he } from '../i18n/he';
@@ -44,6 +45,8 @@ const serviceItems = services.map((service) => ({
     summary_he: heServices[service.slug]?.description ?? '',
     description_he: '',
     features_he: hebrewFeatures(service.slug, service.features),
+    details: serviceDetails[service.slug] ?? '',
+    details_he: '',
   },
 }));
 

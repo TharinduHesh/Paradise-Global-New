@@ -19,7 +19,7 @@ const localizedList = (data: Record<string, unknown>, field: string) => getLocal
 
 export interface ServiceView {
   id: string; slug: string; title: string; short: string; summary: string; description: string;
-  features: string[]; highlights: string[]; icon: string; image: string; href: string; process: ProcessStep[];
+  features: string[]; highlights: string[]; details: string; icon: string; image: string; href: string; process: ProcessStep[];
 }
 
 export const viewService = (item: PublishedItem<Record<string, unknown>>): ServiceView => {
@@ -37,6 +37,7 @@ export const viewService = (item: PublishedItem<Record<string, unknown>>): Servi
     description,
     features,
     highlights: highlights.length ? highlights : features.slice(0, 4),
+    details: localized(data, 'details'),
     icon: text(data.icon) || 'FileCheck',
     image: text(data.image),
     href: text(data.link).trim() || `/services/${item.slug}`,

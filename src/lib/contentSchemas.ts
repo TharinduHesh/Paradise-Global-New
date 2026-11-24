@@ -72,6 +72,8 @@ export const contentSchemas: Record<string, TypeSchema> = {
       { key: 'description_he', label: 'Full description (Hebrew)', kind: 'textarea', hebrew: true },
       { key: 'features', label: 'Features (service pages)', kind: 'list' },
       { key: 'features_he', label: 'Features (Hebrew)', kind: 'list', hebrew: true },
+      { key: 'details', label: 'Detailed page content (service pages)', kind: 'textarea', optional: true, help: 'Shown on the service page. Start a part with "# Title", a section with "## Heading"; leave a blank line between paragraphs. The last section of each part is shown as the call to action.' },
+      { key: 'details_he', label: 'Detailed page content (Hebrew)', kind: 'textarea', optional: true, hebrew: true },
       { key: 'process', label: 'Process steps', kind: 'json', optional: true, help: 'List of steps: [{ "step": 1, "title": "", "description": "", "icon": "MessageSquare" }].' },
     ],
   },
