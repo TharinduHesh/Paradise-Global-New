@@ -4,6 +4,7 @@ import { builtInContent, importedContentSettingKey } from '../../../src/lib/buil
 import { passwordProblem } from '../../../src/lib/passwordPolicy';
 import { manageAccounts } from '../../_lib/adminAccounts';
 import { validateTurnstile } from '../../_lib/turnstile';
+import { createLoginChallenge, openLoginEnvelope } from '../../_lib/loginEnvelope';
 import {
   AdminContext, AdminEnv, AdminUser, clearSession, createSession, csrfTokenFor, error, getCookie, hashPassword, hasValidCsrfToken, logActivity,
   randomId, readJson, sha256, verifyPassword, withAuth, json, cookie, SESSION_COOKIE, SESSION_SECONDS,
@@ -62,8 +63,10 @@ const recordFailure = async (env: AdminEnv, key: string, limit: number) => {
 };
 
 const login = async (context: AdminContext) => {
-  const body = await readJson<Body & { turnstileToken?: unknown }>(context.request);
-  if (typeof body?.email !== 'string' || typeof body.password !== 'string' || !body.email.trim() || !body.password
+  // The sign-in fields only arrive encrypted (see src/lib/loginEnvelope.ts); a plain JSON body is refused.
+  const body = await openLoginEnvelope<Body & { turnstileToken?: unknown }>(context.env, context.request);
+  if (!body) return error('Your sign-in request expired. Please try again.', 400);
+  if (typeof body.email !== 'string' || typeof body.password !== 'string' || !body.email.trim() || !body.password
     || body.email.length > 254 || body.password.length > 256) return error('Email and password are required.');
   const secret = context.env.TURNSTILE_SECRET_KEY;
   if (secret && !await validateTurnstile(context.request, secret, body.turnstileToken, 'admin_login')) {
@@ -110,9 +113,10 @@ const login = async (context: AdminContext) => {
 };
 
 const setup = async (context: AdminContext) => {
-  const body = await readJson<SetupBody>(context.request);
+  const body = await openLoginEnvelope<SetupBody>(context.env, context.request);
+  if (!body) return error('Your setup request expired. Please try again.', 400);
   const setupToken = context.env.OWNER_SETUP_TOKEN;
-  if (!setupToken || body?.setupToken !== setupToken) return error('A valid Owner setup token is required.', 403);
+  if (!setupToken || body.setupToken !== setupToken) return error('A valid Owner setup token is required.', 403);
   if (!body.email?.trim() || !body.name?.trim()) return error('Name and email are required.');
   const userId = randomId();
   const email = body.email.trim();
@@ -134,6 +138,7 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
   const admin: AdminContext = context;
   const path = route(context.request);
   try {
+    if (path === 'login-challenge' && context.request.method === 'GET') return json(await createLoginChallenge(context.env));
     if (path === 'login' && context.request.method === 'POST') return await login(admin);
     if (path === 'setup' && context.request.method === 'POST') return await setup(admin);
     const invalidCsrf = () => error('Your security token is missing or out of date. Refresh the page and try again.', 403);

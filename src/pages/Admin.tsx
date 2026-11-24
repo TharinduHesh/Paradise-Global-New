@@ -14,6 +14,7 @@ import { api, ApiError, Header, inputClass } from '../components/admin/adminUi';
 import WebsiteManagement from './AdminWebsite';
 import { Turnstile } from '../components/ui/Turnstile';
 import { passwordHint } from '../lib/passwordPolicy';
+import { sealLoginPayload, type LoginChallenge } from '../lib/loginEnvelope';
 import { BusinessInfoPage, MaintenanceModePage } from './AdminSettings';
 
 type User = AccessUser & { id: string; email: string; name: string };
@@ -63,7 +64,10 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
     setLoading(true);
     setError('');
     try {
-      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password, turnstileToken, ...(mustChange ? { newPassword: newPassword.value } : {}) }) });
+      // The fields are encrypted for a one-time server key, so they never appear in the request as readable text.
+      const challenge = await api<LoginChallenge>('login-challenge');
+      const fields = setup ? form : { email: form.email, password: form.password, turnstileToken, ...(mustChange ? { newPassword: newPassword.value } : {}) };
+      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(await sealLoginPayload(challenge, fields)) });
       const { user } = await api<{ user: User }>('me');
       onAuthenticated(user);
       navigate(adminHome(user), { replace: true });
