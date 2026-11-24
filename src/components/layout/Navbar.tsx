@@ -341,11 +341,11 @@ const Navbar: React.FC = () => {
                             type="button"
                             aria-expanded={mobileServicesOpen}
                             onClick={() => setMobileServicesOpen(!mobileServicesOpen)}
-                            className={`flex w-full items-baseline gap-4 py-4 text-start font-serif text-[1.75rem] leading-tight transition-colors sm:text-4xl ${servicesActive ? 'text-gold-400' : 'text-white hover:text-gold-400'}`}
+                            className={`flex w-full items-baseline gap-4 py-3 text-start font-serif text-xl leading-tight transition-colors sm:py-4 sm:text-4xl ${servicesActive ? 'text-gold-400' : 'text-white hover:text-gold-400'}`}
                           >
                             {number}
                             <span className="flex-1">{label(t, link.label)}</span>
-                            <ChevronDown size={22} className={`self-center text-gold-500 transition-transform duration-500 ease-luxe ${mobileServicesOpen ? 'rotate-180' : ''}`} />
+                            <ChevronDown size={18} className={`self-center text-gold-500 transition-transform duration-500 ease-luxe ${mobileServicesOpen ? 'rotate-180' : ''}`} />
                           </button>
                           <AnimatePresence initial={false}>
                             {mobileServicesOpen && (
@@ -376,7 +376,7 @@ const Navbar: React.FC = () => {
                       ) : (
                         <NavLink
                           to={link.href}
-                          className={({ isActive }) => `group flex items-baseline gap-4 py-4 font-serif text-[1.75rem] leading-tight transition-colors sm:text-4xl ${isActive ? 'text-gold-400' : 'text-white hover:text-gold-400'}`}
+                          className={({ isActive }) => `group flex items-baseline gap-4 py-3 font-serif text-xl leading-tight transition-colors sm:py-4 sm:text-4xl ${isActive ? 'text-gold-400' : 'text-white hover:text-gold-400'}`}
                         >
                           {number}
                           <span className="transition-transform duration-500 ease-luxe group-hover:translate-x-2 rtl:group-hover:-translate-x-2">{label(t, link.label)}</span>
