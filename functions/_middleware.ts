@@ -20,17 +20,18 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
       if (!user || (user.role !== 'owner' && user.role !== 'admin' && adminPath === '/admin')) {
         return new Response(null, {
           status: 302,
-          headers: { Location: user ? adminHome(user) : '/admin/login', 'Cache-Control': 'no-store' },
+          headers: { 'Strict-Transport-Security': 'max-age=31536000', Location: user ? adminHome(user) : '/admin/login', 'Cache-Control': 'no-store' },
         });
       }
       if (!canAccessAdminPage(user, adminPath)) {
         return new Response('You do not have permission to open this admin page.', {
-          status: 403, headers: { 'Cache-Control': 'no-store' },
+          status: 403, headers: { 'Strict-Transport-Security': 'max-age=31536000', 'Cache-Control': 'no-store' },
         });
       }
       const response = await next();
       const headers = new Headers(response.headers);
       headers.set('Cache-Control', 'no-store');
+      headers.set('Strict-Transport-Security', 'max-age=31536000');
       return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
     } catch {
       return new Response('Admin access is temporarily unavailable.', { status: 503 });
@@ -197,6 +198,7 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'no-store',
             'Retry-After': '3600',
+            'Strict-Transport-Security': 'max-age=31536000',
           },
         });
       }

@@ -15,6 +15,7 @@ interface D1Database {
 export interface AdminEnv {
   DB: D1Database;
   OWNER_SETUP_TOKEN?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 export const isAdminRole = (role: unknown): role is AdminUser['role'] =>
@@ -70,7 +71,7 @@ export const verifyPassword = async (password: string, stored: string) => {
   return await derivePasswordHash(password, salt, iterations) === expected;
 };
 
-const sha256 = async (value: string) => bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))));
+export const sha256 = async (value: string) => bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))));
 const json = (body: unknown, init?: ResponseInit) => Response.json(body, { headers: { 'Cache-Control': 'no-store' }, ...init });
 export const error = (message: string, status = 400) => json({ error: message }, { status });
 export const readJson = async <T>(request: Request): Promise<T | null> => {

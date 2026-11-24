@@ -1,9 +1,9 @@
+import { passwordProblem } from '../../src/lib/passwordPolicy';
 import { defaultStaffPermissions, manageableRoles, staffPermissions } from '../../src/lib/adminAccess';
 import { error, hashPassword, isAdminRole, json, randomId, readJson, type AdminEnv, type AdminUser } from './admin';
 
 const forbidden = () => error('You do not have permission for this account action.', 403);
 const validEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 254;
-const validPassword = (value: unknown): value is string => typeof value === 'string' && value.length >= 12 && value.length <= 256;
 
 export async function manageAccounts(env: AdminEnv, request: Request, actor: AdminUser, path: string) {
   const allowedRoles = manageableRoles(actor.role);
@@ -62,11 +62,12 @@ export async function manageAccounts(env: AdminEnv, request: Request, actor: Adm
       email = ?, password_hash = '', permissions_json = NULL, updated_at = datetime('now')
       WHERE ${targetGuard}`).bind(accountId + '@deleted.invalid', ...targetParams);
   } else if (resetting) {
-    if (!validPassword(body.password)) return error('Enter a password of 12 to 256 characters.');
+    const weakPassword = passwordProblem(body.password, { email: target?.email, name: target?.name });
+    if (weakPassword) return error(weakPassword);
     event = 'reset_password';
     revokeSessions = true;
     write = db.prepare(`UPDATE admin_users SET password_hash = ?, updated_at = datetime('now')
-      WHERE ${targetGuard}`).bind(await hashPassword(body.password), ...targetParams);
+      WHERE ${targetGuard}`).bind(await hashPassword(body.password as string), ...targetParams);
   } else {
     const name = typeof body.name === 'string' ? body.name.trim() : target?.name ?? '';
     const email = typeof body.email === 'string' ? body.email.trim() : target?.email ?? '';
@@ -84,11 +85,12 @@ export async function manageAccounts(env: AdminEnv, request: Request, actor: Adm
     permissionChanged = Boolean(target && (role !== target.role || (permissions !== undefined && savedPermissions !== target.permissions_json)));
     details = { role, isActive: Boolean(isActive), ...(savedPermissions ? { permissions: JSON.parse(savedPermissions) } : {}) };
     if (creating) {
-      if (!validPassword(body.password)) return error('Enter a password of 12 to 256 characters.');
+      const weakPassword = passwordProblem(body.password, { email, name });
+      if (weakPassword) return error(weakPassword);
       event = 'create';
       write = db.prepare(`INSERT OR IGNORE INTO admin_users (id, email, name, password_hash, role, is_active, permissions_json)
         SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${activeActor}`)
-        .bind(accountId, email, name, await hashPassword(body.password), role, isActive, savedPermissions, actor.id, actor.role);
+        .bind(accountId, email, name, await hashPassword(body.password as string), role, isActive, savedPermissions, actor.id, actor.role);
     } else {
       revokeSessions = !isActive || permissionChanged;
       write = db.prepare(`UPDATE OR IGNORE admin_users SET email = ?, name = ?, role = ?, is_active = ?,

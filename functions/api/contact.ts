@@ -1,3 +1,5 @@
+import { validateTurnstile } from '../_lib/turnstile';
+
 interface ContactEnquiry {
   name: string;
   email: string;
@@ -25,18 +27,6 @@ const fieldLimits = { name: 150, email: 254, phone: 50, service: 120, propertyLo
 export const onRequestGet = ({ env }: { env: Env }) =>
   Response.json({ siteKey: env.TURNSTILE_SECRET_KEY ? env.TURNSTILE_SITE_KEY ?? null : null });
 
-const validateTurnstile = async (request: Request, secret: string, token: unknown) => {
-  if (typeof token !== 'string' || token.length === 0 || token.length > 2048) return false;
-  const body = new URLSearchParams({ secret, response: token });
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body,
-    signal: AbortSignal.timeout(5000),
-  });
-  if (!response.ok) throw new Error('Turnstile verification service unavailable.');
-  const result = await response.json() as { success?: boolean; hostname?: string; action?: string };
-  return result.success === true && result.hostname === new URL(request.url).hostname && result.action === 'contact';
-};
 
 export const onRequestPost = async (context: {
   request: Request;
@@ -96,7 +86,7 @@ export const onRequestPost = async (context: {
 
   try {
     const secret = context.env.TURNSTILE_SECRET_KEY;
-    if (secret && !await validateTurnstile(context.request, secret, enquiry.turnstileToken)) {
+    if (secret && !await validateTurnstile(context.request, secret, enquiry.turnstileToken, 'contact')) {
       return Response.json({ error: 'Complete the security check and try again.' }, { status: 403 });
     }
     await context.env.DB

@@ -33,11 +33,13 @@ const loadTurnstile = () => {
 
 interface TurnstileProps {
   siteKey: string;
+  /** Must match the action the server checks ("contact" or "admin_login"). */
+  action?: string;
   onToken(token: string | null): void;
   onError(): void;
 }
 
-export const Turnstile = ({ siteKey, onToken, onError }: TurnstileProps) => {
+export const Turnstile = ({ siteKey, action = 'contact', onToken, onError }: TurnstileProps) => {
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export const Turnstile = ({ siteKey, onToken, onError }: TurnstileProps) => {
       if (!api) throw new Error('The security check is unavailable.');
       widgetId = api.render(container.current, {
         sitekey: siteKey,
-        action: 'contact',
+        action,
         callback: onToken,
         'expired-callback': () => onToken(null),
         'error-callback': onError,
@@ -59,7 +61,7 @@ export const Turnstile = ({ siteKey, onToken, onError }: TurnstileProps) => {
       mounted = false;
       if (widgetId) getTurnstile()?.remove(widgetId);
     };
-  }, [siteKey, onToken, onError]);
+  }, [siteKey, action, onToken, onError]);
 
   return <div ref={container} />;
 };

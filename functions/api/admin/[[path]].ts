@@ -1,10 +1,12 @@
 import { canReadStaffSection, isAdministrator } from '../../../src/lib/adminAccess';
 import { enquiryCategories, enquiryCategorySql } from '../../../src/lib/enquiryCategories';
 import { builtInContent, importedContentSettingKey } from '../../../src/lib/builtInContent';
+import { passwordProblem } from '../../../src/lib/passwordPolicy';
 import { manageAccounts } from '../../_lib/adminAccounts';
+import { validateTurnstile } from '../../_lib/turnstile';
 import {
   AdminContext, AdminEnv, AdminUser, clearSession, createSession, error, hashPassword, logActivity,
-  randomId, readJson, verifyPassword, withAuth, json, cookie, SESSION_SECONDS,
+  randomId, readJson, sha256, verifyPassword, withAuth, json, cookie, SESSION_SECONDS,
 } from '../../_lib/admin';
 
 interface Body { email?: string; password?: string; name?: string; role?: AdminUser['role']; userId?: string; currentPassword?: string; newPassword?: string; }
@@ -36,46 +38,80 @@ const csvCell = (value: unknown) => {
   return `"${safeText.replaceAll('"', '""')}"`;
 };
 
+// Failed sign-ins are counted per IP address and per account; reaching a limit locks that key for 15 minutes.
+const IP_ATTEMPT_LIMIT = 5;
+const ACCOUNT_ATTEMPT_LIMIT = 10;
+// Checked when the email is unknown so that a missing account takes as long to reject as a wrong password.
+const DUMMY_PASSWORD_HASH = `pbkdf2$100000$${'0'.repeat(32)}$${'0'.repeat(64)}`;
+
+const isLocked = async (env: AdminEnv, key: string) => Boolean(await env.DB.prepare(
+  `SELECT 1 FROM admin_login_attempts WHERE key = ? AND locked_until > datetime('now')`,
+).bind(key).first());
+
+/** Counts a failure (the count restarts after 15 quiet minutes) and reports whether the key is now locked. */
+const recordFailure = async (env: AdminEnv, key: string, limit: number) => {
+  const row = await env.DB.prepare(`INSERT INTO admin_login_attempts (key, attempts, locked_until, updated_at)
+    VALUES (?1, 1, CASE WHEN 1 >= ?2 THEN datetime('now', '+15 minutes') END, datetime('now'))
+    ON CONFLICT(key) DO UPDATE SET
+      attempts = CASE WHEN updated_at < datetime('now', '-15 minutes') THEN 1 ELSE attempts + 1 END,
+      locked_until = CASE WHEN (CASE WHEN updated_at < datetime('now', '-15 minutes') THEN 1 ELSE attempts + 1 END) >= ?2
+        THEN datetime('now', '+15 minutes') ELSE locked_until END,
+      updated_at = datetime('now')
+    RETURNING attempts`).bind(key, limit).first<{ attempts: number }>();
+  return (row?.attempts ?? 0) === limit;
+};
+
 const login = async (context: AdminContext) => {
-  const body = await readJson<Body>(context.request);
-  if (!body?.email || !body.password) return error('Email and password are required.');
-  const key = rateKey(context.request);
-  const attempt = await context.env.DB.prepare('SELECT attempts, locked_until FROM admin_login_attempts WHERE key = ?').bind(key).first<{ attempts: number; locked_until: string | null }>();
-  if (attempt?.locked_until && new Date(attempt.locked_until).getTime() > Date.now()) return error('Too many login attempts. Try again later.', 429);
-  const user = await context.env.DB.prepare('SELECT id, email, name, role, is_active, password_hash FROM admin_users WHERE email = ? AND deleted_at IS NULL').bind(body.email.trim()).first<AdminUser & { password_hash: string }>();
-  if (!user || !user.is_active || !(await verifyPassword(body.password, user.password_hash))) {
-    const attempts = (attempt?.attempts ?? 0) + 1;
-    await context.env.DB.prepare(`INSERT INTO admin_login_attempts (key, attempts, locked_until) VALUES (?, ?, CASE WHEN ? >= 5 THEN datetime('now', '+15 minutes') ELSE NULL END)
-      ON CONFLICT(key) DO UPDATE SET attempts = ?, locked_until = CASE WHEN ? >= 5 THEN datetime('now', '+15 minutes') ELSE locked_until END, updated_at = datetime('now')`)
-      .bind(key, attempts, attempts, attempts, attempts).run();
+  const body = await readJson<Body & { turnstileToken?: unknown }>(context.request);
+  if (typeof body?.email !== 'string' || typeof body.password !== 'string' || !body.email.trim() || !body.password
+    || body.email.length > 254 || body.password.length > 256) return error('Email and password are required.');
+  const secret = context.env.TURNSTILE_SECRET_KEY;
+  if (secret && !await validateTurnstile(context.request, secret, body.turnstileToken, 'admin_login')) {
+    return error('Please complete the security check and try again.', 403);
+  }
+  const email = body.email.trim();
+  const ipKey = `ip:${rateKey(context.request)}`;
+  const accountKey = `account:${await sha256(email.toLowerCase())}`;
+  if (await isLocked(context.env, ipKey) || await isLocked(context.env, accountKey)) return error('Too many login attempts. Try again later.', 429);
+  const user = await context.env.DB.prepare('SELECT id, is_active, password_hash FROM admin_users WHERE email = ? AND deleted_at IS NULL')
+    .bind(email).first<{ id: string; is_active: number; password_hash: string }>();
+  const passwordMatches = await verifyPassword(body.password, user?.password_hash || DUMMY_PASSWORD_HASH);
+  if (!user || !user.is_active || !passwordMatches) {
+    const [, accountLocked] = await Promise.all([
+      recordFailure(context.env, ipKey, IP_ATTEMPT_LIMIT),
+      recordFailure(context.env, accountKey, ACCOUNT_ATTEMPT_LIMIT),
+    ]);
+    // Shows in the Activity log so administrators can see an account under attack.
+    if (accountLocked && user) await logActivity(context.env, undefined, 'login_locked', 'user', user.id, { failedAttempts: ACCOUNT_ATTEMPT_LIMIT });
     return error('Invalid email or password.', 401);
   }
-  await context.env.DB.prepare('DELETE FROM admin_login_attempts WHERE key = ?').bind(key).run();
+  await context.env.DB.batch([ipKey, accountKey].map((key) => context.env.DB.prepare('DELETE FROM admin_login_attempts WHERE key = ?').bind(key)));
   const token = await createSession(context.env, user.id);
   await context.env.DB.prepare('UPDATE admin_users SET last_login_at = datetime("now") WHERE id = ?').bind(user.id).run();
   await logActivity(context.env, user.id, 'login', 'session');
-  return json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } }, { headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
+  // The signed-in user's details are fetched afterwards from /api/admin/me.
+  return json({ ok: true }, { headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
 };
 
 const setup = async (context: AdminContext) => {
   const body = await readJson<SetupBody>(context.request);
   const setupToken = context.env.OWNER_SETUP_TOKEN;
   if (!setupToken || body?.setupToken !== setupToken) return error('A valid Owner setup token is required.', 403);
-  if (!body.email?.trim() || !body.password || !body.name?.trim() || body.password.length < 12) {
-    return error('Name, email, and a password of at least 12 characters are required.');
-  }
+  if (!body.email?.trim() || !body.name?.trim()) return error('Name and email are required.');
   const userId = randomId();
   const email = body.email.trim();
   const name = body.name.trim();
+  const weakPassword = passwordProblem(body.password, { email, name });
+  if (weakPassword) return error(weakPassword);
   const owner = await context.env.DB.prepare(`
     INSERT INTO admin_users (id, email, name, password_hash, role)
     SELECT ?, ?, ?, ?, 'owner' WHERE NOT EXISTS (SELECT 1 FROM admin_users)
     RETURNING id
-  `).bind(userId, email, name, await hashPassword(body.password)).first<{ id: string }>();
+  `).bind(userId, email, name, await hashPassword(body.password as string)).first<{ id: string }>();
   if (!owner) return error('Owner setup is already complete.', 409);
   const token = await createSession(context.env, userId);
   await logActivity(context.env, userId, 'setup_owner', 'user', userId);
-  return json({ user: { id: userId, email, name, role: 'owner' } }, { status: 201, headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
+  return json({ ok: true }, { status: 201, headers: { 'Set-Cookie': cookie(token, SESSION_SECONDS) } });
 };
 
 export const onRequest = async (context: { request: Request; env: AdminEnv }) => {
@@ -249,7 +285,10 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
     if (path === 'password' && context.request.method === 'POST') {
       const body = await readJson<Body>(context.request);
       const current = await context.env.DB.prepare('SELECT password_hash FROM admin_users WHERE id = ?').bind(user.id).first<{ password_hash: string }>();
-      if (!body?.currentPassword || !body.newPassword || body.newPassword.length < 12 || !current || !(await verifyPassword(body.currentPassword, current.password_hash))) return error('Current password is incorrect or the new password is too short.');
+      if (!body?.currentPassword || !current || !(await verifyPassword(body.currentPassword, current.password_hash))) return error('Current password is incorrect.');
+      const weakPassword = passwordProblem(body.newPassword, user);
+      if (weakPassword) return error(weakPassword);
+      if (body.newPassword === body.currentPassword) return error('Choose a new password that is different from the current one.');
       await context.env.DB.prepare('UPDATE admin_users SET password_hash = ?, updated_at = datetime("now") WHERE id = ?').bind(await hashPassword(body.newPassword), user.id).run();
       await context.env.DB.prepare('DELETE FROM admin_sessions WHERE user_id = ?').bind(user.id).run();
       await logActivity(context.env, user.id, 'change_password', 'user', user.id);

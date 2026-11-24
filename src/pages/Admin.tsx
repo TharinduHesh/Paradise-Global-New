@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Activity, BarChart3, ClipboardList, FileText, LogOut, Menu,
@@ -12,6 +12,8 @@ import { adminHome, adminSections, canAccessAdminPage, defaultStaffPermissions, 
 import { enquiryCategories, type EnquiryCategory } from '../lib/enquiryCategories';
 import { api, Header, inputClass } from '../components/admin/adminUi';
 import WebsiteManagement from './AdminWebsite';
+import { Turnstile } from '../components/ui/Turnstile';
+import { passwordHint } from '../lib/passwordPolicy';
 import { BusinessInfoPage, MaintenanceModePage } from './AdminSettings';
 
 type User = AccessUser & { id: string; email: string; name: string };
@@ -31,16 +33,29 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
   const [form, setForm] = useState({ name: '', email: '', password: '', setupToken: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Security check (Cloudflare Turnstile) for sign-in; each token works once, so the widget is reset after every attempt.
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [widgetAttempt, setWidgetAttempt] = useState(0);
+  useEffect(() => {
+    fetch('/api/contact').then((response) => response.json()).then((body: { siteKey?: string | null }) => setSiteKey(body.siteKey ?? null)).catch(() => setSiteKey(null));
+  }, []);
+  const handleVerificationError = useCallback(() => { setTurnstileToken(null); setError('The security check could not load. Refresh the page and try again.'); }, []);
+  const needsCheck = !setup && Boolean(siteKey);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (needsCheck && !turnstileToken) { setError('Please complete the security check.'); return; }
     setLoading(true);
     setError('');
     try {
-      const result = await api<{ user: User }>(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password }) });
-      onAuthenticated(result.user);
-      navigate(adminHome(result.user), { replace: true });
+      await api(setup ? 'setup' : 'login', { method: 'POST', body: JSON.stringify(setup ? form : { email: form.email, password: form.password, turnstileToken }) });
+      const { user } = await api<{ user: User }>('me');
+      onAuthenticated(user);
+      navigate(adminHome(user), { replace: true });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to sign in.');
+      setTurnstileToken(null);
+      setWidgetAttempt((attempt) => attempt + 1);
     } finally {
       setLoading(false);
     }
@@ -77,7 +92,7 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
                 <input
                   className={`${inputClass} h-12 pl-11 pr-12`}
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={setup ? 'Password (12+ characters)' : 'Enter your password'}
+                  placeholder={setup ? 'Create a strong password' : 'Enter your password'}
                   minLength={setup ? 12 : undefined}
                   required
                   value={form.password}
@@ -87,6 +102,7 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
                   {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
                 </button>
               </div>
+              {setup && <span className="mt-1.5 block text-xs text-slate-500">{passwordHint}</span>}
             </label>
             {setup && (
               <label className="block">
@@ -94,6 +110,7 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
                 <input className={`${inputClass} h-12`} type={showPassword ? 'text' : 'password'} placeholder="Owner setup token" required value={form.setupToken} onChange={(e) => setForm({ ...form, setupToken: e.target.value })} />
               </label>
             )}
+            {needsCheck && siteKey && <div className="flex justify-center"><Turnstile key={widgetAttempt} siteKey={siteKey} action="admin_login" onToken={setTurnstileToken} onError={handleVerificationError} /></div>}
             {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</p>}
             <button disabled={loading} className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#c9a84c] px-4 font-semibold text-white shadow-[0_10px_24px_rgba(201,168,76,0.25)] transition hover:bg-[#b8912e] disabled:opacity-60">
               {loading ? 'Please wait...' : <><LogIn size={18} />{setup ? 'Create owner account' : 'Sign in securely'}</>}
@@ -421,7 +438,7 @@ const UsersPage: React.FC<{ user: User }> = ({ user }) => {
         }, 'Password reset and existing sessions ended.');
       }}>
         <h2 className="text-lg font-semibold">Reset password for {resetTarget.name}</h2>
-        <label className="block">New password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /></label>
+        <label className="block">New password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>
         <button disabled={busy} className="rounded-lg bg-[#0a1628] px-4 py-2 text-white">Reset password</button>
         <button disabled={busy} type="button" className="ml-3" onClick={() => { setResetTarget(undefined); setResetPassword(''); }}>Cancel</button>
       </form> : <form className="space-y-3 rounded-xl border border-slate-200 bg-white p-5" onSubmit={save}>
@@ -440,7 +457,7 @@ const UsersPage: React.FC<{ user: User }> = ({ user }) => {
           </label>)}
         </fieldset>}
         {editingId ? <label className="flex items-center gap-2"><input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} />Active</label>
-          : <label className="block">Temporary password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></label>}
+          : <label className="block">Temporary password<input className={inputClass} type="password" autoComplete="new-password" minLength={12} maxLength={256} required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>}
         <button disabled={busy} className="rounded-lg bg-[#0a1628] px-4 py-2 text-white">{editingId ? 'Save changes' : 'Create user'}</button>
         {editingId && <button disabled={busy} type="button" className="ml-3" onClick={clearForm}>Cancel</button>}
       </form>}
@@ -498,7 +515,7 @@ const SeoPage: React.FC = () => {
   </>;
 };
 
-const AccountPage: React.FC = () => { const [form, setForm] = useState({ currentPassword: '', newPassword: '' }); const [message, setMessage] = useState(''); const [error, setError] = useState(''); return <><Header title="My account" subtitle="Change your password and protect your admin session." /><form onSubmit={async (event) => { event.preventDefault(); setMessage(''); setError(''); try { await api('password', { method: 'POST', body: JSON.stringify(form) }); setMessage('Password changed. Please sign in again.'); setForm({ currentPassword: '', newPassword: '' }); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to change password.'); } }} className="max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><div className="space-y-4"><label className="block text-xs font-semibold uppercase text-slate-500">Current password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label className="block text-xs font-semibold uppercase text-slate-500">New password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" minLength={12} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /></label>{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}{message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}<button className="rounded-lg bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white">Change password</button></div></form></>; };
+const AccountPage: React.FC = () => { const [form, setForm] = useState({ currentPassword: '', newPassword: '' }); const [message, setMessage] = useState(''); const [error, setError] = useState(''); return <><Header title="My account" subtitle="Change your password and protect your admin session." /><form onSubmit={async (event) => { event.preventDefault(); setMessage(''); setError(''); try { await api('password', { method: 'POST', body: JSON.stringify(form) }); setMessage('Password changed. Please sign in again.'); setForm({ currentPassword: '', newPassword: '' }); } catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to change password.'); } }} className="max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm"><div className="space-y-4"><label className="block text-xs font-semibold uppercase text-slate-500">Current password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" required value={form.currentPassword} onChange={(e) => setForm({ ...form, currentPassword: e.target.value })} /></label><label className="block text-xs font-semibold uppercase text-slate-500">New password<input className={`${inputClass} mt-1 normal-case font-normal`} type="password" minLength={12} required value={form.newPassword} onChange={(e) => setForm({ ...form, newPassword: e.target.value })} /><span className="mt-1 block text-xs font-normal normal-case text-slate-500">{passwordHint}</span></label>{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}{message && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}<button className="rounded-lg bg-[#0a1628] px-4 py-3 text-sm font-semibold text-white">Change password</button></div></form></>; };
 
 const AdminApp: React.FC = () => {
   const location = useLocation();
