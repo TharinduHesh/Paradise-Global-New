@@ -137,9 +137,10 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
               {loading ? 'Please wait...' : <><LogIn size={18} />{setup ? 'Create owner account' : mustChange ? 'Change password and sign in' : 'Sign in securely'}</>}
             </button>
           </form>
-          <button onClick={() => { setSetup(!setup); setMustChange(false); setShowPassword(false); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">
+          {/* Owner setup is a one-time step for a brand-new installation, so its link only appears at /admin/login?setup. */}
+          {(setup || new URLSearchParams(window.location.search).has('setup')) && <button onClick={() => { setSetup(!setup); setMustChange(false); setShowPassword(false); setError(''); }} className="mt-6 w-full text-center text-sm text-slate-500 hover:text-[#9a7425]">
             {setup ? 'Already have an account? Sign in' : 'First deployment? Set up Owner'}
-          </button>
+          </button>}
         </div>
         <Link to="/" className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 hover:text-[#9a7425]">
           <ArrowLeft size={16} /> Back to website
