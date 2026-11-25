@@ -25,7 +25,8 @@ type Enquiry = {
 };
 
 const statusClass: Record<string, string> = { new: 'bg-blue-50 text-blue-700', in_progress: 'bg-amber-50 text-amber-700', resolved: 'bg-emerald-50 text-emerald-700', archived: 'bg-slate-100 text-slate-500' };
-const ADMIN_SESSION_MS = 5 * 60 * 1000;
+// Matches SESSION_SECONDS in functions/_lib/admin.ts: 20 minutes after sign-in.
+const ADMIN_SESSION_MS = 20 * 60 * 1000;
 
 /** A password input with its own show/hide (eye) button. */
 const PasswordInput: React.FC<Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { wrapperClassName?: string }> = ({ className = '', wrapperClassName = '', ...props }) => {

@@ -42,7 +42,8 @@ export interface AdminContext {
 }
 
 const SESSION_COOKIE = 'pgl_admin_session';
-const SESSION_SECONDS = 5 * 60;
+/** Admin sessions end 20 minutes after sign-in. Keep ADMIN_SESSION_MS in src/pages/Admin.tsx the same. */
+const SESSION_SECONDS = 20 * 60;
 const bytesToHex = (bytes: Uint8Array) => [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 const hexToBytes = (hex: string) => new Uint8Array(hex.match(/.{1,2}/g)?.map((value) => parseInt(value, 16)) ?? []);
 
@@ -92,8 +93,8 @@ export const createSession = async (env: AdminEnv, userId: string) => {
   await env.DB.batch([
     // Housekeeping: expired sessions are useless, so they are removed instead of piling up.
     env.DB.prepare("DELETE FROM admin_sessions WHERE expires_at <= datetime('now')"),
-    env.DB.prepare('INSERT INTO admin_sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, datetime("now", "+5 minutes"))')
-      .bind(randomId(), userId, await sha256(token)),
+    env.DB.prepare('INSERT INTO admin_sessions (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, datetime("now", ?))')
+      .bind(randomId(), userId, await sha256(token), `+${SESSION_SECONDS} seconds`),
   ]);
   return token;
 };
