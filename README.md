@@ -205,3 +205,7 @@ Then open `http://localhost:8788/admin/login`. `npm run dev` on port 5173 only s
 Owners can add Admin and Editor accounts, change roles, deactivate accounts, change their own password, publish content, and toggle maintenance mode. Admins can manage enquiries and publish content; Editors can create and edit content but cannot publish or change access/settings. Public pages use published D1 content when available and retain the current `src/data` content as a safe migration fallback.
 
 Cloudflare Pages uses the `DB` binding in `wrangler.toml` for production. Do not commit credentials; use Cloudflare dashboard environment bindings for production.
+
+### Automatic Hebrew translation
+
+In **Website Management** admins write English only. When they save, `/api/admin/translate` translates changed text into Hebrew and stores it with the record; unchanged text keeps its existing Hebrew. Translation uses Cloudflare Workers AI through the `AI` binding in `wrangler.toml` (if the binding is missing, add it under the Pages project's **Settings → Bindings → Workers AI** with the name `AI`). For higher-quality Hebrew, add a Google Cloud Translation API key as the encrypted secret `GOOGLE_TRANSLATE_API_KEY`; when it is set it is used instead of Workers AI. Local translation needs `npm run build && npm run dev:pages` while signed in to Wrangler; it does not work under plain `npm run dev`.

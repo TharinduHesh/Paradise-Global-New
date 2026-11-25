@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowDown, ArrowLeft, ArrowUp, ImageOff, Plus, RotateCcw, Search } from 'lucide-react';
 import { api, Header, inputClass } from '../components/admin/adminUi';
+import { translateToHebrew } from '../components/admin/autoTranslate';
 import { websiteSections } from '../lib/adminAccess';
 import { blankValue, contentSchemas, slugify, type FieldDef, type TypeSchema } from '../lib/contentSchemas';
 import { originalImages, originalText, textGroups, type FlatText, type TextGroup, type TextOverrides } from '../lib/siteText';
@@ -19,8 +20,8 @@ const typeNotes: Record<string, string> = {
   project: 'Projects shown on the /projects page.',
   testimonial: 'Published testimonials appear on the homepage. The section stays hidden until at least one is published.',
   media: 'A catalogue of the images used on the website. To change an image on the website, edit the page or record that uses it; removing an image from this library does not remove it from those pages.',
-  page: 'The text and images of each page, in English and Hebrew. Only your changes are saved; "Reset" restores the original wording.',
-  translation: 'Text shared across the website, such as the menu, footer and buttons. Only your changes are saved; "Reset" restores the original wording.',
+  page: 'The text and images of each page. Edit the English; the Hebrew website is translated automatically when you save. Only your changes are saved; "Reset" restores the original wording.',
+  translation: 'Text shared across the website, such as the menu, footer and buttons. Edit the English; the Hebrew website is translated automatically when you save. Only your changes are saved; "Reset" restores the original wording.',
 };
 
 const parseData = (item: ContentItem): Data => { try { return JSON.parse(item.data_json) as Data; } catch { return {}; } };
@@ -65,6 +66,39 @@ const draftFrom = (item: ContentItem, schema: TypeSchema): Draft => {
   const json = Object.fromEntries(schema.fields.filter((field) => field.kind === 'json')
     .map((field) => [field.key, data[field.key] === undefined ? '' : JSON.stringify(data[field.key], null, 2)]));
   return { id: item.id, title: item.title, slug: item.slug, slugTouched: true, data, json, isPublished: Boolean(item.is_published) };
+};
+
+/** The English field a Hebrew field is translated from, e.g. `description_he` → `description`. */
+const sourceKey = (field: FieldDef) => field.key.replace(/_he$/, '');
+const isBlank = (value: unknown) => value === undefined || value === null || (typeof value === 'string' ? !value.trim() : Array.isArray(value) && !value.length);
+
+/**
+ * Sets every Hebrew field in `data` from its English field. Only English that changed since the last save (or that has
+ * no Hebrew yet) is sent for translation; unchanged text keeps its existing Hebrew. Throws if translation fails, leaving
+ * the previous Hebrew in place.
+ */
+const fillHebrew = async (schema: TypeSchema, data: Data, previous: Data) => {
+  const jobs: { field: FieldDef; texts: string[] }[] = [];
+  for (const field of schema.fields.filter((entry) => entry.hebrew)) {
+    const source = data[sourceKey(field)];
+    if (isBlank(source)) {
+      if (field.kind === 'list') data[field.key] = [];
+      else delete data[field.key];
+      continue;
+    }
+    if (JSON.stringify(source) === JSON.stringify(previous[sourceKey(field)]) && !isBlank(previous[field.key])) {
+      data[field.key] = previous[field.key];
+      continue;
+    }
+    jobs.push({ field, texts: Array.isArray(source) ? source.map(String) : [String(source)] });
+  }
+  if (!jobs.length) return;
+  const translated = await translateToHebrew(jobs.flatMap((job) => job.texts));
+  let position = 0;
+  for (const { field, texts } of jobs) {
+    const hebrew = translated.slice(position, position += texts.length).map((text) => text.trim());
+    data[field.key] = field.kind === 'list' ? hebrew : hebrew[0];
+  }
 };
 
 const RecordManager: React.FC<{ type: string; schema: TypeSchema }> = ({ type, schema }) => {
@@ -126,6 +160,12 @@ const RecordManager: React.FC<{ type: string; schema: TypeSchema }> = ({ type, s
     const existing = items.find((item) => item.id === draft.id);
     const sortOrder = existing?.sort_order ?? items.reduce((max, item) => Math.max(max, item.sort_order), 0) + 1;
     setSaving(true);
+    try {
+      await fillHebrew(schema, data, existing ? parseData(existing) : {});
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : 'Translation failed.';
+      if (!window.confirm(`The Hebrew translation could not be made (${message}).\n\nSave the English anyway? Changed text will keep its previous Hebrew wording until you save again.`)) { setSaving(false); return; }
+    }
     try {
       await api('content', { method: 'POST', body: JSON.stringify({ id: draft.id, contentType: type, title: draft.title.trim(), slug, data, sortOrder, isPublished: draft.isPublished }) });
       setDraft(null);
@@ -190,12 +230,13 @@ const RecordManager: React.FC<{ type: string; schema: TypeSchema }> = ({ type, s
         <FieldShell label="URL slug" help="Lower-case words separated by hyphens. Used in the page address.">
           <input className={inputClass} required value={draft.slug} onChange={(event) => setDraft({ ...draft, slug: event.target.value, slugTouched: true })} onBlur={() => setDraft({ ...draft, slug: slugify(draft.slug) })} />
         </FieldShell>
-        {schema.fields.map((field) => <FieldInput key={field.key} field={field}
+        {schema.fields.filter((field) => !field.hebrew).map((field) => <FieldInput key={field.key} field={field}
           value={field.kind === 'json' ? draft.json[field.key] ?? '' : draft.data[field.key]}
           onChange={(value) => setDraft(field.kind === 'json' ? { ...draft, json: { ...draft.json, [field.key]: String(value) } } : { ...draft, data: { ...draft.data, [field.key]: value } })} />)}
         <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={draft.isPublished} onChange={(event) => setDraft({ ...draft, isPublished: event.target.checked })} /> {published} on the website</label>
+        {schema.fields.some((field) => field.hebrew) && <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">Write in English only. The Hebrew website is translated automatically when you save.</p>}
         <div className="flex gap-2 border-t border-slate-100 pt-4">
-          <button disabled={saving} className="flex-1 rounded-lg bg-[#c9a84c] px-4 py-3 font-semibold text-white hover:bg-[#b8912e] disabled:opacity-60">{saving ? 'Saving…' : draft.id ? 'Save changes' : `Add ${schema.singular}`}</button>
+          <button disabled={saving} className="flex-1 rounded-lg bg-[#c9a84c] px-4 py-3 font-semibold text-white hover:bg-[#b8912e] disabled:opacity-60">{saving ? 'Translating & saving…' : draft.id ? 'Save changes' : `Add ${schema.singular}`}</button>
           <button type="button" onClick={() => setDraft(null)} className="rounded-lg bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">Cancel</button>
         </div>
       </div>
@@ -262,7 +303,8 @@ const keyLabel = (key: string) => key.split('.').slice(1)
 const changeCount = (record?: ContentItem) => {
   if (!record) return 0;
   const data = parseData(record) as TextOverrides;
-  return Object.keys(data.en ?? {}).length + Object.keys(data.he ?? {}).length + Object.keys(data.images ?? {}).length;
+  // A changed English line and its translated Hebrew count as one change.
+  return new Set([...Object.keys(data.en ?? {}), ...Object.keys(data.he ?? {})]).size + Object.keys(data.images ?? {}).length;
 };
 
 const TextManager: React.FC<{ type: string }> = ({ type }) => {
@@ -294,7 +336,7 @@ const TextManager: React.FC<{ type: string }> = ({ type }) => {
       return <div key={group.slug} className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-medium text-[#0a1628]">{group.title}</p>
-          <p className="text-xs text-slate-500">{[keys && `${keys} text items in English & Hebrew`, images && `${images} images`].filter(Boolean).join(' · ')}</p>
+          <p className="text-xs text-slate-500">{[keys && `${keys} text items`, images && `${images} images`].filter(Boolean).join(' · ')}</p>
           <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${changes ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{changes ? `Customised · ${changes} change${changes === 1 ? '' : 's'}` : 'Original'}</span>
         </div>
         <div className="flex gap-2">
@@ -310,26 +352,53 @@ const TextEditor: React.FC<{ type: string; group: TextGroup; record?: ContentIte
   const originals = useMemo(() => ({ en: originalText(group, 'en'), he: originalText(group, 'he') }), [group]);
   const imageDefaults = useMemo(() => originalImages(group), [group]);
   const saved = useMemo(() => (record ? parseData(record) : {}) as TextOverrides, [record]);
-  const [en, setEn] = useState<FlatText>({ ...originals.en, ...saved.en });
-  const [he, setHe] = useState<FlatText>({ ...originals.he, ...saved.he });
+  const savedEn = useMemo(() => ({ ...originals.en, ...saved.en }), [originals, saved]);
+  const [en, setEn] = useState<FlatText>(savedEn);
   const [images, setImages] = useState<Record<string, string>>(() => Object.fromEntries(Object.entries(imageDefaults).map(([key, image]) => [key, saved.images?.[key] ?? image.url])));
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
 
   const keys = useMemo(() => [...new Set([...Object.keys(originals.en), ...Object.keys(originals.he)])], [originals]);
   const needle = query.trim().toLowerCase();
-  const shown = keys.filter((key) => !needle || [key, en[key], he[key]].some((value) => value?.toLowerCase().includes(needle)));
+  const shown = keys.filter((key) => !needle || [key, en[key]].some((value) => value?.toLowerCase().includes(needle)));
 
   const diff = (values: FlatText, original: FlatText) => Object.fromEntries(Object.entries(values).filter(([key, value]) => value !== (original[key] ?? '')));
 
+  /**
+   * The Hebrew overrides to save. English unchanged since the last save keeps its saved Hebrew; English that differs from
+   * the original is translated; English back at the original uses the original Hebrew (no override).
+   */
+  const hebrewFor = async (): Promise<FlatText> => {
+    const he: FlatText = {};
+    const toTranslate: string[] = [];
+    for (const key of keys) {
+      const text = en[key] ?? '';
+      if (text === (savedEn[key] ?? '') && saved.he?.[key] !== undefined) he[key] = saved.he[key];
+      else if (text !== (originals.en[key] ?? '')) toTranslate.push(key);
+    }
+    if (toTranslate.length) {
+      try {
+        const translated = await translateToHebrew(toTranslate.map((key) => en[key] ?? ''));
+        toTranslate.forEach((key, index) => { he[key] = translated[index]; });
+      } catch (reason) {
+        const message = reason instanceof Error ? reason.message : 'Translation failed.';
+        if (!window.confirm(`The Hebrew translation could not be made (${message}).\n\nSave the English anyway? Changed text will keep its previous Hebrew wording until you save again.`)) throw new Error('cancelled');
+        toTranslate.forEach((key) => { if (saved.he?.[key] !== undefined) he[key] = saved.he[key]; });
+      }
+    }
+    return diff(he, originals.he);
+  };
+
   const save = async () => {
+    setSaving(true);
+    let he: FlatText;
+    try { he = await hebrewFor(); } catch { setSaving(false); return; }
     const data: TextOverrides = {
       en: diff(en, originals.en),
-      he: diff(he, originals.he),
+      he,
       images: Object.fromEntries(Object.entries(images).map(([key, url]) => [key, url.trim()]).filter(([key, url]) => url && url !== imageDefaults[key]?.url)),
     };
     const changes = Object.keys(data.en ?? {}).length + Object.keys(data.he ?? {}).length + Object.keys(data.images ?? {}).length;
-    setSaving(true);
     try {
       if (!changes) { if (record) await api(`content/${record.id}`, { method: 'DELETE' }); }
       else await api('content', { method: 'POST', body: JSON.stringify({ id: record?.id, contentType: type, slug: group.slug, title: group.title, data, sortOrder: 0, isPublished: true }) });
@@ -346,7 +415,7 @@ const TextEditor: React.FC<{ type: string; group: TextGroup; record?: ContentIte
       <button onClick={onClose} className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700"><ArrowLeft size={14} /> Back</button>
       <h2 className="mr-auto font-serif text-xl font-bold text-[#0a1628]">{group.title}</h2>
       {record && <button onClick={onReset} className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"><RotateCcw size={12} /> Reset to original</button>}
-      <button disabled={saving} onClick={() => void save()} className="rounded-lg bg-[#c9a84c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#b8912e] disabled:opacity-60">{saving ? 'Saving…' : 'Save changes'}</button>
+      <button disabled={saving} onClick={() => void save()} className="rounded-lg bg-[#c9a84c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#b8912e] disabled:opacity-60">{saving ? 'Translating & saving…' : 'Save changes'}</button>
     </div>
     <div className="space-y-8 p-4 sm:p-6">
       {Object.keys(imageDefaults).length > 0 && <section>
@@ -372,17 +441,15 @@ const TextEditor: React.FC<{ type: string; group: TextGroup; record?: ContentIte
         </div>
         <div className="divide-y divide-slate-100">
           {shown.map((key) => {
-            const changed = (en[key] ?? '') !== (originals.en[key] ?? '') || (he[key] ?? '') !== (originals.he[key] ?? '');
-            return <div key={key} className={`grid gap-2 py-3 md:grid-cols-[200px_1fr_1fr] ${changed ? 'bg-amber-50/50' : ''}`}>
+            const changed = (en[key] ?? '') !== (originals.en[key] ?? '');
+            return <div key={key} className={`grid gap-2 py-3 md:grid-cols-[200px_1fr] ${changed ? 'bg-amber-50/50' : ''}`}>
               <div className="text-xs">
                 <p className="font-semibold text-slate-700">{keyLabel(key)}</p>
                 <p className="break-all font-mono text-[10px] text-slate-400">{key}</p>
-                {changed && <button onClick={() => { setEn({ ...en, [key]: originals.en[key] ?? '' }); setHe({ ...he, [key]: originals.he[key] ?? '' }); }} className="mt-1 font-semibold text-[#9a7425] hover:underline">Undo change</button>}
+                {changed && <button onClick={() => setEn({ ...en, [key]: originals.en[key] ?? '' })} className="mt-1 font-semibold text-[#9a7425] hover:underline">Undo change</button>}
               </div>
-              <label><span className="sr-only">{keyLabel(key)} in English</span><span className="mb-0.5 block text-[10px] font-semibold uppercase text-slate-400">English</span>
+              <label><span className="sr-only">{keyLabel(key)}</span>
                 <textarea rows={rows(en[key] ?? '')} className={`${inputClass} py-2`} value={en[key] ?? ''} onChange={(event) => setEn({ ...en, [key]: event.target.value })} /></label>
-              <label><span className="sr-only">{keyLabel(key)} in Hebrew</span><span className="mb-0.5 block text-[10px] font-semibold uppercase text-slate-400">עברית</span>
-                <textarea dir="rtl" rows={rows(he[key] ?? '')} className={`${inputClass} py-2`} value={he[key] ?? ''} onChange={(event) => setHe({ ...he, [key]: event.target.value })} /></label>
             </div>;
           })}
           {!shown.length && <p className="py-6 text-center text-sm text-slate-400">Nothing matches your search.</p>}

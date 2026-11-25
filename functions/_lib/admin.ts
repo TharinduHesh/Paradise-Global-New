@@ -1,4 +1,5 @@
 import { roles, type Role, type StaffPermission } from '../../src/lib/adminAccess';
+import type { WorkersAi } from './translate';
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
@@ -16,6 +17,10 @@ export interface AdminEnv {
   DB: D1Database;
   OWNER_SETUP_TOKEN?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /** Workers AI, used to translate English text to Hebrew when no Google key is set. */
+  AI?: WorkersAi;
+  /** Optional Google Cloud Translation API key; when set it is used instead of Workers AI. */
+  GOOGLE_TRANSLATE_API_KEY?: string;
 }
 
 export const isAdminRole = (role: unknown): role is AdminUser['role'] =>

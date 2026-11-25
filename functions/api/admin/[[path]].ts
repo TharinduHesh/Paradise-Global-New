@@ -5,6 +5,7 @@ import { passwordProblem } from '../../../src/lib/passwordPolicy';
 import { manageAccounts } from '../../_lib/adminAccounts';
 import { validateTurnstile } from '../../_lib/turnstile';
 import { createLoginChallenge, openLoginEnvelope } from '../../_lib/loginEnvelope';
+import { MAX_TEXT_LENGTH, MAX_TEXTS, translateToHebrew } from '../../_lib/translate';
 import {
   AdminContext, AdminEnv, AdminUser, clearSession, createSession, csrfTokenFor, error, getCookie, hashPassword, hasValidCsrfToken, logActivity,
   randomId, readJson, sha256, verifyPassword, withAuth, json, cookie, SESSION_COOKIE, SESSION_SECONDS,
@@ -257,6 +258,18 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
         .bind(id, body.contentType, body.slug, body.title, JSON.stringify(body.data), body.sortOrder ?? 0, body.isPublished ? 1 : 0, body.contentType, body.slug, body.title, JSON.stringify(body.data), body.sortOrder ?? 0, body.isPublished ? 1 : 0).run();
       await logActivity(context.env, user.id, body.id ? 'update' : 'create', 'content', id, { type: body.contentType });
       return json({ id });
+    }
+    if (path === 'translate' && method === 'POST') {
+      const body = await readJson<{ texts?: unknown }>(context.request);
+      const texts = body?.texts;
+      if (!Array.isArray(texts) || !texts.length || texts.length > MAX_TEXTS
+        || texts.some((text) => typeof text !== 'string' || text.length > MAX_TEXT_LENGTH)) return error(`Send 1–${MAX_TEXTS} texts of up to ${MAX_TEXT_LENGTH} characters each.`);
+      try {
+        return json({ translations: await translateToHebrew(texts as string[], context.env) });
+      } catch (reason) {
+        console.error('Translation failed:', reason);
+        return error(reason instanceof Error ? reason.message : 'Translation failed.', 502);
+      }
     }
     if (path.startsWith('content/') && context.request.method === 'DELETE') {
       const id = path.split('/')[1];

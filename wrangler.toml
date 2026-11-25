@@ -10,3 +10,7 @@ binding = "DB"
 database_name = "paradise-global-new"
 database_id = "fe9c354e-1978-4398-90a1-3c78366a3eb4"
 migrations_dir = "migrations"
+
+# Workers AI translates the admin's English edits into Hebrew (functions/_lib/translate.ts).
+[ai]
+binding = "AI"
