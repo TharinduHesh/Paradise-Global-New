@@ -2,7 +2,11 @@
  * Enquiry emails sent through Resend (https://resend.com). Runs server-side only; RESEND_API_KEY is a Cloudflare secret.
  * Every value from the visitor is HTML-escaped, and nothing they type is placed in an email header except the validated
  * reply-to address.
+ *
+ * Templates are table-based with inline styles (Gmail, Outlook and mobile clients), a small <style> block only for
+ * mobile tweaks, VML fallbacks for buttons in Outlook, and a plain-text version of every email.
  */
+import { defaultCompany, type CompanyInfo } from '../../src/lib/companyInfo';
 
 export interface EmailEnv {
   RESEND_API_KEY?: string;
@@ -22,10 +26,21 @@ export interface StoredEnquiry {
   createdAt: string;
 }
 
-const BRAND = { navy: '#0a1628', gold: '#c9a84c', text: '#334155', muted: '#64748b', site: 'https://paradisegloballeisures.com' };
+/* ------------------------------------------------------------------ Design system */
+
+const SITE = 'https://paradisegloballeisures.com';
+const LOGO = `${SITE}/email-logo.png`;
+const C = {
+  navy: '#0a1628', navyDeep: '#071020', gold: '#c9a84c', goldDark: '#9a7425', goldSoft: '#f6efdc',
+  ivory: '#f4f0e6', panel: '#faf8f3', line: '#ece6d6', text: '#334155', muted: '#6b7280', white: '#ffffff',
+};
+const SERIF = "Georgia,'Times New Roman',Times,serif";
+const SANS = "'Helvetica Neue',Helvetica,Arial,sans-serif";
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const paragraphs = (value: string) => escapeHtml(value).replace(/\r?\n/g, '<br>');
+
+export const reference = (id: number) => `PGL-${String(id).padStart(5, '0')}`;
 
 /** "25 Nov 2026, 10:40 (Sri Lanka time)", from D1's UTC timestamp. */
 export const formatSubmitted = (createdAt: string) => {
@@ -35,63 +50,246 @@ export const formatSubmitted = (createdAt: string) => {
   return `${local} (Sri Lanka time)`;
 };
 
-const layout = (heading: string, body: string) => `<!doctype html>
-<html><body style="margin:0;background:#f4f1ea;font-family:Arial,Helvetica,sans-serif;color:${BRAND.text}">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f1ea;padding:24px 12px"><tr><td align="center">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden">
-<tr><td style="background:${BRAND.navy};padding:24px 28px;border-bottom:3px solid ${BRAND.gold}">
-<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#ffffff">Paradise Global Leisures</p>
-<p style="margin:4px 0 0;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.gold}">Property · Development · Hospitality</p>
-</td></tr>
-<tr><td style="padding:28px">
-<h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:${BRAND.navy}">${heading}</h1>
-${body}
-</td></tr>
-<tr><td style="padding:16px 28px;background:#faf8f3;font-size:12px;color:${BRAND.muted}">
-Paradise Global Leisures · <a href="${BRAND.site}" style="color:#9a7425">paradisegloballeisures.com</a>
-</td></tr>
-</table></td></tr></table></body></html>`;
+const digits = (phone: string) => phone.replace(/[^\d+]/g, '').replace(/^0/, '+94');
+const telHref = (phone: string) => `tel:${digits(phone)}`;
+const whatsappHref = (phone: string) => `https://wa.me/${digits(phone).replace(/^\+/, '')}`;
+const firstPhone = (phone: string) => phone.split(/\s*[/;\n]\s*/)[0]?.trim() ?? phone;
 
-const fields = (enquiry: StoredEnquiry): [string, string][] => [
-  ['Full Name', enquiry.name],
-  ['Email Address', enquiry.email],
-  ['Phone / WhatsApp', enquiry.phone || '—'],
-  ['Service Required', enquiry.service || '—'],
-  ['Property Location of Interest', enquiry.propertyLocation || '—'],
-  ['Message', enquiry.message],
-  ['Submitted', formatSubmitted(enquiry.createdAt)],
-];
+/** A thin gold rule with a small diamond in the middle. */
+const ornament = (background: string) => `<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr>
+<td width="56" style="border-bottom:1px solid ${C.gold};font-size:0;line-height:0">&nbsp;</td>
+<td style="padding:0 10px;color:${C.gold};font-size:10px;line-height:10px;background:${background}">&#9670;</td>
+<td width="56" style="border-bottom:1px solid ${C.gold};font-size:0;line-height:0">&nbsp;</td></tr></table>`;
 
-export const adminNotification = (enquiry: StoredEnquiry) => ({
-  subject: 'New Website Enquiry – Paradise Global Leisures',
-  html: layout('New website enquiry', `
-<p style="margin:0 0 16px;line-height:1.6">A new enquiry (#${enquiry.id}) was submitted through the website contact form. Reply to this email to answer the customer directly.</p>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-${fields(enquiry).map(([label, value]) => `<tr>
-<td style="padding:10px 12px 10px 0;border-top:1px solid #eee;vertical-align:top;width:38%;font-weight:bold;color:${BRAND.navy}">${label}</td>
-<td style="padding:10px 0;border-top:1px solid #eee;line-height:1.6">${paragraphs(value)}</td></tr>`).join('')}
-</table>`),
-  text: [`New website enquiry #${enquiry.id}`, '', ...fields(enquiry).map(([label, value]) => `${label}: ${value}`)].join('\n'),
-});
+/** A bulletproof button: VML for Outlook on Windows, a styled link everywhere else. */
+const button = (href: string, label: string, variant: 'gold' | 'navy' = 'gold') => {
+  const bg = variant === 'gold' ? C.gold : C.navy;
+  const fg = variant === 'gold' ? C.navy : C.white;
+  const safeHref = escapeHtml(href);
+  return `<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="8%" stroke="f" fillcolor="${bg}"><w:anchorlock/><center style="color:${fg};font-family:Arial,sans-serif;font-size:14px;font-weight:bold;letter-spacing:1px;">${escapeHtml(label)}</center></v:roundrect><![endif]-->
+<!--[if !mso]><!--><a href="${safeHref}" target="_blank" style="display:inline-block;background:${bg};color:${fg};font-family:${SANS};font-size:14px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:15px 34px;border-radius:4px;mso-hide:all">${escapeHtml(label)}</a><!--<![endif]-->`;
+};
 
-export const customerConfirmation = (enquiry: StoredEnquiry) => ({
-  subject: 'We Have Received Your Enquiry – Paradise Global Leisures',
-  html: layout(`Thank you, ${escapeHtml(enquiry.name)}`, `
-<p style="margin:0 0 14px;line-height:1.7">Thank you for contacting Paradise Global Leisures. We confirm that we have received your enquiry${enquiry.service ? ` about <strong>${escapeHtml(enquiry.service)}</strong>` : ''}.</p>
-<p style="margin:0 0 14px;line-height:1.7">A member of our team will review your message and contact you as soon as possible.</p>
-<div style="margin:20px 0;padding:14px 16px;background:#faf8f3;border-left:3px solid ${BRAND.gold};font-size:14px;line-height:1.6">
-<p style="margin:0 0 6px;font-weight:bold;color:${BRAND.navy}">Your message</p>
-<p style="margin:0">${paragraphs(enquiry.message)}</p>
-</div>
-<p style="margin:0;line-height:1.7">Kind regards,<br><strong style="color:${BRAND.navy}">The Paradise Global Leisures Team</strong></p>`),
-  text: [
-    `Dear ${enquiry.name},`, '',
-    'Thank you for contacting Paradise Global Leisures. We confirm that we have received your enquiry.',
-    'A member of our team will review your message and contact you as soon as possible.', '',
-    'Your message:', enquiry.message, '',
-    'Kind regards,', 'The Paradise Global Leisures Team', BRAND.site,
-  ].join('\n'),
-});
+const eyebrow = (text: string) => `<p style="margin:0 0 10px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:${C.goldDark}">${text}</p>`;
+const heading = (text: string) => `<h1 style="margin:0 0 18px;font-family:${SERIF};font-size:28px;line-height:1.3;font-weight:normal;color:${C.navy}">${text}</h1>`;
+const para = (html: string, extra = '') => `<p style="margin:0 0 16px;font-family:${SANS};font-size:15px;line-height:1.7;color:${C.text};${extra}">${html}</p>`;
+const sectionTitle = (text: string) => `<p style="margin:0 0 12px;font-family:${SERIF};font-size:18px;color:${C.navy}">${text}</p>`;
+
+/** One label/value row for detail cards. `value` must already be safe HTML. */
+const detailRow = (label: string, value: string, first = false) => `<tr>
+<td class="stack" valign="top" width="38%" style="padding:15px 12px 12px 0;${first ? '' : `border-top:1px solid ${C.line};`}font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:${C.muted}">${label}</td>
+<td class="stack" valign="top" style="padding:12px 0;${first ? '' : `border-top:1px solid ${C.line};`}font-family:${SANS};font-size:15px;line-height:1.6;color:${C.navy}">${value}</td></tr>`;
+
+const card = (inner: string, background = C.panel, border = C.line) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${background};border:1px solid ${border};border-radius:6px"><tr><td class="card-pad" style="padding:22px 24px">${inner}</td></tr></table>`;
+
+const spacer = (height: number) => `<div style="height:${height}px;line-height:${height}px;font-size:0">&nbsp;</div>`;
+
+const layout = (company: CompanyInfo, preheader: string, body: string) => `<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>${escapeHtml(company.name)}</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+  @media only screen and (max-width:620px){
+    .container{width:100%!important}
+    .px{padding-left:22px!important;padding-right:22px!important}
+    .card-pad{padding:18px!important}
+    .stack{display:block!important;width:100%!important;padding-right:0!important}
+    .stack + .stack{border-top:0!important;padding-top:0!important}
+    .stack-left{text-align:left!important}
+    .tagline{font-size:9px!important;letter-spacing:2px!important}
+    h1{font-size:24px!important}
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:${C.ivory};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:${C.ivory}">${escapeHtml(preheader)}&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.ivory}" style="background:${C.ivory}"><tr><td align="center" style="padding:28px 10px">
+<!--[if mso]><table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+<table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:${C.white};border-radius:8px;overflow:hidden;box-shadow:0 6px 24px rgba(10,22,40,0.08)">
+  <tr><td bgcolor="${C.navy}" align="center" style="background:${C.navy};padding:34px 24px 26px">
+    <a href="${SITE}" target="_blank" style="text-decoration:none"><img src="${LOGO}" width="96" height="101" alt="Paradise Global Leisures" style="display:block;margin:0 auto;border:0;outline:none;width:96px;height:auto"></a>
+    ${spacer(18)}
+    ${ornament(C.navy)}
+    <p class="tagline" style="margin:14px 0 0;font-family:${SANS};font-size:10px;letter-spacing:3.5px;text-transform:uppercase;color:${C.gold}">Property &nbsp;·&nbsp; Development &nbsp;·&nbsp; Hospitality</p>
+  </td></tr>
+  <tr><td bgcolor="${C.gold}" style="background:${C.gold};height:3px;font-size:0;line-height:0">&nbsp;</td></tr>
+  <tr><td class="px" style="padding:40px 44px 36px">${body}</td></tr>
+  <tr><td bgcolor="${C.navy}" align="center" class="px" style="background:${C.navy};padding:30px 44px">
+    ${ornament(C.navy)}
+    <p style="margin:16px 0 6px;font-family:${SERIF};font-size:16px;letter-spacing:1px;color:${C.white}">${escapeHtml(company.name.toUpperCase())}</p>
+    <p style="margin:0 0 12px;font-family:${SANS};font-size:12px;line-height:1.8;color:#b8c1d1">
+      ${escapeHtml(company.address)}<br>
+      <a href="${telHref(firstPhone(company.phone))}" style="color:#b8c1d1;text-decoration:none">${escapeHtml(company.phone)}</a> &nbsp;·&nbsp;
+      <a href="mailto:${escapeHtml(company.email)}" style="color:#b8c1d1;text-decoration:none">${escapeHtml(company.email)}</a>
+    </p>
+    <p style="margin:0;font-family:${SANS};font-size:12px;letter-spacing:1px"><a href="${SITE}" target="_blank" style="color:${C.gold};text-decoration:none">paradisegloballeisures.com</a></p>
+  </td></tr>
+  <tr><td bgcolor="${C.navyDeep}" align="center" style="background:${C.navyDeep};padding:12px 24px;font-family:${SANS};font-size:11px;color:#7d889c">© ${new Date().getUTCFullYear()} ${escapeHtml(company.name)}. All rights reserved.</td></tr>
+</table>
+<!--[if mso]></td></tr></table><![endif]-->
+</td></tr></table>
+</body></html>`;
+
+/* ------------------------------------------------------------------ Admin notification */
+
+export const adminNotification = (enquiry: StoredEnquiry, company: CompanyInfo = defaultCompany) => {
+  const ref = reference(enquiry.id);
+  const submitted = formatSubmitted(enquiry.createdAt);
+  const name = escapeHtml(enquiry.name);
+  const email = escapeHtml(enquiry.email);
+  const phone = enquiry.phone ? escapeHtml(enquiry.phone) : '';
+  const link = (href: string, text: string) => `<a href="${escapeHtml(href)}" style="color:${C.navy};text-decoration:underline;text-decoration-color:${C.gold}">${text}</a>`;
+
+  const body = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr>
+<td bgcolor="${C.goldSoft}" style="background:${C.goldSoft};border:1px solid ${C.gold};border-radius:20px;padding:6px 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:2.5px;color:${C.goldDark}">&#9679;&nbsp; NEW ENQUIRY</td>
+</tr></table>
+${heading(`Enquiry from ${name}`)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px"><tr>
+<td class="stack" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">Reference&nbsp; <strong style="color:${C.navy};letter-spacing:1px">${ref}</strong></td>
+<td class="stack stack-left" align="right" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">${escapeHtml(submitted)}</td>
+</tr></table>
+
+${card(`
+${eyebrow('Service required')}
+<p style="margin:0;font-family:${SERIF};font-size:22px;line-height:1.35;color:${C.navy}">${enquiry.service ? escapeHtml(enquiry.service) : 'Not specified'}</p>
+${enquiry.propertyLocation ? `<p style="margin:8px 0 0;font-family:${SANS};font-size:14px;color:${C.text}">Property location of interest: <strong style="color:${C.navy}">${escapeHtml(enquiry.propertyLocation)}</strong></p>` : ''}
+`, C.goldSoft, '#e6d6a8')}
+${spacer(18)}
+
+${card(`
+${sectionTitle('Customer contact details')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${detailRow('Full name', `<strong>${name}</strong>`, true)}
+${detailRow('Email address', link(`mailto:${enquiry.email}`, email))}
+${detailRow('Phone / WhatsApp', phone ? `${link(telHref(enquiry.phone), phone)} &nbsp;<a href="${escapeHtml(whatsappHref(enquiry.phone))}" style="font-size:12px;color:${C.goldDark};text-decoration:none;font-weight:bold">WhatsApp&nbsp;›</a>` : `<span style="color:${C.muted}">Not provided</span>`)}
+${detailRow('Property location', enquiry.propertyLocation ? escapeHtml(enquiry.propertyLocation) : `<span style="color:${C.muted}">Not specified</span>`)}
+${detailRow('Submitted', escapeHtml(submitted))}
+${detailRow('Reference', `<strong style="letter-spacing:1px">${ref}</strong>`)}
+</table>`)}
+${spacer(26)}
+
+${sectionTitle('Message')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="3" bgcolor="${C.gold}" style="background:${C.gold};font-size:0;line-height:0">&nbsp;</td>
+<td dir="auto" style="padding:4px 0 4px 18px;font-family:${SANS};font-size:15px;line-height:1.75;color:${C.text}">${paragraphs(enquiry.message)}</td>
+</tr></table>
+${spacer(32)}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
+${button(`mailto:${enquiry.email}?subject=${encodeURIComponent(`Re: Your enquiry ${ref} – Paradise Global Leisures`)}`, `Reply to ${enquiry.name.split(' ')[0]}`)}
+${spacer(12)}
+${button(`${SITE}/admin/enquiries`, 'Open in Admin', 'navy')}
+</td></tr></table>
+${spacer(18)}
+${para(`Replying to this email also goes straight to ${name}.`, `margin:0;text-align:center;font-size:12px;color:${C.muted}`)}`;
+
+  return {
+    subject: 'New Website Enquiry – Paradise Global Leisures',
+    html: layout(company, `${enquiry.name} – ${enquiry.service || 'General enquiry'} (${ref})`, body),
+    text: [
+      `NEW WEBSITE ENQUIRY – ${ref}`, '',
+      `Full Name: ${enquiry.name}`,
+      `Email Address: ${enquiry.email}`,
+      `Phone / WhatsApp: ${enquiry.phone || 'Not provided'}`,
+      `Service Required: ${enquiry.service || 'Not specified'}`,
+      `Property Location of Interest: ${enquiry.propertyLocation || 'Not specified'}`,
+      `Submitted: ${submitted}`, '',
+      'Message:', enquiry.message, '',
+      `Open in Admin: ${SITE}/admin/enquiries`,
+    ].join('\n'),
+  };
+};
+
+/* ------------------------------------------------------------------ Customer confirmation */
+
+export const customerConfirmation = (enquiry: StoredEnquiry, company: CompanyInfo = defaultCompany) => {
+  const ref = reference(enquiry.id);
+  const submitted = formatSubmitted(enquiry.createdAt);
+  const firstName = escapeHtml(enquiry.name.split(' ')[0] || enquiry.name);
+  const steps: [string, string][] = [
+    ['We review your enquiry', 'A member of our team reads your message and the service you are interested in.'],
+    ['A specialist contacts you', 'We will be in touch as soon as possible by email, phone or WhatsApp.'],
+    ['We plan the next steps together', 'We discuss your requirements and how Paradise Global Leisures can help.'],
+  ];
+
+  const body = `
+${eyebrow('Enquiry received')}
+${heading(`Thank you, ${firstName}`)}
+${para('Thank you for contacting <strong style="color:' + C.navy + '">Paradise Global Leisures</strong>. We are pleased to confirm that your enquiry has been received and is now with our team.')}
+${spacer(8)}
+
+${card(`
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="44" valign="top"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="34" height="34" align="center" bgcolor="${C.gold}" style="background:${C.gold};border-radius:17px;font-family:${SANS};font-size:16px;font-weight:bold;line-height:34px;color:${C.navy}">&#10003;</td></tr></table></td>
+<td valign="middle" style="font-family:${SERIF};font-size:19px;color:${C.navy}">Your enquiry is confirmed</td>
+</tr></table>
+${spacer(10)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${detailRow('Reference', `<strong style="letter-spacing:1.5px">${ref}</strong>`, true)}
+${enquiry.service ? detailRow('Service', escapeHtml(enquiry.service)) : ''}
+${enquiry.propertyLocation ? detailRow('Location', escapeHtml(enquiry.propertyLocation)) : ''}
+${detailRow('Received', escapeHtml(submitted))}
+</table>
+${para('Please quote your reference number if you contact us about this enquiry.', `margin:12px 0 0;font-size:13px;color:${C.muted}`)}
+`, C.goldSoft, '#e6d6a8')}
+${spacer(30)}
+
+${sectionTitle('What happens next')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${steps.map(([title, text], index) => `<tr>
+<td width="46" valign="top" style="padding:0 0 18px"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="30" height="30" align="center" style="border:1px solid ${C.gold};border-radius:15px;font-family:${SERIF};font-size:14px;line-height:30px;color:${C.goldDark}">${index + 1}</td></tr></table></td>
+<td valign="top" style="padding:3px 0 18px;font-family:${SANS};font-size:15px;line-height:1.6;color:${C.text}"><strong style="color:${C.navy}">${title}</strong><br><span style="font-size:14px;color:${C.muted}">${text}</span></td>
+</tr>`).join('')}
+</table>
+${spacer(6)}
+
+${sectionTitle('Your message')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="3" bgcolor="${C.gold}" style="background:${C.gold};font-size:0;line-height:0">&nbsp;</td>
+<td dir="auto" style="padding:4px 0 4px 18px;font-family:${SANS};font-size:14px;line-height:1.75;color:${C.text};font-style:italic">${paragraphs(enquiry.message)}</td>
+</tr></table>
+${spacer(34)}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">${button(SITE, 'Explore Our Website')}</td></tr></table>
+${spacer(34)}
+
+${card(`
+${sectionTitle('Need to reach us sooner?')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${detailRow('Phone', `<a href="${telHref(firstPhone(company.phone))}" style="color:${C.navy};text-decoration:none">${escapeHtml(company.phone)}</a>`, true)}
+${detailRow('WhatsApp', `<a href="${escapeHtml(whatsappHref(company.whatsapp))}" style="color:${C.navy};text-decoration:none">${escapeHtml(company.whatsapp)}</a>`)}
+${detailRow('Email', `<a href="mailto:${escapeHtml(company.email)}" style="color:${C.navy};text-decoration:none">${escapeHtml(company.email)}</a>`)}
+${detailRow('Office hours', escapeHtml(company.hours).replace(/;\s*/g, '<br>'))}
+</table>`)}
+${spacer(28)}
+${para(`Kind regards,<br><span style="font-family:${SERIF};font-size:17px;color:${C.navy}">The Paradise Global Leisures Team</span>`, 'margin:0')}`;
+
+  return {
+    subject: 'We Have Received Your Enquiry – Paradise Global Leisures',
+    html: layout(company, `Your enquiry ${ref} has been received. Our team will contact you as soon as possible.`, body),
+    text: [
+      `Dear ${enquiry.name},`, '',
+      'Thank you for contacting Paradise Global Leisures. We are pleased to confirm that your enquiry has been received.', '',
+      `Reference: ${ref}`,
+      ...(enquiry.service ? [`Service: ${enquiry.service}`] : []),
+      ...(enquiry.propertyLocation ? [`Location: ${enquiry.propertyLocation}`] : []),
+      `Received: ${submitted}`, '',
+      'What happens next:',
+      ...steps.map(([title, text], index) => `${index + 1}. ${title} – ${text}`), '',
+      'Your message:', enquiry.message, '',
+      'Need to reach us sooner?',
+      `Phone: ${company.phone}`, `WhatsApp: ${company.whatsapp}`, `Email: ${company.email}`, `Office hours: ${company.hours}`, '',
+      'Kind regards,', 'The Paradise Global Leisures Team', SITE,
+    ].join('\n'),
+  };
+};
+
+/* ------------------------------------------------------------------ Sending */
 
 interface Email { to: string; subject: string; html: string; text: string; replyTo?: string; idempotencyKey: string }
 
@@ -121,15 +319,15 @@ const send = async (env: Required<EmailEnv>, email: Email) => {
  * Sends the admin notification and the customer confirmation. Never throws: the enquiry is already saved, so a failed
  * email is logged (without the API key or the visitor's details) and the result is reported to the caller.
  */
-export const sendEnquiryEmails = async (env: EmailEnv, enquiry: StoredEnquiry) => {
+export const sendEnquiryEmails = async (env: EmailEnv, enquiry: StoredEnquiry, company: CompanyInfo = defaultCompany) => {
   const { RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL } = env;
   if (!RESEND_API_KEY || !ADMIN_EMAIL || !FROM_EMAIL) {
     console.warn(`Enquiry #${enquiry.id} saved, but emails are not configured (missing ${[!RESEND_API_KEY && 'RESEND_API_KEY', !ADMIN_EMAIL && 'ADMIN_EMAIL', !FROM_EMAIL && 'FROM_EMAIL'].filter(Boolean).join(', ')}).`);
     return { admin: false, customer: false };
   }
   const config = { RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL };
-  const admin = adminNotification(enquiry);
-  const customer = customerConfirmation(enquiry);
+  const admin = adminNotification(enquiry, company);
+  const customer = customerConfirmation(enquiry, company);
   const [adminResult, customerResult] = await Promise.allSettled([
     send(config, { to: ADMIN_EMAIL, ...admin, replyTo: enquiry.email, idempotencyKey: `enquiry-${enquiry.id}-admin` }),
     send(config, { to: enquiry.email, ...customer, replyTo: ADMIN_EMAIL, idempotencyKey: `enquiry-${enquiry.id}-customer` }),

@@ -4,23 +4,9 @@ import { getPublishedContent } from './publishedContent';
 import { pageImageDefaults } from './pageImages';
 import { unflatten, type TextOverrides } from './siteText';
 
-export interface CompanyInfo {
-  name: string; phone: string; whatsapp: string; email: string;
-  address: string; hours: string;
-  facebook: string; instagram: string;
-}
+import { defaultCompany, type CompanyInfo } from './companyInfo';
 
-/** Used until the saved business info loads, and for any field left blank in Settings. */
-export const defaultCompany: CompanyInfo = {
-  name: 'Paradise Global Leisures (PVT) LTD',
-  phone: '075 166 8705',
-  whatsapp: '+94751668705',
-  email: 'info@paradisegloballeisures.com',
-  address: 'Kandy & Colombo, Sri Lanka',
-  hours: 'Mon–Fri: 9:00 AM – 6:00 PM; Sat: 9:00 AM – 1:00 PM',
-  facebook: '',
-  instagram: '',
-};
+export { defaultCompany, type CompanyInfo };
 
 interface SiteContent { images: Record<string, Record<string, string>>; company: CompanyInfo }
 const SiteContentContext = createContext<SiteContent>({ images: {}, company: defaultCompany });

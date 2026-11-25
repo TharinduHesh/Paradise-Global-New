@@ -1,5 +1,6 @@
 import { validateTurnstile } from '../_lib/turnstile';
 import { sendEnquiryEmails, type EmailEnv } from '../_lib/email';
+import { mergeCompany } from '../../src/lib/companyInfo';
 
 interface ContactEnquiry {
   name: string;
@@ -134,7 +135,15 @@ export const onRequestPost = async (context: {
   }
 
   // The enquiry is safely stored; the emails are sent after the response so a slow or failed email never affects the visitor.
-  const emails = sendEnquiryEmails(context.env, { ...clean, id: stored.id, createdAt: stored.created_at });
+  const enquiryRecord = { ...clean, id: stored.id, createdAt: stored.created_at };
+  const emails = context.env.DB
+    .prepare(`SELECT value_json FROM site_settings WHERE key = ?`)
+    .bind('company')
+    .first<{ value_json: string }>()
+    // The business details in Settings fill the email footer; the defaults are used if they cannot be read.
+    .then((row) => mergeCompany(row ? JSON.parse(row.value_json) : null))
+    .catch(() => mergeCompany(null))
+    .then((company) => sendEnquiryEmails(context.env, enquiryRecord, company));
   if (context.waitUntil) context.waitUntil(emails);
   else await emails;
 
