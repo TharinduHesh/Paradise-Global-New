@@ -4,6 +4,8 @@ pages_build_output_dir = "dist"
 
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAAGE0jDpCKVae8bal"
+ADMIN_EMAIL = "globalparadise99@gmail.com"
+FROM_EMAIL = "Paradise Global Leisures <notifications@paradisegloballeisures.com>"
 
 [[d1_databases]]
 binding = "DB"
