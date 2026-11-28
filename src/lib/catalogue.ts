@@ -1,6 +1,7 @@
 import { builtInContent } from './builtInContent';
 import { usePublishedList, type PublishedItem } from './publishedContent';
 import { getLocalizedList, getLocalizedText } from './localizedContent';
+import { fillHebrew } from './hebrewFallback';
 import type { Destination, ProcessStep, Project } from '../types';
 
 /**
@@ -9,7 +10,8 @@ import type { Destination, ProcessStep, Project } from '../types';
  */
 export function useCatalogue<T>(type: string): PublishedItem<T>[] {
   const fallback = (builtInContent[type] ?? []).map((item, index) => ({ id: `built-in-${index}`, slug: item.slug, title: item.title, data: item.data as T }));
-  return usePublishedList<T, PublishedItem<T>>(type, fallback, (item) => item);
+  // Records still carrying the original English get the original Hebrew where theirs is missing.
+  return usePublishedList<T, PublishedItem<T>>(type, fallback, (item) => ({ ...item, data: fillHebrew(type, item.slug, item.data as object, item.title) as T }));
 }
 
 const text = (value: unknown) => typeof value === 'string' ? value : '';

@@ -5,6 +5,7 @@ import { destinations } from '../data/destinations';
 import { en } from '../i18n/en';
 import { he } from '../i18n/he';
 import { pageImageDefaults } from './pageImages';
+import { propertiesHe, serviceDetailsHe, servicesHe } from '../data/hebrewContent';
 
 export interface BuiltInItem { slug: string; title: string; data: Record<string, unknown> }
 
@@ -43,10 +44,10 @@ const serviceItems = services.map((service) => ({
     short_he: heServices[service.slug]?.short ?? '',
     summary: enServices[service.slug]?.description ?? '',
     summary_he: heServices[service.slug]?.description ?? '',
-    description_he: '',
-    features_he: hebrewFeatures(service.slug, service.features),
+    description_he: servicesHe[service.slug]?.description ?? '',
+    features_he: servicesHe[service.slug]?.features ?? hebrewFeatures(service.slug, service.features),
     details: serviceDetails[service.slug] ?? '',
-    details_he: '',
+    details_he: serviceDetailsHe[service.slug] ?? '',
   },
 }));
 
@@ -73,7 +74,18 @@ Object.entries(pageImageDefaults).forEach(([page, images]) => Object.values(imag
 
 /** Content that ships with the website. It is copied into the database once per type so admins can edit or delete it. */
 export const builtInContent: Record<string, BuiltInItem[]> = {
-  property: properties.map((item) => ({ slug: item.slug, title: item.name, data: { ...item } })),
+  property: properties.map((item) => {
+    const hebrew = propertiesHe[item.slug];
+    return {
+      slug: item.slug, title: item.name,
+      data: {
+        ...item,
+        name_he: item.name_he || hebrew?.name || '',
+        description_he: item.description_he || hebrew?.description || '',
+        features_he: item.features_he?.length ? item.features_he : hebrew?.features ?? [],
+      },
+    };
+  }),
   service: serviceItems,
   destination: destinationItems,
   project: projects.map((item) => ({ slug: item.title.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), title: item.title, data: { ...item } })),

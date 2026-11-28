@@ -13,11 +13,14 @@ import Badge from '../components/ui/Badge';
 import { EASE_INOUT, EASE_LUXE } from '../lib/motion';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedList, getLocalizedText } from '../lib/localizedContent';
+import { fillHebrew } from '../lib/hebrewFallback';
+import { landUnitLabel, placeName, propertyTypeLabel, rentPeriodLabel } from '../lib/propertyLabels';
 
 const PropertyDetails: React.FC = () => {
   const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
-  const properties = usePublishedList<Property>('property', staticProperties, (item) => item.data);
+  // Listings still carrying the original English get the original Hebrew where theirs is missing.
+  const properties = usePublishedList<Property>('property', staticProperties.map((p) => fillHebrew('property', p.slug, p)), (item) => fillHebrew('property', item.data.slug, item.data));
   const property = properties.find((p) => p.slug === slug);
   const [activeImage, setActiveImage] = useState(0);
 
@@ -44,7 +47,7 @@ const PropertyDetails: React.FC = () => {
   const formatPrice = (): string => {
     if (property.priceUnit === 'USD') {
       return property.priceType === 'rent'
-        ? `$${property.price.toLocaleString()} / ${property.rentPeriod}`
+        ? `$${property.price.toLocaleString()} / ${rentPeriodLabel(t, property.rentPeriod)}`
         : `$${property.price.toLocaleString()}`;
     }
     if (property.priceUnit === 'LKR') {
@@ -155,12 +158,12 @@ const PropertyDetails: React.FC = () => {
                     <h1 className="font-serif text-navy-900 text-2xl md:text-3xl font-bold mb-1">{localizedName}</h1>
                     <div className="flex items-center gap-1.5 text-navy-500">
                       <MapPin size={14} className="text-gold-500" />
-                      {property.location}, {property.district}
+                      {placeName(t, property.location)}, {placeName(t, property.district)}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 sm:flex-col sm:items-end">
                     <p className="font-serif text-gold-600 text-2xl md:text-3xl font-bold">{formatPrice()}</p>
-                    <Badge variant="beige">{property.propertyType}</Badge>
+                    <Badge variant="beige">{propertyTypeLabel(t, property.propertyType)}</Badge>
                   </div>
                 </div>
 
@@ -182,13 +185,13 @@ const PropertyDetails: React.FC = () => {
                   )}
                   <div className="flex flex-col items-center gap-1.5 text-center">
                     <Square size={22} className="text-gold-500" />
-                    <p className="font-semibold text-navy-900">{property.landSize} {property.landUnit}</p>
+                    <p className="font-semibold text-navy-900">{property.landSize} {landUnitLabel(t, property.landUnit)}</p>
                     <p className="text-navy-500 text-xs">{t('property.landSize')}</p>
                   </div>
                   {property.buildingSize && (
                     <div className="flex flex-col items-center gap-1.5 text-center">
                       <Home size={22} className="text-gold-500" />
-                      <p className="font-semibold text-navy-900">{property.buildingSize.toLocaleString()} sq ft</p>
+                      <p className="font-semibold text-navy-900">{property.buildingSize.toLocaleString()} {landUnitLabel(t, 'sq ft')}</p>
                       <p className="text-navy-500 text-xs">{t('property.buildSize')}</p>
                     </div>
                   )}
@@ -227,7 +230,7 @@ const PropertyDetails: React.FC = () => {
                 <div className="h-64 bg-beige-100 rounded-sm flex items-center justify-center border border-beige-200">
                   <div className="text-center">
                     <MapPin size={40} className="text-gold-400 mx-auto mb-3" />
-                    <p className="text-navy-600 font-medium">{property.location}, {property.district}</p>
+                    <p className="text-navy-600 font-medium">{placeName(t, property.location)}, {placeName(t, property.district)}</p>
                     <p className="text-navy-400 text-sm mt-1">{t('property.exactLocation')}</p>
                   </div>
                 </div>

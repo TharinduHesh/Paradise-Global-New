@@ -5,22 +5,26 @@ import type { Property } from '../../types';
 import Badge from '../ui/Badge';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedText } from '../../lib/localizedContent';
+import { fillHebrew } from '../../lib/hebrewFallback';
+import { landUnitLabel, placeLine, propertyTypeLabel, rentPeriodLabel } from '../../lib/propertyLabels';
 import { useCompany, whatsappHref } from '../../lib/siteContent';
 
 interface PropertyCardProps {
   property: Property;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property: record }) => {
   const { t } = useTranslation();
   const company = useCompany();
   const [imgError, setImgError] = useState(false);
+  // Listings still carrying the original English get the original Hebrew where theirs is missing.
+  const property = fillHebrew('property', record.slug, record);
   const localizedName = getLocalizedText(property.name, property.name_he);
 
   const formatPrice = (property: Property): string => {
     if (property.priceUnit === 'USD') {
       return property.priceType === 'rent'
-        ? `$${property.price.toLocaleString()}/${property.rentPeriod}`
+        ? `$${property.price.toLocaleString()}/${rentPeriodLabel(t, property.rentPeriod)}`
         : `$${property.price.toLocaleString()}`;
     }
     if (property.priceUnit === 'LKR') {
@@ -71,7 +75,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         </div>
         {/* Property Type */}
         <div className="absolute top-3 right-3">
-          <Badge variant="beige">{property.propertyType}</Badge>
+          <Badge variant="beige">{propertyTypeLabel(t, property.propertyType)}</Badge>
         </div>
         {/* Status overlay for sold/rented */}
         {property.status !== 'available' && (
@@ -100,7 +104,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         {/* Location */}
         <p className="flex items-center gap-1.5 text-navy-500 text-sm mb-4">
           <MapPin size={13} className="text-gold-500 flex-shrink-0" />
-          {property.location}{property.district !== property.location ? `, ${property.district}` : ''}
+          {placeLine(t, property.location, property.district)}
         </p>
 
         {/* Stats */}
@@ -120,7 +124,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
             )}
             <span className="flex items-center gap-1.5">
               <Square size={14} className="text-gold-500" />
-              {property.landSize} {property.landUnit}
+              {property.landSize} {landUnitLabel(t, property.landUnit)}
             </span>
           </div>
         )}
