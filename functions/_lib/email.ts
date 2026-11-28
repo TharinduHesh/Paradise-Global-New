@@ -336,3 +336,99 @@ export const sendEnquiryEmails = async (env: EmailEnv, enquiry: StoredEnquiry, c
   if (customerResult.status === 'rejected') console.error(`Enquiry #${enquiry.id}: customer confirmation failed:`, String(customerResult.reason));
   return { admin: adminResult.status === 'fulfilled', customer: customerResult.status === 'fulfilled' };
 };
+
+/* ------------------------------------------------------------------ New review notification */
+
+export interface StoredReview {
+  id: number;
+  name: string;
+  email: string;
+  country: string;
+  /** Display label of the reviewed service. */
+  service: string;
+  rating: number;
+  message: string;
+  createdAt: string;
+}
+
+export const reviewReference = (id: number) => `REV-${String(id).padStart(5, '0')}`;
+const stars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
+
+export const reviewNotification = (review: StoredReview, company: CompanyInfo = defaultCompany) => {
+  const ref = reviewReference(review.id);
+  const submitted = formatSubmitted(review.createdAt);
+  const name = escapeHtml(review.name);
+  const body = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr>
+<td bgcolor="${C.goldSoft}" style="background:${C.goldSoft};border:1px solid ${C.gold};border-radius:20px;padding:6px 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:2.5px;color:${C.goldDark}">&#9679;&nbsp; NEW REVIEW · AWAITING MODERATION</td>
+</tr></table>
+${heading(`Review from ${name}`)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px"><tr>
+<td class="stack" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">Reference&nbsp; <strong style="color:${C.navy};letter-spacing:1px">${ref}</strong></td>
+<td class="stack stack-left" align="right" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">${escapeHtml(submitted)}</td>
+</tr></table>
+
+${card(`
+${eyebrow('Rating')}
+<p style="margin:0;font-family:${SERIF};font-size:26px;letter-spacing:3px;color:${C.gold}">${stars(review.rating)}</p>
+<p style="margin:6px 0 0;font-family:${SANS};font-size:14px;color:${C.text}">${review.rating} out of 5 · <strong style="color:${C.navy}">${escapeHtml(review.service)}</strong></p>
+`, C.goldSoft, '#e6d6a8')}
+${spacer(18)}
+
+${card(`
+${sectionTitle('Reviewer')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${detailRow('Name', `<strong>${name}</strong>`, true)}
+${detailRow('Email (private)', `<a href="mailto:${escapeHtml(review.email)}" style="color:${C.navy};text-decoration:underline;text-decoration-color:${C.gold}">${escapeHtml(review.email)}</a>`)}
+${detailRow('Country', review.country ? escapeHtml(review.country) : `<span style="color:${C.muted}">Not provided</span>`)}
+${detailRow('Submitted', escapeHtml(submitted))}
+</table>`)}
+${spacer(26)}
+
+${sectionTitle('Review')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td width="3" bgcolor="${C.gold}" style="background:${C.gold};font-size:0;line-height:0">&nbsp;</td>
+<td dir="auto" style="padding:4px 0 4px 18px;font-family:${SANS};font-size:15px;line-height:1.75;color:${C.text}">${paragraphs(review.message)}</td>
+</tr></table>
+${spacer(32)}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
+${button(`${SITE}/admin/reviews`, 'Moderate in Admin', 'navy')}
+</td></tr></table>
+${spacer(18)}
+${para('This review is pending. It will not appear on the website until an admin publishes it.', `margin:0;text-align:center;font-size:12px;color:${C.muted}`)}`;
+
+  return {
+    subject: `New ${review.rating}-Star Review Awaiting Moderation – Paradise Global Leisures`,
+    html: layout(company, `${review.name} rated ${review.service} ${review.rating}/5 (${ref})`, body),
+    text: [
+      `NEW CUSTOMER REVIEW – ${ref} (pending moderation)`, '',
+      `Rating: ${stars(review.rating)} (${review.rating}/5)`,
+      `Service: ${review.service}`,
+      `Name: ${review.name}`,
+      `Email (private): ${review.email}`,
+      `Country: ${review.country || 'Not provided'}`,
+      `Submitted: ${submitted}`, '',
+      'Review:', review.message, '',
+      `Moderate in Admin: ${SITE}/admin/reviews`,
+    ].join('\n'),
+  };
+};
+
+/** Emails the admin about a new pending review. Never throws: the review is already saved. */
+export const sendReviewNotification = async (env: EmailEnv, review: StoredReview, company: CompanyInfo = defaultCompany) => {
+  const { RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL } = env;
+  if (!RESEND_API_KEY || !ADMIN_EMAIL || !FROM_EMAIL) {
+    console.warn(`Review #${review.id} saved, but emails are not configured.`);
+    return false;
+  }
+  try {
+    await send({ RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL }, {
+      to: ADMIN_EMAIL, ...reviewNotification(review, company), replyTo: review.email, idempotencyKey: `review-${review.id}-admin`,
+    });
+    return true;
+  } catch (reason) {
+    console.error(`Review #${review.id}: admin notification failed:`, String(reason));
+    return false;
+  }
+};

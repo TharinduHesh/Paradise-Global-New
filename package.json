@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test": "tsc -b --pretty false",
+    "test:reviews": "rolldown tests/reviews.test.ts --file .test-build/reviews.test.mjs --platform node --format esm && node --test .test-build/reviews.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

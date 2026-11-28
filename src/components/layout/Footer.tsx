@@ -149,6 +149,7 @@ const Footer: React.FC = () => {
           <p>© {currentYear} Paradise Global Leisures (PVT) LTD. {t('footer.rights')}</p>
           <div>{t('footer.poweredBy')}</div>
           <div className="flex gap-4">
+            <Link to="/reviews" className="hover:text-gold-400 transition-colors">{t('reviews.footerLink')}</Link>
             <Link to="/privacy-policy" className="hover:text-gold-400 transition-colors">{t('footer.privacy')}</Link>
             <Link to="/terms-of-service" className="hover:text-gold-400 transition-colors">{t('footer.terms')}</Link>
           </div>

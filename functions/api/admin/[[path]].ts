@@ -3,6 +3,7 @@ import { enquiryCategories, enquiryCategorySql } from '../../../src/lib/enquiryC
 import { builtInContent, importedContentSettingKey } from '../../../src/lib/builtInContent';
 import { passwordProblem } from '../../../src/lib/passwordPolicy';
 import { manageAccounts } from '../../_lib/adminAccounts';
+import { manageReviews } from '../../_lib/adminReviews';
 import { validateTurnstile } from '../../_lib/turnstile';
 import { createLoginChallenge, openLoginEnvelope } from '../../_lib/loginEnvelope';
 import { MAX_TEXT_LENGTH, MAX_TEXTS, translateToHebrew } from '../../_lib/translate';
@@ -165,15 +166,20 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       return error('You do not have permission for this action.', 403);
     }
 
+    // Review moderation is for Owners and Admins only; the check above has already refused everyone else.
+    if (/^reviews(?:\/\d+)?$/.test(path)) return await manageReviews(context.env, context.request, user, path);
+
     if (path === 'dashboard' && context.request.method === 'GET') {
-      const [enquiries, published, users, activity, maintenance] = await Promise.all([
+      const [enquiries, published, users, activity, maintenance, pendingReviews] = await Promise.all([
         context.env.DB.prepare(`SELECT COUNT(*) AS count FROM contact_enquiries WHERE status = 'new'`).first(),
         context.env.DB.prepare('SELECT COUNT(*) AS count FROM content_items WHERE is_published = 1').first(),
         context.env.DB.prepare('SELECT COUNT(*) AS count FROM admin_users WHERE is_active = 1').first(),
         context.env.DB.prepare(`SELECT a.*, u.name AS user_name FROM admin_activity a LEFT JOIN admin_users u ON u.id = a.user_id ORDER BY a.created_at DESC LIMIT 8`).all(),
         context.env.DB.prepare(`SELECT value_json FROM site_settings WHERE key = 'maintenance'`).first<{ value_json: string }>(),
+        // Before migration 0006 is applied the table does not exist; the dashboard must still load.
+        context.env.DB.prepare(`SELECT COUNT(*) AS count FROM customer_reviews WHERE status = 'pending'`).first().catch(() => null),
       ]);
-      return json({ metrics: { newEnquiries: enquiries?.count ?? 0, publishedContent: published?.count ?? 0, activeUsers: users?.count ?? 0, maintenance: maintenance ? JSON.parse(maintenance.value_json) : { enabled: false } }, activity: activity.results });
+      return json({ metrics: { newEnquiries: enquiries?.count ?? 0, publishedContent: published?.count ?? 0, activeUsers: users?.count ?? 0, pendingReviews: pendingReviews?.count ?? 0, maintenance: maintenance ? JSON.parse(maintenance.value_json) : { enabled: false } }, activity: activity.results });
     }
     if (path === 'enquiries' && method === 'GET') {
       const params = new URL(context.request.url).searchParams;

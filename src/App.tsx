@@ -19,6 +19,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import MaintenancePage from './pages/Maintenance';
 import Projects from './pages/Projects';
+import Reviews from './pages/Reviews';
 import { SiteContentProvider } from './lib/siteContent';
 
 type MaintenanceSettings = { enabled: boolean; design?: string; message: string; reopeningAt?: string };
@@ -41,6 +42,7 @@ const SitePages: React.FC = () => {
         <Route path="/destinations" element={<Destinations />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/reviews" element={<Reviews />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         {/* 404 */}

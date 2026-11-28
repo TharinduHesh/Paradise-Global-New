@@ -16,6 +16,7 @@ export const pageGroups: TextGroup[] = [
   { slug: 'properties', title: 'Property pages', namespaces: ['propertiesPage', 'filters', 'property'] },
   { slug: 'destinations', title: 'Hospitality Collection page', namespaces: ['destinationsPage'] },
   { slug: 'contact', title: 'Contact page', namespaces: ['contact'], images: 'contact' },
+  { slug: 'reviews', title: 'Reviews page & review form', namespaces: ['reviews'] },
   { slug: 'projects', title: 'Projects page', namespaces: [], images: 'projects' },
   { slug: 'legal', title: 'Privacy Policy & Terms', namespaces: ['legal'] },
 ];

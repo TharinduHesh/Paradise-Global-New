@@ -1,6 +1,7 @@
 import { validateTurnstile } from '../_lib/turnstile';
 import { sendEnquiryEmails, type EmailEnv } from '../_lib/email';
 import { mergeCompany } from '../../src/lib/companyInfo';
+import { EMAIL, multiLine, singleLine } from '../_lib/sanitize';
 
 interface ContactEnquiry {
   name: string;
@@ -25,15 +26,6 @@ interface Env extends EmailEnv {
 
 const requiredFields = ['name', 'email', 'message'] as const;
 const fieldLimits = { name: 150, email: 254, phone: 50, service: 120, propertyLocation: 120, message: 4000 } as const;
-
-/* oxlint-disable no-control-regex -- these patterns exist to strip or reject control characters. */
-/** Single-line fields: control characters (including CR/LF, which could inject email headers) become spaces. */
-const singleLine = (value: string) => value.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-/** The message keeps its line breaks and tabs; other control characters are removed. */
-const multiLine = (value: string) => value.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim();
-/** A plain address with no spaces, control characters, quotes or angle brackets, so it is safe as a reply-to. */
-const EMAIL = /^[^\s@<>()[\]\\,;:"\u0000-\u001f\u007f]+@[^\s@<>()[\]\\,;:"\u0000-\u001f\u007f]+\.[^\s@<>()[\]\\,;:"\u0000-\u001f\u007f]{2,}$/u;
-/* oxlint-enable no-control-regex */
 
 export const onRequestGet = ({ env }: { env: Env }) =>
   Response.json({ siteKey: env.TURNSTILE_SECRET_KEY ? env.TURNSTILE_SITE_KEY ?? null : null });

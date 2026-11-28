@@ -31,6 +31,7 @@ export const websiteManagementPath = '/admin/content';
 export const adminSections = [
   ['/', 'Dashboard'],
   ['/enquiries', 'Enquiry Inbox'],
+  ['/reviews', 'Review Management'],
   ['/content', 'Website Management'],
   ['/business', 'Business Info'],
   ['/maintenance', 'Maintenance Mode'],
