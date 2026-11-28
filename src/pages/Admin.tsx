@@ -109,7 +109,7 @@ const Login: React.FC<{ onAuthenticated: (user: User) => void }> = ({ onAuthenti
               <span className="mb-2 block text-sm font-semibold text-[#0a1628]">Email address</span>
               <div className="relative">
                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input className={`${inputClass} h-12 pl-11`} type="email" placeholder="admin@example.com" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <input className={`${inputClass} h-12 pl-11`} type="email" placeholder="example@paradise.com" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               </div>
             </label>
             <label className="block">
