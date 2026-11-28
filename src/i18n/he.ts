@@ -67,6 +67,8 @@ export const he = {
     reviews: {
       eyebrow: 'ביקורות לקוחות', title: 'ביקורות לקוחות', subtitle: 'משוב אמיתי מלקוחות שעבדו עם Paradise Global Leisures.',
       write: 'כתיבת ביקורת', readAll: 'לכל הביקורות', footerLink: 'ביקורות',
+      homeEyebrow: 'מילים מהלקוחות שלנו', homeTitle: 'חוויות שמדברות בעד עצמן', viewAll: 'לכל הביקורות',
+      carousel: { label: 'ביקורות לקוחות', previous: 'הביקורת הקודמת', next: 'הביקורת הבאה', goTo: 'הצגת ביקורת {{number}}', slide: '{{current}} מתוך {{total}}' },
       average: 'דירוג ממוצע', basedOn_one: 'מבוסס על ביקורת אחת שפורסמה', basedOn_two: 'מבוסס על {{count}} ביקורות שפורסמו', basedOn_other: 'מבוסס על {{count}} ביקורות שפורסמו',
       outOf: '{{rating}} מתוך 5 כוכבים', starsCount_one: 'כוכב אחד', starsCount_two: '{{count}} כוכבים', starsCount_other: '{{count}} כוכבים',
       breakdownLabel: '{{stars}}: {{count}} ביקורות',

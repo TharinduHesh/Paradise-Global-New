@@ -21,6 +21,8 @@ export const en = {
     reviews: {
       eyebrow: 'Client Reviews', title: 'Customer Reviews', subtitle: 'Genuine feedback from clients who have worked with Paradise Global Leisures.',
       write: 'Write a Review', readAll: 'Read All Reviews', footerLink: 'Reviews',
+      homeEyebrow: 'Words From Our Clients', homeTitle: 'Experiences That Speak for Themselves', viewAll: 'View All Reviews',
+      carousel: { label: 'Client reviews', previous: 'Previous review', next: 'Next review', goTo: 'Show review {{number}}', slide: '{{current}} of {{total}}' },
       average: 'Average rating', basedOn_one: 'Based on {{count}} published review', basedOn_other: 'Based on {{count}} published reviews',
       outOf: '{{rating}} out of 5 stars', starsCount_one: '{{count}} star', starsCount_other: '{{count}} stars',
       breakdownLabel: '{{stars}}: {{count}} reviews',

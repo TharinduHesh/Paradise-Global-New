@@ -1,58 +1,54 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PenLine, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import SectionHeader from '../ui/SectionHeader';
-import ReviewCard from '../reviews/ReviewCard';
-import ReviewSummary from '../reviews/ReviewSummary';
-import { fetchReviews, type ReviewPage } from '../../lib/reviews';
+import ReviewCarousel from '../reviews/ReviewCarousel';
+import { fetchReviews, type PublicReview } from '../../lib/reviews';
 
-const HOME_REVIEW_COUNT = 6;
+const HOME_REVIEW_COUNT = 12;
+const textLink = 'text-lg text-navy-900 underline decoration-navy-900/60 decoration-1 underline-offset-[6px] transition-colors hover:text-gold-600 hover:decoration-gold-500';
 
 /**
- * Homepage Customer Reviews: the genuine average rating and the latest published reviews. Always shown, so visitors can
- * find the review form; with no published reviews it invites the first one instead of showing any placeholder feedback.
+ * Homepage "Words from our clients": the latest published reviews in an editorial carousel. Always shown so visitors can
+ * reach the review form; with no published reviews it invites the first one instead of showing placeholder feedback.
  */
 const CustomerReviews: React.FC = () => {
   const { t } = useTranslation();
   // undefined while loading, null if the reviews could not be loaded.
-  const [data, setData] = useState<ReviewPage | null>();
+  const [reviews, setReviews] = useState<PublicReview[] | null>();
 
   useEffect(() => {
     const controller = new AbortController();
     fetchReviews({ pageSize: HOME_REVIEW_COUNT, signal: controller.signal })
-      .then(setData)
-      .catch(() => { if (!controller.signal.aborted) setData(null); });
+      .then((result) => setReviews(result.reviews))
+      .catch(() => { if (!controller.signal.aborted) setReviews(null); });
     return () => controller.abort();
   }, []);
 
-  const reviews = data?.reviews ?? [];
-  const empty = data !== undefined && data !== null && data.summary.count === 0;
-
+  const hasReviews = Boolean(reviews?.length);
   return (
-    <section className="section-padding bg-beige-50">
+    <section className="section-padding bg-white">
       <div className="container-custom">
-        <SectionHeader eyebrow={t('reviews.eyebrow')} title={t('reviews.title')} subtitle={t('reviews.subtitle')} centered />
+        <SectionHeader eyebrow={`— ${t('reviews.homeEyebrow')} —`} title={t('reviews.homeTitle')} centered />
 
-        {data && data.summary.count > 0 && <div className="mt-8"><ReviewSummary summary={data.summary} compact /></div>}
-
-        {reviews.length > 0 && (
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => <ReviewCard key={review.id} review={review} />)}
-          </div>
-        )}
-
-        {empty && (
-          <div className="mx-auto mt-12 max-w-xl rounded-sm border border-dashed border-beige-300 bg-white px-6 py-12 text-center shadow-card">
-            <Star size={36} className="mx-auto mb-4 text-gold-400" aria-hidden="true" />
-            <p className="font-serif text-2xl font-bold text-navy-900">{t('reviews.noReviewsText')}</p>
-          </div>
-        )}
-
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
-          {reviews.length > 0 && <Link to="/reviews" className="btn-outline">{t('reviews.readAll')}</Link>}
-          <Link to="/reviews#write-review" className="btn-primary"><PenLine size={16} aria-hidden="true" /> {t('reviews.write')}</Link>
+        <div className="mt-14">
+          {hasReviews && <ReviewCarousel reviews={reviews!} />}
+          {reviews?.length === 0 && (
+            <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+              <span aria-hidden="true" className="block h-10 select-none font-serif text-7xl font-bold leading-[0.9] text-gold-500">&ldquo;</span>
+              <p className="mt-6 text-xl italic leading-relaxed text-navy-800">{t('reviews.noReviewsText')}</p>
+              <span aria-hidden="true" className="mt-6 block h-px w-12 bg-gold-400" />
+            </div>
+          )}
         </div>
+
+        {reviews !== undefined && (
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            {hasReviews && <Link to="/reviews" className={textLink}>{t('reviews.viewAll')}</Link>}
+            {hasReviews && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-gold-500" />}
+            <Link to="/reviews#write-review" className={textLink}>{t('reviews.write')}</Link>
+          </div>
+        )}
       </div>
     </section>
   );
