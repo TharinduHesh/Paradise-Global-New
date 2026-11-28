@@ -107,7 +107,7 @@ const About: React.FC = () => {
       {/* Company profile */}
       <section className="section-padding bg-beige-50" lang={profileLang} dir={profileLang === 'en' ? 'ltr' : undefined}>
         <div className="container-custom">
-          <SectionHeader eyebrow={t('about.profileEyebrow')} title={t('about.profileTitle')} subtitle={t('about.profileIntro')} />
+          <SectionHeader eyebrow={t('about.profileEyebrow')} title={t('about.profileTitle')} subtitle={t('about.profileIntro')} centered />
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {profileSections.map((section) => (
               <article key={section.title} className="rounded-sm border border-beige-200 bg-white p-6 shadow-card">

@@ -10,7 +10,7 @@ const CTABanner: React.FC = () => {
   const company = useCompany();
   const background = usePageImage('home', 'cta');
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-16 overflow-hidden">
       {/* Background */}
       <ParallaxBackground src={background} speed={0.2} />
       <div className="absolute inset-0 bg-navy-900/85" />
