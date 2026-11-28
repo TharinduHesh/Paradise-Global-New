@@ -19,7 +19,7 @@ const FeaturedProperties: React.FC = () => {
   const featured = properties.filter((p) => p.isFeatured).slice(0, 3);
 
   return (
-    <section className="section-padding bg-white">
+    <section className="section-padding !pt-12 md:!pt-16 bg-white">
       <div className="container-custom">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
           <SectionHeader

@@ -10,7 +10,7 @@ const ServicesOverview: React.FC = () => {
   const { t } = useTranslation();
   const visibleServices = useCatalogue<Record<string, unknown>>('service').map(viewService);
   return (
-    <section className="section-padding bg-beige-50">
+    <section className="section-padding !pb-10 md:!pb-12 bg-beige-50">
       <div className="container-custom">
         <SectionHeader
           eyebrow={t('home.servicesEyebrow')}
