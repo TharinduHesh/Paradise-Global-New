@@ -44,6 +44,8 @@ export const onRequest = async ({ request, env, next }: MaintenanceContext) => {
     || url.pathname === '/admin'
     || url.pathname.startsWith('/admin/')
     || url.pathname.startsWith('/api/')
+    // The email moderation page must keep working while the public site is in maintenance mode.
+    || url.pathname === '/review-moderation'
     || !request.headers.get('accept')?.includes('text/html')
   ) {
     return next();

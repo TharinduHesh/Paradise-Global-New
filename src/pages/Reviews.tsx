@@ -6,7 +6,7 @@ import SectionHeader from '../components/ui/SectionHeader';
 import ReviewCard from '../components/reviews/ReviewCard';
 import ReviewForm from '../components/reviews/ReviewForm';
 import ReviewSummary from '../components/reviews/ReviewSummary';
-import { fetchReviews, reviewServices, type PublicReview, type ReviewSummary as Summary } from '../lib/reviews';
+import { fetchReviews, type PublicReview, type ReviewSummary as Summary } from '../lib/reviews';
 import { usePageImage } from '../lib/siteContent';
 
 const PAGE_SIZE = 9;
@@ -20,20 +20,19 @@ const Reviews: React.FC = () => {
   const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [siteKey, setSiteKey] = useState<string | null>();
-  const [service, setService] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState('');
   // The request that last finished; while it differs from the current one, a load is in progress.
-  const requestKey = `${service}|${page}`;
+  const requestKey = String(page);
   const [settledKey, setSettledKey] = useState('');
   const loading = settledKey !== requestKey;
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    const key = `${service}|${page}`;
-    fetchReviews({ page, pageSize: PAGE_SIZE, service, signal: controller.signal })
+    const key = String(page);
+    fetchReviews({ page, pageSize: PAGE_SIZE, signal: controller.signal })
       .then((result) => {
         setError('');
         setReviews((previous) => (page === 1 ? result.reviews : [...previous, ...result.reviews]));
@@ -49,14 +48,13 @@ const Reviews: React.FC = () => {
       })
       .finally(() => { if (!controller.signal.aborted) setSettledKey(key); });
     return () => controller.abort();
-  }, [page, service, t]);
+  }, [page, t]);
 
   useEffect(() => {
     if (hash === `#${WRITE_REVIEW_ID}`) window.setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
   }, [hash]);
 
   const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const changeService = (value: string) => { setService(value); setPage(1); setReviews([]); };
   const hasPublished = Boolean(summary?.count);
 
   return (
@@ -86,17 +84,6 @@ const Reviews: React.FC = () => {
           </aside>
 
           <div className="lg:col-span-2">
-            {(hasPublished || service) && (
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <label htmlFor="review-filter" className="text-xs font-medium uppercase tracking-wide text-navy-600">{t('reviews.filterLabel')}</label>
-                <select id="review-filter" value={service} onChange={(event) => changeService(event.target.value)}
-                  className="w-full rounded-sm border border-beige-300 bg-white px-4 py-2.5 text-sm text-navy-800 focus:border-gold-400 focus:outline-none focus:ring-1 focus:ring-gold-400 sm:w-72">
-                  <option value="">{t('reviews.allServices')}</option>
-                  {Object.keys(reviewServices).map((key) => <option key={key} value={key}>{t(`reviews.services.${key}`)}</option>)}
-                </select>
-              </div>
-            )}
-
             {error && <p role="alert" className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
             {reviews.length > 0 && (
@@ -108,8 +95,8 @@ const Reviews: React.FC = () => {
             {!loading && !error && reviews.length === 0 && (
               <div className="rounded-sm border border-dashed border-beige-300 bg-white px-6 py-14 text-center">
                 <Star size={36} className="mx-auto mb-4 text-gold-400" aria-hidden="true" />
-                <h2 className="mb-2 font-serif text-2xl font-bold text-navy-900">{service ? t('reviews.noReviewsForService') : t('reviews.noReviews')}</h2>
-                {!service && <p className="mb-6 text-navy-500">{t('reviews.noReviewsText')}</p>}
+                <h2 className="mb-2 font-serif text-2xl font-bold text-navy-900">{t('reviews.noReviews')}</h2>
+                <p className="mb-6 text-navy-500">{t('reviews.noReviewsText')}</p>
                 <button type="button" onClick={scrollToForm} className="btn-primary">{t('reviews.write')}</button>
               </div>
             )}

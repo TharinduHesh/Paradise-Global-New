@@ -8,6 +8,8 @@ export const defaultStaffPermissions: StaffPermission[] = ['enquiries'];
 export type AccessUser = { role: Role; permissions?: StaffPermission[] };
 
 export const isAdministrator = (role: Role) => role === 'owner' || role === 'admin';
+// Review moderation is open to Managers too; deleting a review stays with Owners and Admins.
+export const canManageReviews = (role: Role) => isAdministrator(role) || role === 'manager';
 // Staff accounts and the activity log are for Owners and Admins only.
 export const canManageAccounts = (role: Role) => isAdministrator(role);
 
@@ -54,6 +56,7 @@ export const canAccessAdminPage = (user: AccessUser, pathname: string) => {
   if (path === '/admin/enquiries') return canReadStaffSection(user, 'enquiries');
   if (path === '/admin/activity') return canReadStaffSection(user, 'activity');
   if (path === '/admin/users') return canManageAccounts(user.role);
+  if (path === '/admin/reviews') return canManageReviews(user.role);
   return isAdministrator(user.role) && (
     path === '/admin' || path === '/admin/settings' || path === '/admin/maintenance-preview'
     || adminSections.some(([section]) => '/admin' + section === path)

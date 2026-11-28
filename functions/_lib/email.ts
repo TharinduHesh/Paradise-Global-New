@@ -344,91 +344,111 @@ export interface StoredReview {
   name: string;
   email: string;
   country: string;
-  /** Display label of the reviewed service. */
-  service: string;
   rating: number;
   message: string;
   createdAt: string;
 }
 
+/** One-time links from functions/_lib/reviewModeration.ts; absent if they could not be created. */
+export interface ReviewModerationLinks { approve: string; reject: string }
+
 export const reviewReference = (id: number) => `REV-${String(id).padStart(5, '0')}`;
+export const REVIEW_EMAIL_SUBJECT = 'New Customer Review – Approval Required | Paradise Global Leisures';
 const stars = (rating: number) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
 
-export const reviewNotification = (review: StoredReview, company: CompanyInfo = defaultCompany) => {
+/** A secondary, outlined button (white with a navy border). */
+const outlineButton = (href: string, label: string) => {
+  const safeHref = escapeHtml(href);
+  return `<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${safeHref}" style="height:46px;v-text-anchor:middle;width:240px;" arcsize="8%" strokecolor="${C.navy}" fillcolor="${C.white}"><w:anchorlock/><center style="color:${C.navy};font-family:Arial,sans-serif;font-size:13px;font-weight:bold;letter-spacing:1px;">${escapeHtml(label)}</center></v:roundrect><![endif]-->
+<!--[if !mso]><!--><a href="${safeHref}" target="_blank" style="display:inline-block;background:${C.white};color:${C.navy};border:1px solid ${C.navy};font-family:${SANS};font-size:13px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;padding:13px 30px;border-radius:4px;mso-hide:all">${escapeHtml(label)}</a><!--<![endif]-->`;
+};
+
+export const reviewNotification = (review: StoredReview, company: CompanyInfo = defaultCompany, links?: ReviewModerationLinks) => {
   const ref = reviewReference(review.id);
   const submitted = formatSubmitted(review.createdAt);
   const name = escapeHtml(review.name);
+  const dashboard = `${SITE}/admin/reviews`;
+  const actions = links
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+<td class="stack" align="center" width="50%" style="padding:0 6px 12px">${button(links.approve, 'Approve Review')}</td>
+<td class="stack" align="center" width="50%" style="padding:0 6px 12px">${button(links.reject, 'Reject Review', 'navy')}</td>
+</tr><tr><td colspan="2" class="stack" align="center" style="padding:6px 0 0">${outlineButton(dashboard, 'Open Manager Dashboard')}</td></tr></table>`
+    : `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">${button(dashboard, 'Open Manager Dashboard', 'navy')}</td></tr></table>`;
+
   const body = `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr>
-<td bgcolor="${C.goldSoft}" style="background:${C.goldSoft};border:1px solid ${C.gold};border-radius:20px;padding:6px 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:2.5px;color:${C.goldDark}">&#9679;&nbsp; NEW REVIEW · AWAITING MODERATION</td>
+<td bgcolor="${C.goldSoft}" style="background:${C.goldSoft};border:1px solid ${C.gold};border-radius:20px;padding:6px 14px;font-family:${SANS};font-size:11px;font-weight:bold;letter-spacing:2.5px;color:${C.goldDark}">&#9679;&nbsp; APPROVAL REQUIRED</td>
 </tr></table>
-${heading(`Review from ${name}`)}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px"><tr>
-<td class="stack" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">Reference&nbsp; <strong style="color:${C.navy};letter-spacing:1px">${ref}</strong></td>
-<td class="stack stack-left" align="right" style="font-family:${SANS};font-size:13px;color:${C.muted};padding:0 0 4px">${escapeHtml(submitted)}</td>
-</tr></table>
+${heading('A new customer review is waiting')}
+${para(`<strong style="color:${C.navy}">${name}</strong> has shared a review. It is not visible on the website until you approve it.`)}
+${spacer(6)}
 
 ${card(`
-${eyebrow('Rating')}
-<p style="margin:0;font-family:${SERIF};font-size:26px;letter-spacing:3px;color:${C.gold}">${stars(review.rating)}</p>
-<p style="margin:6px 0 0;font-family:${SANS};font-size:14px;color:${C.text}">${review.rating} out of 5 · <strong style="color:${C.navy}">${escapeHtml(review.service)}</strong></p>
-`, C.goldSoft, '#e6d6a8')}
-${spacer(18)}
-
-${card(`
-${sectionTitle('Reviewer')}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-${detailRow('Name', `<strong>${name}</strong>`, true)}
-${detailRow('Email (private)', `<a href="mailto:${escapeHtml(review.email)}" style="color:${C.navy};text-decoration:underline;text-decoration-color:${C.gold}">${escapeHtml(review.email)}</a>`)}
-${detailRow('Country', review.country ? escapeHtml(review.country) : `<span style="color:${C.muted}">Not provided</span>`)}
-${detailRow('Submitted', escapeHtml(submitted))}
-</table>`)}
-${spacer(26)}
-
-${sectionTitle('Review')}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td width="3" bgcolor="${C.gold}" style="background:${C.gold};font-size:0;line-height:0">&nbsp;</td>
-<td dir="auto" style="padding:4px 0 4px 18px;font-family:${SANS};font-size:15px;line-height:1.75;color:${C.text}">${paragraphs(review.message)}</td>
-</tr></table>
-${spacer(32)}
-
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">
-${button(`${SITE}/admin/reviews`, 'Moderate in Admin', 'navy')}
-</td></tr></table>
+<p style="margin:0;font-family:${SERIF};font-size:44px;line-height:1;color:${C.gold}">&ldquo;</p>
+<p style="margin:6px 0 0;font-family:${SERIF};font-size:22px;letter-spacing:3px;color:${C.gold}">${stars(review.rating)}</p>
+<p style="margin:4px 0 16px;font-family:${SANS};font-size:12px;letter-spacing:1px;color:${C.muted}">${review.rating} OUT OF 5</p>
+<p dir="auto" style="margin:0;font-family:${SERIF};font-size:17px;font-style:italic;line-height:1.7;color:${C.navy}">${paragraphs(review.message)}</p>
+<table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0" style="margin:18px auto 14px"><tr><td width="48" style="border-bottom:1px solid ${C.gold};font-size:0;line-height:0">&nbsp;</td></tr></table>
+<p dir="auto" style="margin:0;font-family:${SANS};font-size:16px;font-weight:bold;color:${C.navy}">${name}</p>
+${review.country ? `<p dir="auto" style="margin:4px 0 0;font-family:${SANS};font-size:13px;color:${C.goldDark}">${escapeHtml(review.country)}</p>` : ''}
+</td></tr></table>`, C.goldSoft, '#e6d6a8')}
 ${spacer(18)}
-${para('This review is pending. It will not appear on the website until an admin publishes it.', `margin:0;text-align:center;font-size:12px;color:${C.muted}`)}`;
+
+${card(`
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${detailRow('Customer', `<strong>${name}</strong>`, true)}
+${detailRow('Country', review.country ? escapeHtml(review.country) : `<span style="color:${C.muted}">Not provided</span>`)}
+${detailRow('Rating', `<span style="color:${C.gold};letter-spacing:2px">${stars(review.rating)}</span> &nbsp;${review.rating}/5`)}
+${detailRow('Submitted', escapeHtml(submitted))}
+${detailRow('Status', `<span style="display:inline-block;background:#fef3c7;color:#92400e;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:bold;letter-spacing:1px">PENDING APPROVAL</span>`)}
+${detailRow('Reference', `<strong style="letter-spacing:1px">${ref}</strong>`)}
+</table>`)}
+${spacer(30)}
+
+${actions}
+${spacer(20)}
+${para(links
+    ? 'Approve and Reject open a secure confirmation page; nothing changes until you confirm there. Each link works once and expires in 48 hours. After that, use the Manager Dashboard.'
+    : 'Sign in to the Manager Dashboard to approve or reject this review.', `margin:0;text-align:center;font-size:12px;line-height:1.6;color:${C.muted}`)}`;
 
   return {
-    subject: `New ${review.rating}-Star Review Awaiting Moderation – Paradise Global Leisures`,
-    html: layout(company, `${review.name} rated ${review.service} ${review.rating}/5 (${ref})`, body),
+    subject: REVIEW_EMAIL_SUBJECT,
+    html: layout(company, `${review.name} left a ${review.rating}-star review – approval required (${ref})`, body),
     text: [
-      `NEW CUSTOMER REVIEW – ${ref} (pending moderation)`, '',
-      `Rating: ${stars(review.rating)} (${review.rating}/5)`,
-      `Service: ${review.service}`,
-      `Name: ${review.name}`,
-      `Email (private): ${review.email}`,
+      `NEW CUSTOMER REVIEW – APPROVAL REQUIRED (${ref})`, '',
+      `Customer: ${review.name}`,
       `Country: ${review.country || 'Not provided'}`,
-      `Submitted: ${submitted}`, '',
+      `Rating: ${stars(review.rating)} (${review.rating}/5)`,
+      `Submitted: ${submitted}`,
+      'Status: Pending approval', '',
       'Review:', review.message, '',
-      `Moderate in Admin: ${SITE}/admin/reviews`,
+      ...(links ? [
+        `Approve review: ${links.approve}`,
+        `Reject review: ${links.reject}`,
+        'Each link opens a confirmation page, works once and expires in 48 hours.', '',
+      ] : []),
+      `Open Manager Dashboard: ${dashboard}`,
     ].join('\n'),
   };
 };
 
-/** Emails the admin about a new pending review. Never throws: the review is already saved. */
-export const sendReviewNotification = async (env: EmailEnv, review: StoredReview, company: CompanyInfo = defaultCompany) => {
-  const { RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL } = env;
-  if (!RESEND_API_KEY || !ADMIN_EMAIL || !FROM_EMAIL) {
-    console.warn(`Review #${review.id} saved, but emails are not configured.`);
+/** Emails the review notification. Never throws: the review is already saved. */
+export const sendReviewNotification = async (env: EmailEnv & { REVIEW_NOTIFICATION_EMAIL?: string }, review: StoredReview,
+  company: CompanyInfo = defaultCompany, links?: ReviewModerationLinks) => {
+  const { RESEND_API_KEY, FROM_EMAIL } = env;
+  const to = env.REVIEW_NOTIFICATION_EMAIL || env.ADMIN_EMAIL;
+  if (!RESEND_API_KEY || !to || !FROM_EMAIL) {
+    console.warn(`Review #${review.id} saved, but the review notification email is not configured.`);
     return false;
   }
   try {
-    await send({ RESEND_API_KEY, ADMIN_EMAIL, FROM_EMAIL }, {
-      to: ADMIN_EMAIL, ...reviewNotification(review, company), replyTo: review.email, idempotencyKey: `review-${review.id}-admin`,
+    await send({ RESEND_API_KEY, ADMIN_EMAIL: to, FROM_EMAIL }, {
+      to, ...reviewNotification(review, company, links), idempotencyKey: `review-${review.id}-notification`,
     });
     return true;
   } catch (reason) {
-    console.error(`Review #${review.id}: admin notification failed:`, String(reason));
+    console.error(`Review #${review.id}: notification email failed:`, String(reason));
     return false;
   }
 };

@@ -1,4 +1,4 @@
-import { canReadStaffSection, isAdministrator } from '../../../src/lib/adminAccess';
+import { canManageReviews, canReadStaffSection, isAdministrator } from '../../../src/lib/adminAccess';
 import { enquiryCategories, enquiryCategorySql } from '../../../src/lib/enquiryCategories';
 import { builtInContent, importedContentSettingKey } from '../../../src/lib/builtInContent';
 import { passwordProblem } from '../../../src/lib/passwordPolicy';
@@ -158,6 +158,11 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
     const enquiry = /^enquiries\/(\d+)$/.exec(path);
     if (path === 'me' && method === 'GET') return json({ user, csrfToken: await csrfTokenFor(context.request) });
     if (/^users(?:\/[^/]+(?:\/password)?)?$/.test(path)) return await manageAccounts(context.env, context.request, user, path);
+    // Review moderation: Owners, Admins and Managers (deleting stays with Owners and Admins, checked in manageReviews).
+    if (/^reviews(?:\/\d+)?$/.test(path)) {
+      if (!canManageReviews(user.role)) return error('You do not have permission for this action.', 403);
+      return await manageReviews(context.env, context.request, user, path);
+    }
     const staffRead = method === 'GET' && (
       ((path === 'enquiries' || enquiry) && canReadStaffSection(user, 'enquiries'))
       || (path === 'activity' && canReadStaffSection(user, 'activity'))
@@ -166,8 +171,6 @@ export const onRequest = async (context: { request: Request; env: AdminEnv }) =>
       return error('You do not have permission for this action.', 403);
     }
 
-    // Review moderation is for Owners and Admins only; the check above has already refused everyone else.
-    if (/^reviews(?:\/\d+)?$/.test(path)) return await manageReviews(context.env, context.request, user, path);
 
     if (path === 'dashboard' && context.request.method === 'GET') {
       const [enquiries, published, users, activity, maintenance, pendingReviews] = await Promise.all([

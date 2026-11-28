@@ -30,7 +30,7 @@ const ReviewCard: React.FC<{ review: PublicReview; className?: string; surface?:
       <footer className="mt-6 border-t border-beige-200 pt-5">
         <p dir="auto" className="font-serif font-semibold text-navy-900">{review.name}</p>
         <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-navy-500">
-          <span>{t(`reviews.services.${review.service}`)}</span>
+          {review.service && <span>{t(`reviews.services.${review.service}`)}</span>}
           {review.country && <span className="inline-flex items-center gap-1"><MapPin size={12} className="text-gold-500" aria-hidden="true" /><span dir="auto">{review.country}</span></span>}
         </p>
       </footer>

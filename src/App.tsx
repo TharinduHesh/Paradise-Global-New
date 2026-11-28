@@ -20,6 +20,7 @@ import TermsOfService from './pages/TermsOfService';
 import MaintenancePage from './pages/Maintenance';
 import Projects from './pages/Projects';
 import Reviews from './pages/Reviews';
+import ReviewModeration from './pages/ReviewModeration';
 import { SiteContentProvider } from './lib/siteContent';
 
 type MaintenanceSettings = { enabled: boolean; design?: string; message: string; reopeningAt?: string };
@@ -68,7 +69,7 @@ const App: React.FC = () => {
     if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')) {
       void i18n.changeLanguage('en');
     }
-    if (window.location.pathname.startsWith('/admin')) return;
+    if (window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/review-moderation')) return;
     fetch('/api/settings', { cache: 'no-store' })
       .then((response) => response.ok ? response.json() as Promise<{ settings: ApiSettings }> : Promise.reject())
       .then((result) => {
@@ -101,6 +102,8 @@ const App: React.FC = () => {
   return (
     <Routes>
       <Route path="/admin/*" element={<AdminApp />} />
+      {/* Utility page for the email approve/reject links: no site header, footer or navigation; works during maintenance. */}
+      <Route path="/review-moderation" element={<ReviewModeration />} />
       <Route path="*" element={<SiteContentProvider><Layout><SitePages /></Layout></SiteContentProvider>} />
     </Routes>
   );

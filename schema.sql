@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS customer_reviews (
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'published', 'rejected', 'hidden')),
   admin_reply TEXT NOT NULL DEFAULT '',
   admin_reply_he TEXT NOT NULL DEFAULT '',
+  rejection_reason TEXT NOT NULL DEFAULT '',
   replied_at TEXT,
   replied_by TEXT REFERENCES admin_users(id),
   -- SHA-256 of the visitor's IP address, used only for rate limiting; the address itself is never stored.
@@ -129,3 +130,17 @@ CREATE TABLE IF NOT EXISTS customer_reviews (
 CREATE INDEX IF NOT EXISTS idx_customer_reviews_status_published ON customer_reviews(status, published_at);
 CREATE INDEX IF NOT EXISTS idx_customer_reviews_email_created ON customer_reviews(email, created_at);
 CREATE INDEX IF NOT EXISTS idx_customer_reviews_ip_created ON customer_reviews(ip_hash, created_at);
+
+CREATE TABLE IF NOT EXISTS review_moderation_tokens (
+  id TEXT PRIMARY KEY,
+  review_id INTEGER NOT NULL REFERENCES customer_reviews(id) ON DELETE CASCADE,
+  action TEXT NOT NULL CHECK (action IN ('approve', 'reject')),
+  token_hash TEXT NOT NULL UNIQUE,
+  recipient TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_moderation_tokens_review ON review_moderation_tokens(review_id);
+CREATE INDEX IF NOT EXISTS idx_review_moderation_tokens_expiry ON review_moderation_tokens(expires_at);

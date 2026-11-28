@@ -610,7 +610,7 @@ const AdminApp: React.FC = () => {
   let page = <Dashboard />;
   if (section) page = <WebsiteManagement key={section.path} path={section.path} types={section.types} />;
   if (path === '/admin/enquiries') page = <Enquiries canEdit={isAdministrator(user.role)} />;
-  if (path === '/admin/reviews') page = <ReviewManagement />;
+  if (path === '/admin/reviews') page = <ReviewManagement canDelete={isAdministrator(user.role)} />;
   if (path === '/admin/activity') page = <ActivityPage />;
   if (path === '/admin/account') page = <AccountPage />;
   if (path === '/admin/maintenance-preview') page = <MaintenancePreview />;

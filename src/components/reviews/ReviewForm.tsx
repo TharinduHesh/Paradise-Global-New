@@ -3,9 +3,9 @@ import { CheckCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '../ui/Turnstile';
 import { StarRatingInput } from './StarRating';
-import { ReviewSubmitError, reviewLimits, reviewServices, submitReview, type ReviewSubmission } from '../../lib/reviews';
+import { ReviewSubmitError, reviewLimits, submitReview, type ReviewSubmission } from '../../lib/reviews';
 
-const emptyForm: ReviewSubmission = { name: '', email: '', country: '', service: '', rating: 0, message: '', website: '' };
+const emptyForm: ReviewSubmission = { name: '', email: '', country: '', rating: 0, message: '', website: '' };
 const fieldClass = 'w-full border border-beige-300 rounded-sm px-4 py-3 text-sm text-navy-800 placeholder-navy-300 bg-white focus:outline-none focus:border-gold-400 focus:ring-1 focus:ring-gold-400 transition-colors';
 const labelClass = 'block text-xs font-medium text-navy-600 mb-1.5 uppercase tracking-wide';
 const LINKS = /https?:\/\/|www\./gi;
@@ -49,7 +49,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ siteKey }) => {
       setForm(emptyForm);
     } catch (caught) {
       const status = caught instanceof ReviewSubmitError ? caught.status : 0;
-      setError(status === 429 ? t('reviews.form.rateLimited') : status === 403 ? t('reviews.form.securityError') : t('reviews.form.error'));
+      setError(status === 403 ? t('reviews.form.securityError') : t('reviews.form.error'));
       setWidgetAttempt((attempt) => attempt + 1);
     } finally {
       setTurnstileToken(null);
@@ -100,19 +100,10 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ siteKey }) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="review-country" className={labelClass}>{t('reviews.form.country')} <span className="normal-case text-navy-400">({t('reviews.form.optional')})</span></label>
-            <input id="review-country" name="country" maxLength={reviewLimits.country} autoComplete="country-name" value={form.country} onChange={update}
-              placeholder={t('reviews.form.placeholders.country')} className={fieldClass} />
-          </div>
-          <div>
-            <label htmlFor="review-service" className={labelClass}>{t('reviews.form.service')} *</label>
-            <select id="review-service" name="service" required value={form.service} onChange={update} className={fieldClass}>
-              <option value="">{t('reviews.form.serviceSelect')}</option>
-              {Object.keys(reviewServices).map((key) => <option key={key} value={key}>{t(`reviews.services.${key}`)}</option>)}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="review-country" className={labelClass}>{t('reviews.form.country')} <span className="normal-case text-navy-400">({t('reviews.form.optional')})</span></label>
+          <input id="review-country" name="country" maxLength={reviewLimits.country} autoComplete="country-name" value={form.country} onChange={update}
+            placeholder={t('reviews.form.placeholders.country')} className={fieldClass} />
         </div>
 
         <div>

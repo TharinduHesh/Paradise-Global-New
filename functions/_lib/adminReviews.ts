@@ -1,14 +1,16 @@
 /**
- * Review moderation for the admin console (/api/admin/reviews…). The admin router only calls this for Owners and Admins,
- * after authentication and the anti-CSRF check.
+ * Review moderation for the admin console (/api/admin/reviews…). The admin router only calls this for Owners, Admins and
+ * Managers, after authentication and the anti-CSRF check.
  *
  * GET    reviews          list with search, status, service, rating filters and pagination, plus counts per status
- * PATCH  reviews/:id      { action?: approve | publish | unpublish | reject, reply?: string }
- * DELETE reviews/:id      delete permanently
+ * PATCH  reviews/:id      { action?: approve | publish | unpublish | reject, reply?: string, reason?: string (reject) }
+ * DELETE reviews/:id      delete permanently (Owners and Admins only)
  */
 import { isReviewService, reviewActions, reviewLimits, reviewStatuses, type ReviewAction, type ReviewStatus } from '../../src/lib/reviews';
+import { isAdministrator } from '../../src/lib/adminAccess';
 import { error, json, logActivity, readJson, type AdminEnv, type AdminUser } from './admin';
 import { multiLine, stripTags } from './sanitize';
+import { spendModerationTokens } from './reviewModeration';
 import { translateToHebrew } from './translate';
 
 export const ADMIN_REVIEW_PAGE_SIZE = 20;
@@ -37,7 +39,7 @@ export async function manageReviews(env: AdminEnv, request: Request, actor: Admi
       AND (? = '' OR r.service = ?) AND (? = '' OR r.rating = CAST(? AS INTEGER))`;
     const values = [search, like, like, like, like, service, service, rating, rating];
     const [list, counts] = await Promise.all([
-      db.prepare(`SELECT r.id, r.name, r.email, r.country, r.service, r.rating, r.message, r.status, r.admin_reply, r.admin_reply_he,
+      db.prepare(`SELECT r.id, r.name, r.email, r.country, r.service, r.rating, r.message, r.status, r.rejection_reason, r.admin_reply, r.admin_reply_he,
           r.replied_at, r.published_at, r.created_at, r.updated_at, u.name AS replied_by_name
         FROM customer_reviews r LEFT JOIN admin_users u ON u.id = r.replied_by
         ${filter} AND (? = '' OR r.status = ?)
@@ -62,15 +64,21 @@ export async function manageReviews(env: AdminEnv, request: Request, actor: Admi
   if (!existing) return error('Review not found.', 404);
 
   if (request.method === 'DELETE') {
-    await db.prepare('DELETE FROM customer_reviews WHERE id = ?').bind(id).run();
+    if (!isAdministrator(actor.role)) return error('Only Owners and Admins can delete reviews.', 403);
+    await db.batch([
+      db.prepare('DELETE FROM review_moderation_tokens WHERE review_id = ?').bind(id),
+      db.prepare('DELETE FROM customer_reviews WHERE id = ?').bind(id),
+    ]);
     await logActivity(env, actor.id, 'delete', 'review', id, { name: existing.name, rating: existing.rating, status: existing.status });
     return json({ ok: true });
   }
 
   if (request.method === 'PATCH') {
-    const body = await readJson<{ action?: unknown; reply?: unknown }>(request);
+    const body = await readJson<{ action?: unknown; reply?: unknown; reason?: unknown }>(request);
     if (!body || typeof body !== 'object' || Array.isArray(body)) return error('Invalid review changes.');
     const { action, reply } = body;
+    if (body.reason !== undefined && (typeof body.reason !== 'string' || body.reason.length > 500)) return error('The reason can be up to 500 characters.');
+    const reason = action === 'reject' && typeof body.reason === 'string' ? stripTags(multiLine(body.reason)) : '';
     if (action === undefined && reply === undefined) return error('Nothing to change.');
     if (action !== undefined && !isAction(action)) return error('Invalid moderation action.');
     if (reply !== undefined && (typeof reply !== 'string' || reply.length > reviewLimits.reply)) {
@@ -100,19 +108,25 @@ export async function manageReviews(env: AdminEnv, request: Request, actor: Admi
       }
     }
 
-    await db.prepare(`UPDATE customer_reviews SET
+    // A status change applies only if the review is still in the status this request saw (an email-link approval may have
+    // landed meanwhile), and it spends any outstanding email links in the same atomic batch.
+    const statements = [db.prepare(`UPDATE customer_reviews SET
         status = COALESCE(?1, status),
         published_at = CASE WHEN ?1 = 'published' THEN COALESCE(published_at, datetime('now')) ELSE published_at END,
+        rejection_reason = CASE WHEN ?1 = 'rejected' THEN ?8 WHEN ?1 IS NOT NULL THEN '' ELSE rejection_reason END,
         admin_reply = CASE WHEN ?2 THEN ?3 ELSE admin_reply END,
         admin_reply_he = CASE WHEN ?2 THEN ?4 ELSE admin_reply_he END,
         replied_at = CASE WHEN ?2 THEN (CASE WHEN ?3 = '' THEN NULL ELSE datetime('now') END) ELSE replied_at END,
         replied_by = CASE WHEN ?2 THEN (CASE WHEN ?3 = '' THEN NULL ELSE ?5 END) ELSE replied_by END,
         updated_at = datetime('now')
-      WHERE id = ?6`)
-      .bind(nextStatus, replyText === null ? 0 : 1, replyText ?? '', replyHebrew, actor.id, id).run();
+      WHERE id = ?6 AND (?1 IS NULL OR status = ?7)`)
+      .bind(nextStatus, replyText === null ? 0 : 1, replyText ?? '', replyHebrew, actor.id, id, existing.status, reason)];
+    if (action) statements.push(spendModerationTokens(db, id));
+    const [update] = await db.batch(statements) as { meta?: { changes?: number } }[];
+    if (action && update?.meta?.changes !== 1) return error('This review was changed by someone else. Refresh and try again.', 409);
 
     if (action) {
-      await logActivity(env, actor.id, action, 'review', id, { name: existing.name, rating: existing.rating, from: existing.status, to: nextStatus });
+      await logActivity(env, actor.id, action, 'review', id, { name: existing.name, rating: existing.rating, from: existing.status, to: nextStatus, ...(reason ? { reason } : {}) });
     }
     if (replyText !== null && replyText !== existing.admin_reply) {
       await logActivity(env, actor.id, replyText ? 'reply' : 'remove_reply', 'review', id, { name: existing.name });

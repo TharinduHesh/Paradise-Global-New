@@ -5,6 +5,8 @@ pages_build_output_dir = "dist"
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAAGE0jDpCKVae8bal"
 ADMIN_EMAIL = "globalparadise99@gmail.com"
+# Receives new-review emails with the one-time Approve/Reject links; only links sent to this address are honoured.
+REVIEW_NOTIFICATION_EMAIL = "globalparadise99@gmail.com"
 FROM_EMAIL = "Paradise Global Leisures <notifications@paradisegloballeisures.com>"
 
 [[d1_databases]]

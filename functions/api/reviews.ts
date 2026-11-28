@@ -1,32 +1,33 @@
 /**
  * Public customer reviews.
  * GET  /api/reviews  → published reviews only, with the rating summary. Never returns emails, IP hashes or unpublished reviews.
- * POST /api/reviews  → a visitor submits a review. It is saved as 'pending' and the admin is emailed.
+ * POST /api/reviews  → a visitor submits a review. It is saved as 'pending' and the manager is emailed one-time
+ *                      approve/reject links (see functions/_lib/reviewModeration.ts).
  */
 import { validateTurnstile } from '../_lib/turnstile';
-import { sendReviewNotification, type EmailEnv } from '../_lib/email';
-import { sha256 } from '../_lib/admin';
+import { sendReviewNotification, type EmailEnv, type ReviewModerationLinks } from '../_lib/email';
 import { EMAIL, multiLine, singleLine, stripTags } from '../_lib/sanitize';
+import { createModerationTokens, moderationLink, reviewRecipient } from '../_lib/reviewModeration';
 import { mergeCompany } from '../../src/lib/companyInfo';
-import { isReviewService, reviewLimits, reviewServices, type PublicReview, type ReviewService, type ReviewSummary } from '../../src/lib/reviews';
+import { isReviewService, reviewLimits, type PublicReview, type ReviewSummary } from '../../src/lib/reviews';
 
 interface D1Statement {
   bind(...values: unknown[]): D1Statement;
   first<T = Record<string, unknown>>(): Promise<T | null>;
   all<T = Record<string, unknown>>(): Promise<{ results: T[] }>;
 }
-interface D1Database { prepare(query: string): D1Statement }
+interface D1Database { prepare(query: string): D1Statement; batch(statements: D1Statement[]): Promise<unknown[]> }
 
 export interface ReviewsEnv extends EmailEnv {
   DB: D1Database;
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /** Who receives new-review emails (falls back to ADMIN_EMAIL). */
+  REVIEW_NOTIFICATION_EMAIL?: string;
 }
 
 interface Context { request: Request; env: ReviewsEnv; waitUntil?: (promise: Promise<unknown>) => void }
 
-/** Submissions allowed per visitor IP and per email address before further ones are refused for a while. */
-export const REVIEW_RATE_LIMITS = { perIpHour: 3, perIpDay: 6, perEmailDay: 3 } as const;
 const DEFAULT_PAGE_SIZE = 9;
 const MAX_PAGE_SIZE = 24;
 const MAX_LINKS = 1;
@@ -43,7 +44,8 @@ const toPublic = (row: Row): PublicReview => ({
   id: row.id,
   name: row.name,
   country: row.country,
-  service: (isReviewService(row.service) ? row.service : 'general') as ReviewService,
+  // The form no longer asks for a service; older reviews keep theirs.
+  service: isReviewService(row.service) ? row.service : '',
   rating: row.rating,
   message: row.message,
   reply: row.admin_reply,
@@ -119,12 +121,12 @@ export const onRequestPost = async (context: Context) => {
   const rating = input.rating;
   if (!clean.name) return fail('The name field is required.');
   if (!EMAIL.test(clean.email)) return fail('Enter a valid email address.');
-  if (!isReviewService(clean.service)) return fail('Select the service you are reviewing.');
+  // Service is optional (the form no longer asks for it); anything unrecognised is stored as blank.
+  const service = isReviewService(clean.service) ? clean.service : '';
   if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) return fail('Choose a rating from 1 to 5 stars.');
   if (clean.message.length < reviewLimits.minMessage) return fail(`Please write at least ${reviewLimits.minMessage} characters.`);
   if ((clean.message.match(/https?:\/\/|www\./gi) ?? []).length > MAX_LINKS) return fail('Please remove the links from your review.');
 
-  const ipHash = await sha256(`review-ip:${request.headers.get('CF-Connecting-IP') ?? 'unknown'}`);
   let stored: { id: number; created_at: string } | null;
   try {
     const secret = env.TURNSTILE_SECRET_KEY;
@@ -136,19 +138,10 @@ export const onRequestPost = async (context: Context) => {
       WHERE email = ? AND message = ? AND created_at > datetime('now', '-30 days') LIMIT 1`).bind(clean.email, clean.message).first();
     if (duplicate) return json({ ok: true, duplicate: true });
 
-    const usage = await env.DB.prepare(`SELECT
-        (SELECT COUNT(*) FROM customer_reviews WHERE ip_hash = ?1 AND created_at > datetime('now', '-1 hour')) AS ip_hour,
-        (SELECT COUNT(*) FROM customer_reviews WHERE ip_hash = ?1 AND created_at > datetime('now', '-1 day')) AS ip_day,
-        (SELECT COUNT(*) FROM customer_reviews WHERE email = ?2 AND created_at > datetime('now', '-1 day')) AS email_day`)
-      .bind(ipHash, clean.email).first<{ ip_hour: number; ip_day: number; email_day: number }>();
-    if (usage && (usage.ip_hour >= REVIEW_RATE_LIMITS.perIpHour || usage.ip_day >= REVIEW_RATE_LIMITS.perIpDay
-      || usage.email_day >= REVIEW_RATE_LIMITS.perEmailDay)) {
-      return fail('You have sent several reviews recently. Please try again later.', 429);
-    }
-
-    stored = await env.DB.prepare(`INSERT INTO customer_reviews (name, email, country, service, rating, message, status, ip_hash)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?) RETURNING id, created_at`)
-      .bind(clean.name, clean.email, clean.country, clean.service, rating, clean.message, ipHash)
+    // There is deliberately no per-visitor submission limit; nothing is shown publicly until a manager approves it.
+    stored = await env.DB.prepare(`INSERT INTO customer_reviews (name, email, country, service, rating, message, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'pending') RETURNING id, created_at`)
+      .bind(clean.name, clean.email, clean.country, service, rating, clean.message)
       .first<{ id: number; created_at: string }>();
     if (!stored) throw new Error('The database did not return the saved review.');
   } catch (error) {
@@ -156,12 +149,20 @@ export const onRequestPost = async (context: Context) => {
     return fail('Unable to save your review. Please try again later.', 500);
   }
 
-  // The review is stored; the admin email goes out after the response so a slow email never delays the visitor.
-  const review = { ...clean, rating, service: reviewServices[clean.service], id: stored.id, createdAt: stored.created_at };
-  const email = env.DB.prepare('SELECT value_json FROM site_settings WHERE key = ?').bind('company').first<{ value_json: string }>()
+  // The review is stored. One-time approve/reject links are created for the recipient; if that fails, the email still
+  // goes out with only the dashboard button. Everything below runs after the response so the visitor never waits.
+  const review = { ...clean, rating, id: stored.id, createdAt: stored.created_at };
+  const reviewId = stored.id;
+  const recipient = reviewRecipient(env);
+  const links: Promise<ReviewModerationLinks | undefined> = recipient
+    ? createModerationTokens(env.DB, reviewId, recipient)
+      .then((tokens) => ({ approve: moderationLink(tokens.approve), reject: moderationLink(tokens.reject) }))
+      .catch((error) => { console.error(`Review #${reviewId}: unable to create moderation links:`, error instanceof Error ? error.message : error); return undefined; })
+    : Promise.resolve(undefined);
+  const company = env.DB.prepare('SELECT value_json FROM site_settings WHERE key = ?').bind('company').first<{ value_json: string }>()
     .then((row) => mergeCompany(row ? JSON.parse(row.value_json) : null))
-    .catch(() => mergeCompany(null))
-    .then((company) => sendReviewNotification(env, review, company));
+    .catch(() => mergeCompany(null));
+  const email = Promise.all([company, links]).then(([info, moderation]) => sendReviewNotification(env, review, info, moderation));
   if (context.waitUntil) context.waitUntil(email);
   else await email;
 

@@ -5,7 +5,7 @@ import { reviewActions, reviewLimits, reviewServices, reviewStatuses, parseDbDat
 
 type AdminReview = {
   id: number; name: string; email: string; country: string; service: ReviewService | string; rating: number; message: string;
-  status: ReviewStatus; admin_reply: string; admin_reply_he: string; replied_at: string | null; replied_by_name: string | null;
+  status: ReviewStatus; rejection_reason: string; admin_reply: string; admin_reply_he: string; replied_at: string | null; replied_by_name: string | null;
   published_at: string | null; created_at: string;
 };
 type Counts = Record<ReviewStatus, number>;
@@ -29,9 +29,10 @@ const Stars: React.FC<{ rating: number }> = ({ rating }) => (
   </span>
 );
 
-const ReviewManagement: React.FC = () => {
+/** `canDelete` is true for Owners and Admins; Managers can moderate and reply but not delete. */
+const ReviewManagement: React.FC<{ canDelete: boolean }> = ({ canDelete }) => {
   const [status, setStatus] = useState<ReviewStatus | ''>('pending');
-  const [filters, setFilters] = useState({ search: '', service: '', rating: '' });
+  const [filters, setFilters] = useState({ search: '', rating: '' });
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<AdminReview[]>([]);
@@ -62,7 +63,7 @@ const ReviewManagement: React.FC = () => {
     return () => controller.abort();
   }, [query, revision]);
 
-  const changeFilter = (key: 'service' | 'rating', value: string) => { setFilters({ ...filters, [key]: value }); setPage(1); };
+  const changeFilter = (key: 'rating', value: string) => { setFilters({ ...filters, [key]: value }); setPage(1); };
   const changeStatus = (value: ReviewStatus | '') => { setStatus(value); setPage(1); setReplyingId(null); };
   const refresh = () => {
     // The last review on a later page may have moved to another tab; step back so the page is not empty.
@@ -71,11 +72,17 @@ const ReviewManagement: React.FC = () => {
   };
 
   const moderate = async (review: AdminReview, action: ReviewAction) => {
-    if (action === 'reject' && !window.confirm(`Reject the review from ${review.name}? It will not be shown on the website.`)) return;
+    let reason: string | undefined;
+    if (action === 'reject') {
+      // null means Cancel; an empty answer rejects without a reason.
+      const answer = window.prompt(`Reject the review from ${review.name}? It will not be shown on the website.\n\nOptional reason (only visible to staff):`, '');
+      if (answer === null) return;
+      reason = answer.slice(0, 500);
+    }
     setBusyId(review.id);
     setNotice(null);
     try {
-      await api(`reviews/${review.id}`, { method: 'PATCH', body: JSON.stringify({ action }) });
+      await api(`reviews/${review.id}`, { method: 'PATCH', body: JSON.stringify({ action, ...(reason ? { reason } : {}) }) });
       setNotice({ ok: true, text: `Review from ${review.name} is now ${statusLabels[reviewActions[action].to].toLowerCase()}.` });
       refresh();
     } catch (caught) {
@@ -143,10 +150,6 @@ const ReviewManagement: React.FC = () => {
         <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
         <input className={`${inputClass} pl-9`} placeholder="Search name, email, country or text" value={search} onChange={(event) => setSearch(event.target.value)} />
       </label>
-      <select className={`${inputClass} sm:w-64`} aria-label="Filter by service" value={filters.service} onChange={(event) => changeFilter('service', event.target.value)}>
-        <option value="">All services</option>
-        {Object.entries(reviewServices).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-      </select>
       <select className={`${inputClass} sm:w-40`} aria-label="Filter by rating" value={filters.rating} onChange={(event) => changeFilter('rating', event.target.value)}>
         <option value="">All ratings</option>
         {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} star{rating === 1 ? '' : 's'}</option>)}
@@ -172,7 +175,7 @@ const ReviewManagement: React.FC = () => {
                 <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                   <a href={`mailto:${review.email}`} className="inline-flex items-center gap-1 hover:text-[#9a7425]"><Mail size={12} aria-hidden="true" />{review.email}</a>
                   {review.country && <span className="inline-flex items-center gap-1"><Globe size={12} aria-hidden="true" />{review.country}</span>}
-                  <span>{serviceLabel(review.service)}</span>
+                  {review.service && <span>{serviceLabel(review.service)}</span>}
                 </p>
               </div>
               <div className="text-right text-xs text-slate-400">
@@ -182,6 +185,9 @@ const ReviewManagement: React.FC = () => {
             </div>
 
             <p dir="auto" className="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">{review.message}</p>
+            {review.status === 'rejected' && review.rejection_reason && (
+              <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-800"><strong>Rejection reason:</strong> {review.rejection_reason}</p>
+            )}
 
             {review.admin_reply && replyingId !== review.id && (
               <div className="mt-3 rounded-lg border-l-2 border-[#c9a84c] bg-[#f9f6f0] p-4 text-sm">
@@ -215,14 +221,14 @@ const ReviewManagement: React.FC = () => {
               {replyingId !== review.id && <button type="button" disabled={busy} onClick={() => { setReplyingId(review.id); setReplyDraft(review.admin_reply); }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">
                 <MessageSquareReply size={15} aria-hidden="true" />{review.admin_reply ? 'Edit reply' : 'Reply'}</button>}
-              <button type="button" disabled={busy} onClick={() => void remove(review)} aria-label={`Delete review from ${review.name}`} title="Delete review"
-                className="ml-auto rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"><Trash2 size={16} /></button>
+              {canDelete && <button type="button" disabled={busy} onClick={() => void remove(review)} aria-label={`Delete review from ${review.name}`} title="Delete review"
+                className="ml-auto rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"><Trash2 size={16} /></button>}
             </div>
           </article>
         );
       })}
       {!loading && !items.length && <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-400">
-        {filters.search || filters.service || filters.rating ? 'No reviews match these filters.' : status ? `No ${statusLabels[status].toLowerCase()} reviews.` : 'No reviews yet.'}
+        {filters.search || filters.rating ? 'No reviews match these filters.' : status ? `No ${statusLabels[status].toLowerCase()} reviews.` : 'No reviews yet.'}
       </div>}
       {loading && !items.length && <p className="p-8 text-center text-sm text-slate-400">Loading reviews…</p>}
     </div>

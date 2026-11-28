@@ -39,7 +39,8 @@ export interface PublicReview {
   id: number;
   name: string;
   country: string;
-  service: ReviewService;
+  /** Blank for reviews submitted after the service question was removed from the form. */
+  service: ReviewService | '';
   rating: number;
   message: string;
   reply: string;
@@ -61,7 +62,6 @@ export interface ReviewSubmission {
   name: string;
   email: string;
   country: string;
-  service: ReviewService | '';
   rating: number;
   message: string;
   /** Honeypot: hidden from people, so anything typed here comes from a bot. */
