@@ -4,7 +4,7 @@ export const en = {
   translation: {
     notFound: { page: 'Page not found', home: 'Go Home' },
     maintenance: { title: "We'll Be Right Back", defaultMessage: 'We are making improvements. Please check back soon.' },
-    nav: { home: 'Home', about: 'About', services: 'Services', allServices: 'All Services', properties: 'Properties', destinations: 'Hospitality Collection', contact: 'Contact', consultation: 'Request Consultation', planApprovals: 'Paradise Development Solutions', realEstate: 'Paradise Real Estate', propertyManagement: 'Paradise Property Care', legalConsultation: 'Paradise Legal Solutions', architecturalSupport: 'Architectural Support', construction: 'Paradise Design & Construction', toggleMenu: 'Toggle menu' },
+    nav: { home: 'Home', about: 'About', services: 'Services', allServices: 'All Services', properties: 'Properties', destinations: 'Hospitality Collection', reviews: 'Reviews', contact: 'Contact', consultation: 'Request Consultation', planApprovals: 'Paradise Development Solutions', realEstate: 'Paradise Real Estate', propertyManagement: 'Paradise Property Care', legalConsultation: 'Paradise Legal Solutions', architecturalSupport: 'Architectural Support', construction: 'Paradise Design & Construction', toggleMenu: 'Toggle menu' },
     language: { english: 'English', hebrew: 'עברית' },
     footer: { description: 'An integrated property and hospitality partner for Sri Lanka and international clients. We connect real estate, approvals, management, legal coordination, design and construction.', services: 'Our Divisions', destinations: 'Hospitality Destinations', contact: 'Get In Touch', privacy: 'Privacy Policy', terms: 'Terms of Service', contactUs: 'Contact Us', rights: 'All rights reserved.', address: 'Paradise Global Leisures (PVT) LTD', province: 'Sri Lanka', poweredBy: 'Powered by SerendibCode' },
     common: { learnMore: 'Learn More', viewAll: 'View all', send: 'Send Enquiry', loading: 'Loading...', required: 'Required', district: 'District', scrollDown: 'Scroll down' },
@@ -24,7 +24,7 @@ export const en = {
       average: 'Average rating', basedOn_one: 'Based on {{count}} published review', basedOn_other: 'Based on {{count}} published reviews',
       outOf: '{{rating}} out of 5 stars', starsCount_one: '{{count}} star', starsCount_other: '{{count}} stars',
       breakdownLabel: '{{stars}}: {{count}} reviews',
-      noReviews: 'No reviews yet', noReviewsText: 'Be the first to share your experience with Paradise Global Leisures.',
+      noReviews: 'No reviews yet', noReviewsText: 'Be the first to share your experience.',
       noReviewsForService: 'There are no published reviews for this service yet.',
       filterLabel: 'Filter by service', allServices: 'All services', loadMore: 'Show More Reviews',
       loadError: 'Reviews could not be loaded. Please try again later.', reply: 'Response from Paradise Global Leisures',

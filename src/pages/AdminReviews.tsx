@@ -17,7 +17,7 @@ const statusStyles: Record<ReviewStatus, string> = {
 const actionButtons: Record<ReviewAction, { label: string; Icon: typeof Check; style: string }> = {
   approve: { label: 'Approve & publish', Icon: Check, style: 'bg-emerald-600 text-white hover:bg-emerald-700' },
   publish: { label: 'Publish', Icon: Check, style: 'bg-emerald-600 text-white hover:bg-emerald-700' },
-  unpublish: { label: 'Unpublish', Icon: EyeOff, style: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50' },
+  unpublish: { label: 'Hide', Icon: EyeOff, style: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50' },
   reject: { label: 'Reject', Icon: X, style: 'border border-red-200 bg-white text-red-600 hover:bg-red-50' },
 };
 const serviceLabel = (key: string) => (reviewServices as Record<string, string>)[key] ?? key;

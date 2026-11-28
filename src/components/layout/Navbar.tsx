@@ -27,12 +27,13 @@ const navLinks = [
   },
   { label: 'Properties', href: '/properties' },
   { label: 'Destinations', href: '/destinations' },
+  { label: 'Reviews', href: '/reviews' },
   { label: 'Contact', href: '/contact' },
 ];
 
 const navKeys: Record<string, string> = {
   Home: 'home', About: 'about', Services: 'services', 'All Services': 'allServices',
-  Properties: 'properties', Destinations: 'destinations', Contact: 'contact',
+  Properties: 'properties', Destinations: 'destinations', Reviews: 'reviews', Contact: 'contact',
   'Paradise Real Estate': 'realEstate',
   'Paradise Development Solutions': 'planApprovals',
   'Paradise Property Care': 'propertyManagement',

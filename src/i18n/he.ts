@@ -2,7 +2,7 @@ export const he = {
   translation: {
     notFound: { page: 'העמוד לא נמצא', home: 'חזרה לבית' },
     maintenance: { title: 'נחזור בקרוב', defaultMessage: 'אנו מבצעים שיפורים. אנא בדקו שוב בקרוב.' },
-    nav: { home: 'בית', about: 'אודות', services: 'שירותים', allServices: 'כל השירותים', properties: 'נכסים', destinations: 'אוסף האירוח', contact: 'צור קשר', consultation: 'בקשת ייעוץ', planApprovals: 'פתרונות פיתוח פארדייס', realEstate: 'פארדייס נדל״ן', propertyManagement: 'פארדייס לטיפול בנכסים', legalConsultation: 'פתרונות משפטיים של פארדייס', architecturalSupport: 'תכנון ותמיכה', construction: 'פארדייס לעיצוב ובנייה', toggleMenu: 'פתיחה או סגירת התפריט' },
+    nav: { home: 'בית', about: 'אודות', services: 'שירותים', allServices: 'כל השירותים', properties: 'נכסים', destinations: 'אוסף האירוח', reviews: 'ביקורות', contact: 'צור קשר', consultation: 'בקשת ייעוץ', planApprovals: 'פתרונות פיתוח פארדייס', realEstate: 'פארדייס נדל״ן', propertyManagement: 'פארדייס לטיפול בנכסים', legalConsultation: 'פתרונות משפטיים של פארדייס', architecturalSupport: 'תכנון ותמיכה', construction: 'פארדייס לעיצוב ובנייה', toggleMenu: 'פתיחה או סגירת התפריט' },
     language: { english: 'English', hebrew: 'עברית' },
     footer: { description: 'שותף משולב לנכסים ולאירוח בסרי לנקה וללקוחות בינלאומיים. אנו מחברים בין נדל״ן, אישורים, ניהול, תיאום משפטי, תכנון ובנייה.', services: 'החטיבות שלנו', destinations: 'יעדי אירוח', contact: 'צרו קשר', privacy: 'מדיניות פרטיות', terms: 'תנאי שימוש', contactUs: 'פנו אלינו', rights: 'כל הזכויות שמורות.', address: 'Paradise Global Leisures (PVT) LTD', province: 'סרי לנקה', poweredBy: 'מופעל על ידי SerendibCode' },
     common: { learnMore: 'למידע נוסף', viewAll: 'צפו בכל', send: 'שליחת פנייה', loading: 'טוען...', required: 'שדה חובה', district: 'מחוז', scrollDown: 'גלילה למטה' },
@@ -70,7 +70,7 @@ export const he = {
       average: 'דירוג ממוצע', basedOn_one: 'מבוסס על ביקורת אחת שפורסמה', basedOn_two: 'מבוסס על {{count}} ביקורות שפורסמו', basedOn_other: 'מבוסס על {{count}} ביקורות שפורסמו',
       outOf: '{{rating}} מתוך 5 כוכבים', starsCount_one: 'כוכב אחד', starsCount_two: '{{count}} כוכבים', starsCount_other: '{{count}} כוכבים',
       breakdownLabel: '{{stars}}: {{count}} ביקורות',
-      noReviews: 'אין עדיין ביקורות', noReviewsText: 'היו הראשונים לשתף את החוויה שלכם עם Paradise Global Leisures.',
+      noReviews: 'אין עדיין ביקורות', noReviewsText: 'היו הראשונים לשתף את החוויה שלכם.',
       noReviewsForService: 'אין עדיין ביקורות שפורסמו עבור שירות זה.',
       filterLabel: 'סינון לפי שירות', allServices: 'כל השירותים', loadMore: 'הצגת ביקורות נוספות',
       loadError: 'לא הצלחנו לטעון את הביקורות. נסו שוב מאוחר יותר.', reply: 'תגובה מ-Paradise Global Leisures',

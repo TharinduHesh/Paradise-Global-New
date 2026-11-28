@@ -7,6 +7,7 @@ import DestinationsSection from '../components/home/DestinationsSection';
 import WhyChooseUs from '../components/home/WhyChooseUs';
 import CTABanner from '../components/home/CTABanner';
 import Testimonials from '../components/home/Testimonials';
+import CustomerReviews from '../components/home/CustomerReviews';
 
 // Sections reveal themselves as they scroll into view (see components/motion/useAutoReveal).
 const Home: React.FC = () => {
@@ -19,6 +20,7 @@ const Home: React.FC = () => {
       <DestinationsSection />
       <WhyChooseUs />
       <Testimonials />
+      <CustomerReviews />
       <CTABanner />
     </>
   );
